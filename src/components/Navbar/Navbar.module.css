@@ -1,0 +1,252 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #e8eaf0;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+.navbar {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.navInner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 24px;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.logoText {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1c2e;
+  letter-spacing: -1px;
+}
+
+.logoAccent {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f59e0b;
+  letter-spacing: -1px;
+}
+
+/* Location */
+.locationBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.locationBtn:hover {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+.locationIcon {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.locationText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.locationLabel {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.locationValue {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Search */
+.searchWrapper {
+  flex: 1;
+  max-width: 580px;
+  display: flex;
+  align-items: center;
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 0 0 0 14px;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.searchWrapper:hover {
+  background: #eff0f5;
+}
+
+.searchFocused {
+  background: #fff !important;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.searchIcon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 11px 12px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #1f2937;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.searchBtn {
+  height: 100%;
+  padding: 0 20px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 0 10px 10px 0;
+  white-space: nowrap;
+}
+
+.searchBtn:hover {
+  background: #4f46e5;
+}
+
+/* Actions */
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.actionBtn,
+.cartBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  color: #374151;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.actionBtn:hover,
+.cartBtn:hover {
+  border-color: #6366f1;
+  background: #f5f3ff;
+  color: #6366f1;
+}
+
+.actionLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cartBadge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+/* Secondary Nav */
+.secondaryNav {
+  border-top: 1px solid #f1f3f9;
+  background: #fff;
+  overflow: hidden;
+}
+
+.secondaryNavInner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.secondaryNavInner::-webkit-scrollbar {
+  display: none;
+}
+
+.navLink {
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #6b7280;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  border-radius: 0;
+}
+
+.navLink:hover {
+  color: #6366f1;
+}
+
+.navLinkActive {
+  color: #6366f1;
+  border-bottom-color: #6366f1;
+}
