@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Search, ShoppingCart, User, MapPin, ChevronDown } from 'lucide-react';
-import { navLinks } from '../../data/categories';
 import styles from './Navbar.module.css';
 
 export default function Navbar({ cartCount }) {
-  const [activeNav, setActiveNav] = useState('Groceries');
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (
@@ -13,8 +11,8 @@ export default function Navbar({ cartCount }) {
         <div className={styles.navInner}>
           {/* Logo */}
           <div className={styles.logo}>
-            <span className={styles.logoText}>Mega</span>
-            <span className={styles.logoAccent}>Mart</span>
+            <span className={styles.logoText}>Few</span>
+            <span className={styles.logoAccent}>Pick</span>
           </div>
 
           {/* Location */}
@@ -23,7 +21,7 @@ export default function Navbar({ cartCount }) {
             <div className={styles.locationText}>
               <span className={styles.locationLabel}>Deliver to</span>
               <span className={styles.locationValue}>
-                Mumbai, 400001 <ChevronDown size={14} />
+                Poornima University <ChevronDown size={14} />
               </span>
             </div>
           </button>
@@ -57,20 +55,7 @@ export default function Navbar({ cartCount }) {
           </div>
         </div>
 
-        {/* Secondary Nav */}
-        <div className={styles.secondaryNav}>
-          <div className={styles.secondaryNavInner}>
-            {navLinks.map((link) => (
-              <button
-                key={link.label}
-                onClick={() => setActiveNav(link.label)}
-                className={`${styles.navLink} ${activeNav === link.label ? styles.navLinkActive : ''}`}
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
-        </div>
+
       </nav>
     </header>
   );
