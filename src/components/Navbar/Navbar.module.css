@@ -93,12 +93,13 @@
 .searchWrapper {
   flex: 1;
   max-width: 580px;
+  height: 44px;
   display: flex;
   align-items: center;
   background: #f3f4f6;
   border: 2px solid transparent;
   border-radius: 12px;
-  padding: 0 0 0 14px;
+  padding: 0 14px;
   transition: all 0.2s;
   overflow: hidden;
 }
@@ -109,8 +110,8 @@
 
 .searchFocused {
   background: #fff !important;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
 }
 
 .searchIcon {
@@ -123,10 +124,11 @@
   background: transparent;
   border: none;
   outline: none;
-  padding: 11px 12px;
+  padding: 0 12px;
   font-size: 0.875rem;
   font-family: inherit;
   color: #1f2937;
+  height: 100%;
 }
 
 .searchInput::placeholder {
@@ -134,22 +136,175 @@
 }
 
 .searchBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   height: 100%;
+  margin: 0;
   padding: 0 20px;
-  background: #6366f1;
+  background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
   font-family: inherit;
   border: none;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s;
-  border-radius: 0 10px 10px 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .searchBtn:hover {
-  background: #4f46e5;
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4);
+  transform: translateY(-1px);
+}
+
+.searchBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+}
+
+.moreWrapper {
+  position: relative;
+}
+
+.moreBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+  padding: 4px 2px;
+  transition: color 0.2s;
+}
+
+.moreBtn:hover {
+  color: #111827;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  padding-top: 10px;
+  z-index: 100;
+}
+
+.dropdownInner {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #374151;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdownItem:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.cartIconBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  transition: color 0.2s ease;
+}
+
+.cartIconBtn:hover {
+  color: #111827;
+}
+
+.cartBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.loginBtn {
+  flex-shrink: 0;
+  padding: 0 24px;
+  height: 40px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  letter-spacing: 0.01em;
+}
+
+.loginBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.loginBtn:active {
+  transform: translateY(0);
 }
 
 /* Actions */

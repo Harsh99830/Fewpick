@@ -1,9 +1,19 @@
-import { useState } from 'react';
-import { Search, ShoppingCart, User, MapPin, ChevronDown } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, ShoppingCart, MapPin, ChevronDown } from 'lucide-react';
 import styles from './Navbar.module.css';
+
+const moreLinks = [
+  { label: 'About Us' },
+  { label: 'Contact Us' },
+  { label: 'Careers' },
+  { label: 'Blog' },
+  { label: 'Help & Support' },
+];
 
 export default function Navbar({ cartCount }) {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
 
   return (
     <header className={styles.header}>
@@ -21,7 +31,7 @@ export default function Navbar({ cartCount }) {
             <div className={styles.locationText}>
               <span className={styles.locationLabel}>Deliver to</span>
               <span className={styles.locationValue}>
-                Poornima University <ChevronDown size={14} />
+                Poornima University
               </span>
             </div>
           </button>
@@ -36,26 +46,43 @@ export default function Navbar({ cartCount }) {
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
             />
-            <button className={styles.searchBtn}>Search</button>
           </div>
 
-          {/* Actions */}
-          <div className={styles.navActions}>
-            <button className={styles.actionBtn}>
-              <User size={20} />
-              <span className={styles.actionLabel}>Sign In</span>
-            </button>
-            <button className={styles.cartBtn}>
-              <ShoppingCart size={20} />
-              <span className={styles.actionLabel}>Cart</span>
-              {cartCount > 0 && (
-                <span className={styles.cartBadge}>{cartCount}</span>
+          <div className={styles.navRight}>
+            {/* More dropdown */}
+            <div
+              className={styles.moreWrapper}
+              ref={moreRef}
+              onMouseEnter={() => setMoreOpen(true)}
+              onMouseLeave={() => setMoreOpen(false)}
+            >
+              <button className={styles.moreBtn}>
+                More <ChevronDown size={14} className={moreOpen ? styles.chevronUp : ''} />
+              </button>
+              {moreOpen && (
+                <div className={styles.dropdown}>
+                  <div className={styles.dropdownInner}>
+                    {moreLinks.map((link) => (
+                      <button key={link.label} className={styles.dropdownItem}>
+                        {link.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
+            </div>
+
+            {/* Cart */}
+            <button className={styles.cartIconBtn}>
+              <ShoppingCart size={22} />
+              {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
             </button>
+
+            {/* Login */}
+            <button className={styles.loginBtn}>Login</button>
           </div>
+
         </div>
-
-
       </nav>
     </header>
   );
