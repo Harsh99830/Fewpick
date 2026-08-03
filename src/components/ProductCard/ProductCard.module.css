@@ -213,3 +213,30 @@
   font-weight: 800;
   color: #16a34a;
 }
+
+@media (max-width: 600px) {
+  .imageWrapper {
+    padding: 10px;
+  }
+
+  .info {
+    padding: 8px 10px 10px;
+  }
+
+  .productName {
+    font-size: 0.75rem;
+  }
+
+  .price {
+    font-size: 0.95rem;
+  }
+
+  .addBtn {
+    padding: 7px 0;
+    font-size: 0.75rem;
+  }
+
+  .card {
+    border-radius: 14px;
+  }
+}

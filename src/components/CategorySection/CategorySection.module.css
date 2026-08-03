@@ -97,8 +97,35 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .grid {
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .categoryItem {
+    flex: 0 0 auto;
+    width: 72px;
+  }
+
+  .iconCircle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .emoji {
+    font-size: 1.6rem;
+  }
+
+  .catName {
+    font-size: 0.65rem;
   }
 }

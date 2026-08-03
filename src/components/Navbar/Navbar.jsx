@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Search, ShoppingCart, MapPin, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { Search, ShoppingCart, MapPin, ChevronDown, Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 const moreLinks = [
@@ -13,7 +13,7 @@ const moreLinks = [
 export default function Navbar({ cartCount }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className={styles.header}>
@@ -25,14 +25,12 @@ export default function Navbar({ cartCount }) {
             <span className={styles.logoAccent}>Pick</span>
           </div>
 
-          {/* Location */}
+          {/* Location — hidden on mobile */}
           <button className={styles.locationBtn}>
             <MapPin size={16} className={styles.locationIcon} />
             <div className={styles.locationText}>
               <span className={styles.locationLabel}>Deliver to</span>
-              <span className={styles.locationValue}>
-                Poornima University
-              </span>
+              <span className={styles.locationValue}>Poornima University</span>
             </div>
           </button>
 
@@ -48,11 +46,11 @@ export default function Navbar({ cartCount }) {
             />
           </div>
 
+          {/* Right section — hidden on mobile */}
           <div className={styles.navRight}>
             {/* More dropdown */}
             <div
               className={styles.moreWrapper}
-              ref={moreRef}
               onMouseEnter={() => setMoreOpen(true)}
               onMouseLeave={() => setMoreOpen(false)}
             >
@@ -82,7 +80,52 @@ export default function Navbar({ cartCount }) {
             <button className={styles.loginBtn}>Login</button>
           </div>
 
+          {/* Mobile: cart + hamburger */}
+          <div className={styles.mobileActions}>
+            <button className={styles.cartIconBtn}>
+              <ShoppingCart size={22} />
+              {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
+            </button>
+            <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile search bar — full width below nav */}
+        <div className={styles.mobileSearch}>
+          <div className={`${styles.searchWrapper} ${searchFocused ? styles.searchFocused : ''}`}>
+            <Search size={18} className={styles.searchIcon} />
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search essentials, groceries and more..."
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+            />
+          </div>
+        </div>
+
+        {/* Mobile menu drawer */}
+        {menuOpen && (
+          <div className={styles.mobileMenu}>
+            <button className={styles.locationBtn} style={{ width: '100%', justifyContent: 'flex-start', marginTop: '12px' }}>
+              <MapPin size={16} className={styles.locationIcon} />
+              <div className={styles.locationText}>
+                <span className={styles.locationLabel}>Deliver to</span>
+                <span className={styles.locationValue}>Poornima University</span>
+              </div>
+            </button>
+            <div className={styles.mobileDivider} />
+            {moreLinks.map((link) => (
+              <button key={link.label} className={styles.mobileMenuItem}>
+                {link.label}
+              </button>
+            ))}
+            <div className={styles.mobileDivider} />
+            <button className={styles.loginBtn} style={{ width: '100%' }}>Login</button>
+          </div>
+        )}
       </nav>
     </header>
   );

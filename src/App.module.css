@@ -8,3 +8,17 @@
   flex-direction: column;
   gap: 48px;
 }
+
+@media (max-width: 768px) {
+  .main {
+    padding: 16px 12px 32px;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 12px 10px 24px;
+    gap: 20px;
+  }
+}
