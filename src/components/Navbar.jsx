@@ -82,11 +82,6 @@ export default function Navbar({ cartCount }) {
                 </span>
               )}
             </button>
-
-            {/* Login */}
-            <button className="flex-shrink-0 px-6 h-10 bg-[#2563eb] text-white text-sm font-semibold rounded-lg cursor-pointer transition-all hover:bg-[#1d4ed8] hover:-translate-y-px active:translate-y-0 tracking-[0.01em]">
-              Login
-            </button>
           </div>
 
           {/* Mobile: cart + hamburger */}
@@ -135,10 +130,6 @@ export default function Navbar({ cartCount }) {
                 {link.label}
               </button>
             ))}
-            <div className="h-px bg-[#f1f3f9] my-1.5" />
-            <button className="flex-shrink-0 px-6 h-10 bg-[#2563eb] text-white text-sm font-semibold rounded-lg cursor-pointer transition-all hover:bg-[#1d4ed8] hover:-translate-y-px active:translate-y-0 tracking-[0.01em] w-full">
-              Login
-            </button>
           </div>
         )}
       </nav>
