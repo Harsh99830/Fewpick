@@ -5,7 +5,6 @@ import HeroBanner from './components/HeroBanner';
 import ProductSection from './components/ProductSection';
 import CategorySection from './components/CategorySection';
 import CartPage from './components/CartPage';
-import Footer from './components/Footer';
 import { snackProducts, groceryProducts } from './data/products';
 
 const allProducts = [...snackProducts, ...groceryProducts];
@@ -81,8 +80,6 @@ function App() {
           />
         </Routes>
       </main>
-
-      <Footer />
     </>
   );
 }
