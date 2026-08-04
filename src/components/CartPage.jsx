@@ -45,22 +45,20 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
 
   if (orderPlaced) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-[600px] mx-auto bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-drop-in">
-        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-600 mb-6 shadow-inner animate-bounce">
-          <Check size={40} className="stroke-[3]" />
+      <div className="max-w-[480px] py-16 px-4 mx-auto text-center flex flex-col items-center animate-drop-in">
+        <div className="text-sm font-bold text-green-600 mb-3.5 flex items-center justify-center gap-1.5">
+          <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" /> Order Confirmed
         </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Order Placed Successfully!</h2>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed max-w-[400px]">
-          Thank you for shopping with FewPick. Your order <span className="font-extrabold text-gray-800">{placedOrderId}</span> has been placed and will reach you in <span className="font-bold text-orange-500">10 mins</span>!
+        <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-[-0.02em]">Thank you for your order!</h2>
+        <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+          Your order <span className="font-semibold text-gray-800">{placedOrderId}</span> has been successfully placed. We're getting it ready and it will be delivered within <span className="font-semibold text-gray-800">10 minutes</span>.
         </p>
         <button
           onClick={() => {
-            // First clear all items from the cart
             cartItems.forEach(item => onUpdateQty(item.product.id, 0));
-            // Navigate back to homepage
             onNavigateHome();
           }}
-          className="px-8 py-3.5 bg-green-600 hover:bg-green-700 text-white font-extrabold rounded-xl shadow-[0_4px_14px_rgba(22,163,74,0.3)] transition-all transform hover:-translate-y-px active:translate-y-0 text-sm cursor-pointer"
+          className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none"
         >
           Continue Shopping
         </button>
@@ -70,20 +68,16 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
 
   if (cartItems.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-4 text-center max-w-[500px] mx-auto animate-drop-in">
-        <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 mb-6 relative">
-          <ShoppingBag size={44} className="stroke-[1.5]" />
-          <span className="absolute top-5 right-5 w-3.5 h-3.5 bg-rose-500 rounded-full animate-ping" />
-        </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Your Cart is Empty</h2>
-        <p className="text-sm text-gray-400 mb-8 leading-relaxed">
-          Looks like you haven't added anything to your cart yet. Browse our top categories and grab some fresh items!
+      <div className="max-w-[480px] py-20 px-4 mx-auto text-center flex flex-col items-center animate-drop-in">
+        <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-[-0.02em]">Your cart is empty</h2>
+        <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+          There are no items in your cart. Choose from our top categories and add some items to get started.
         </p>
         <button
           onClick={onNavigateHome}
-          className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-[0_4px_14px_rgba(99,102,241,0.3)] transition-all transform hover:-translate-y-px active:translate-y-0 text-sm cursor-pointer"
+          className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none"
         >
-          Explore Products
+          Start Shopping
         </button>
       </div>
     );
