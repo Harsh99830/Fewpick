@@ -1,37 +1,18 @@
-import { ArrowLeft, Trash2, Plus, Minus, ShieldCheck, Tag, ShoppingBag, Check, Percent } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
-  const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState('');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
 
   // Computations
-  const totalMRP = cartItems.reduce((acc, item) => acc + (item.product.mrp * item.quantity), 0);
-  const totalDiscount = cartItems.reduce((acc, item) => acc + ((item.product.mrp - item.product.price) * item.quantity), 0);
-  const subtotal = totalMRP - totalDiscount;
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
   
-  // Delivery Charge: Free if subtotal > 150, else 35
-  const deliveryCharge = subtotal > 150 || subtotal === 0 ? 0 : 35;
+  // Delivery Charge: Fixed charge of ₹10
+  const deliveryCharge = subtotal > 0 ? 10 : 0;
   
-  // Promo code discount: 10% off
-  const promoDiscount = promoApplied ? Math.round(subtotal * 0.1) : 0;
-  
-  const grandTotal = subtotal + deliveryCharge - promoDiscount;
-
-  const handleApplyPromo = (e) => {
-    e.preventDefault();
-    if (promoCode.trim().toUpperCase() === 'FEWPICK10') {
-      setPromoApplied(true);
-      setPromoError('');
-    } else {
-      setPromoError('Invalid coupon. Try FEWPICK10!');
-      setPromoApplied(false);
-    }
-  };
+  const grandTotal = subtotal + deliveryCharge;
 
   const handleCheckout = () => {
     setIsCheckingOut(true);
@@ -159,64 +140,19 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
         <div className="bg-white rounded-2xl border border-[#e8eaf0] shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 flex flex-col gap-6 lg:sticky lg:top-24">
           <h2 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-4">Bill Details</h2>
 
-          {/* Promo code */}
-          <form onSubmit={handleApplyPromo} className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Enter promo (FEWPICK10)"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                disabled={promoApplied}
-                className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-indigo-500 disabled:opacity-50 placeholder:text-gray-400 font-medium"
-              />
-              <button
-                type="submit"
-                disabled={promoApplied}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl disabled:bg-green-600 transition-colors cursor-pointer"
-              >
-                {promoApplied ? <Check size={16} /> : 'Apply'}
-              </button>
-            </div>
-            {promoApplied && (
-              <span className="text-xs font-bold text-green-600 flex items-center gap-1 animate-drop-in">
-                <Tag size={12} /> Coupon 'FEWPICK10' Applied (10% Off)
-              </span>
-            )}
-            {promoError && <span className="text-xs font-bold text-rose-500 animate-drop-in">{promoError}</span>}
-          </form>
-
           {/* Bill Breakdowns */}
           <div className="flex flex-col gap-3 text-sm">
             <div className="flex justify-between text-gray-500">
-              <span>Item Total (MRP)</span>
-              <span>₹{totalMRP}</span>
+              <span>Item Total</span>
+              <span>₹{subtotal}</span>
             </div>
-            <div className="flex justify-between text-green-600 font-medium">
-              <span>Product Discount</span>
-              <span>-₹{totalDiscount}</span>
-            </div>
-            {promoApplied && (
-              <div className="flex justify-between text-green-600 font-medium">
-                <span>Promo Discount (10%)</span>
-                <span>-₹{promoDiscount}</span>
-              </div>
-            )}
             <div className="flex justify-between text-gray-500 border-b border-dashed border-gray-100 pb-3">
-              <span>Delivery Charges</span>
-              <span>{deliveryCharge === 0 ? <span className="text-green-600 font-bold uppercase text-xs bg-green-50 px-2 py-0.5 rounded text-[10px]">FREE</span> : `₹${deliveryCharge}`}</span>
+              <span>Rider's Effort</span>
+              <span>₹{deliveryCharge}</span>
             </div>
             <div className="flex justify-between text-base font-black text-gray-900 pt-1">
               <span>Grand Total</span>
               <span className="text-lg">₹{grandTotal}</span>
-            </div>
-          </div>
-
-          {/* Savings Callout */}
-          <div className="bg-green-50/50 border border-green-100 rounded-xl p-3 flex items-start gap-2.5 text-xs text-green-700">
-            <Percent size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-            <div className="font-semibold">
-              Yay! You saved ₹{totalDiscount + promoDiscount} on this order.
             </div>
           </div>
 
@@ -235,12 +171,6 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
               <span>Proceed to Checkout</span>
             )}
           </button>
-
-          {/* Security details */}
-          <div className="flex items-center justify-center gap-1.5 text-[0.7rem] text-gray-400 font-semibold uppercase tracking-wider mt-1">
-            <ShieldCheck size={14} className="text-green-600" />
-            <span>100% Safe and Secure Checkout</span>
-          </div>
         </div>
       </div>
     </div>
