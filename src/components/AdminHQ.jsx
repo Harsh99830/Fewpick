@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
   Lock, LogOut, RefreshCw, Clock, Package, 
-  LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle 
+  LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical 
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -17,10 +17,58 @@ export default function AdminHQ() {
   // Database States
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const [itemsError, setItemsError] = useState('');
+
+  // Selection and Edit States
+  const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  const [editingItem, setEditingItem] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editWeight, setEditWeight] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editMrp, setEditMrp] = useState('');
+  const [editImage, setEditImage] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editStock, setEditStock] = useState('');
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  // Modals visibility states
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+
+  // Add Item Form States
+  const [itemName, setItemName] = useState('');
+  const [itemWeight, setItemWeight] = useState('');
+  const [itemPrice, setItemPrice] = useState('');
+  const [itemMrp, setItemMrp] = useState('');
+  const [itemImage, setItemImage] = useState('');
+  const [itemCategory, setItemCategory] = useState('');
+  const [itemStock, setItemStock] = useState('');
+  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
+
+  // Add Category Form States
+  const [catName, setCatName] = useState('');
+  const [catImage, setCatImage] = useState('');
+  const [isSubmittingCat, setIsSubmittingCat] = useState(false);
+
+  // Actions menu state for table items
+  const [activeMenuId, setActiveMenuId] = useState(null);
+
+  // Date Filters for Daily Orders Bar Chart
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6); // Default: Last 7 Days
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
 
   // Check session storage on load
   useEffect(() => {
@@ -34,6 +82,7 @@ export default function AdminHQ() {
   const fetchInitialData = () => {
     fetchOrders();
     fetchItems();
+    fetchCategories();
   };
 
   const handleLogin = async (e) => {
@@ -111,6 +160,188 @@ export default function AdminHQ() {
     }
   };
 
+  const fetchCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const { data, error } = await supabase
+        .from('category')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (err) {
+      console.error('Fetch categories error:', err);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  const handleAddItemSubmit = async (e) => {
+    e.preventDefault();
+    if (!itemName || !itemPrice) return;
+
+    setIsSubmittingItem(true);
+    try {
+      const newItem = {
+        name: itemName,
+        weight: itemWeight || null,
+        price: parseInt(itemPrice),
+        mrp: itemMrp ? parseInt(itemMrp) : null,
+        image: itemImage || null,
+        category: itemCategory || null,
+        Stock: itemStock ? parseInt(itemStock) : null
+      };
+
+      const { data, error } = await supabase
+        .from('items')
+        .insert([newItem])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        setItems(prev => [...prev, data[0]]);
+        setShowAddItemModal(false);
+        // Reset form
+        setItemName('');
+        setItemWeight('');
+        setItemPrice('');
+        setItemMrp('');
+        setItemImage('');
+        setItemCategory(categories[0]?.name || '');
+        setItemStock('');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add item: ' + err.message);
+    } finally {
+      setIsSubmittingItem(false);
+    }
+  };
+
+  const handleAddCatSubmit = async (e) => {
+    e.preventDefault();
+    if (!catName) return;
+
+    setIsSubmittingCat(true);
+    try {
+      const newCat = {
+        name: catName,
+        image: catImage || null
+      };
+
+      const { data, error } = await supabase
+        .from('category')
+        .insert([newCat])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        setCategories(prev => [...prev, data[0]]);
+        setShowAddCatModal(false);
+        setCatName('');
+        setCatImage('');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add category: ' + err.message);
+    } finally {
+      setIsSubmittingCat(false);
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', itemId);
+        
+      if (error) throw error;
+      setItems(prev => prev.filter(item => item.id !== itemId));
+    } catch (err) {
+      console.error('Delete item error:', err);
+      alert('Failed to delete item: ' + err.message);
+    } finally {
+      setActiveMenuId(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const count = selectedItemIds.size;
+    if (!window.confirm(`Are you sure you want to delete ${count} selected products?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .in('id', Array.from(selectedItemIds));
+
+      if (error) throw error;
+
+      // Update local items state
+      setItems(prev => prev.filter(item => !selectedItemIds.has(item.id)));
+      setIsSelectionMode(false);
+      setSelectedItemIds(new Set());
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      alert('Failed to delete selected items: ' + err.message);
+    }
+  };
+
+  const handleStartEdit = (item) => {
+    setEditingItem(item);
+    setEditName(item.name || '');
+    setEditWeight(item.weight || '');
+    setEditPrice(item.price || '');
+    setEditMrp(item.mrp || '');
+    setEditImage(item.image || '');
+    setEditCategory(item.category || '');
+    setEditStock(item.Stock || '');
+    setActiveMenuId(null);
+  };
+
+  const handleEditItemSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingItem || !editName || !editPrice) return;
+
+    setIsSubmittingEdit(true);
+    try {
+      const updatedFields = {
+        name: editName,
+        weight: editWeight || null,
+        price: parseInt(editPrice),
+        mrp: editMrp ? parseInt(editMrp) : null,
+        image: editImage || null,
+        category: editCategory || null,
+        Stock: editStock ? parseInt(editStock) : null
+      };
+
+      const { error } = await supabase
+        .from('items')
+        .update(updatedFields)
+        .eq('id', editingItem.id);
+
+      if (error) throw error;
+
+      // Update local state list
+      setItems(prev => prev.map(item => 
+        item.id === editingItem.id ? { ...item, ...updatedFields } : item
+      ));
+
+      setEditingItem(null);
+    } catch (err) {
+      console.error('Update item error:', err);
+      alert('Failed to update product: ' + err.message);
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const { error } = await supabase
@@ -185,98 +416,227 @@ export default function AdminHQ() {
     );
   }
 
+  const getChartData = () => {
+    if (!startDate || !endDate) return [];
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    const counts = {};
+    orders.forEach(order => {
+      const orderDate = new Date(order.created_at).toISOString().split('T')[0];
+      counts[orderDate] = (counts[orderDate] || 0) + 1;
+    });
+
+    const data = [];
+    let current = new Date(start);
+    
+    let loopLimit = 0;
+    while (current <= end && loopLimit < 31) {
+      const dateStr = current.toISOString().split('T')[0];
+      const count = counts[dateStr] || 0;
+      
+      const formattedLabel = current.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+      
+      data.push({
+        date: dateStr,
+        label: formattedLabel,
+        count: count
+      });
+      
+      current.setDate(current.getDate() + 1);
+      loopLimit++;
+    }
+    
+    return data;
+  };
+
   // Sub-tab: Dashboard Summary
-  const renderDashboardTab = () => (
-    <div className="flex flex-col gap-6">
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Package size={22} />
-          </div>
-          <div>
-            <p className="text-[1.35rem] font-black text-gray-900 leading-none mb-1">{totalOrders}</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Received</p>
-          </div>
-        </div>
+  const renderDashboardTab = () => {
+    const chartData = getChartData();
+    const maxCount = Math.max(...chartData.map(d => d.count), 0);
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <p className="text-[1.35rem] font-black text-gray-900 leading-none mb-1">₹{totalSales}</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed Revenue</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <Clock size={22} />
-          </div>
-          <div>
-            <p className="text-[1.35rem] font-black text-gray-900 leading-none mb-1">{pendingOrders}</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Pending</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Additional Stats */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col gap-4">
-          <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider border-b border-gray-100 pb-3">Operational Stats</h3>
-          <div className="flex flex-col gap-3.5 text-sm">
-            <div className="flex justify-between items-center text-gray-500">
-              <span>Average Completed Order Value (AOV)</span>
-              <span className="font-bold text-gray-900">₹{averageOrderValue}</span>
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Metrics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <ClipboardList size={22} />
             </div>
-            <div className="flex justify-between items-center text-gray-500">
-              <span>Catalog Size</span>
-              <span className="font-bold text-gray-900">{items.length} items</span>
+            <div>
+              <p className="text-[1.35rem] font-black text-gray-900 leading-none mb-1">{totalOrders}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Orders</p>
             </div>
-            <div className="flex justify-between items-center text-gray-500">
-              <span>Pending Orders Queue</span>
-              <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-xs">{pendingOrders} pending</span>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+              <TrendingUp size={22} />
+            </div>
+            <div>
+              <p className="text-[1.35rem] font-black text-gray-900 leading-none mb-1">₹{totalSales}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Revenue</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-[#6366f1] flex items-center justify-center">
+              <ShoppingBag size={22} />
+            </div>
+            <div>
+              <p className="text-[1.35rem] font-black text-gray-900 leading-none mb-1">{items.length}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Items</p>
             </div>
           </div>
         </div>
 
-        {/* Low Stock Notifications */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col gap-4">
-          <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider border-b border-gray-100 pb-3 flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-500" />
-            Stock Health Warnings
-          </h3>
-          {lowStockItems.length === 0 ? (
-            <div className="flex items-center justify-center flex-1 text-xs text-gray-400 py-6">
-              All items are well stocked (Stock &ge; 20).
+        {/* Daily Orders Bar Chart */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+            <div>
+              <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Daily Orders</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Order frequency over selected range</p>
+            </div>
+            
+            <div className="flex items-center gap-3 flex-wrap text-xs font-semibold text-gray-500">
+              <div className="flex items-center gap-1.5">
+                <span>From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] text-xs font-bold text-gray-700 cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] text-xs font-bold text-gray-700 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          {chartData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-xs text-gray-400 font-bold">
+              Invalid date range selected.
+            </div>
+          ) : maxCount === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-xs text-gray-400 font-bold">
+              No orders logged during this period.
             </div>
           ) : (
-            <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto">
-              {lowStockItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-center text-xs text-gray-500">
-                  <span className="truncate pr-4 font-semibold text-gray-700">{item.name}</span>
-                  <span className="font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                    {item.Stock} left
-                  </span>
-                </div>
-              ))}
+            <div className="flex flex-col gap-3">
+              <div className="h-[220px] flex items-end justify-between gap-1 pt-6 px-1 border-b border-gray-100">
+                {chartData.map((day, idx) => {
+                  const barHeight = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                  return (
+                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end relative">
+                      {/* Tooltip */}
+                      <div className="absolute -top-3 scale-0 group-hover:scale-100 transition-all duration-150 bg-gray-900 text-white text-[9px] font-black px-2 py-1 rounded shadow whitespace-nowrap z-10">
+                        {day.count} {day.count === 1 ? 'order' : 'orders'}
+                      </div>
+                      
+                      {/* Bar */}
+                      <div 
+                        style={{ height: `${Math.max(barHeight, 4)}%` }} 
+                        className={`w-full max-w-[32px] rounded-t-md transition-all duration-300 relative ${
+                          day.count > 0 
+                            ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.05)]' 
+                            : 'bg-gray-100'
+                        }`}
+                      >
+                        {day.count > 0 && (
+                          <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-black text-white hidden sm:block">
+                            {day.count}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Labels */}
+              <div className="flex justify-between gap-1 px-1">
+                {chartData.map((day, idx) => (
+                  <div key={idx} className="flex-1 text-center">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block truncate max-w-[48px] mx-auto">
+                      {day.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
-    </div>
-  );
-
-  // Sub-tab: Items List
+    );
+  };  // Sub-tab: Items List
   const renderItemsTab = () => (
     <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Catalog Inventory</h2>
-        <span className="text-[10px] font-extrabold px-2.5 py-1 bg-gray-50 border border-gray-200 text-gray-500 rounded-full">
-          {items.length} Products
-        </span>
-      </div>
+      {isSelectionMode ? (
+        <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black bg-indigo-600 text-white px-2.5 py-1 rounded-full">
+              {selectedItemIds.size} Selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBulkDelete}
+              disabled={selectedItemIds.size === 0}
+              className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none disabled:bg-gray-200 disabled:text-gray-450 disabled:cursor-not-allowed"
+            >
+              Delete Selected
+            </button>
+            <button
+              onClick={() => {
+                setIsSelectionMode(false);
+                setSelectedItemIds(new Set());
+              }}
+              className="px-3.5 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Catalog Inventory</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{items.length} Products</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (categories.length > 0 && !itemCategory) {
+                  setItemCategory(categories[0].name);
+                }
+                setShowAddItemModal(true);
+              }}
+              className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none"
+            >
+              <Plus size={14} />
+              Add Item
+            </button>
+            <button
+              onClick={() => setShowAddCatModal(true)}
+              className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-[#6366f1] rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none"
+            >
+              <Plus size={14} />
+              Add Category
+            </button>
+          </div>
+        </div>
+      )}
 
       {isLoadingItems ? (
         <div className="flex flex-col items-center justify-center py-20">
@@ -292,17 +652,57 @@ export default function AdminHQ() {
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-wider">
+                {isSelectionMode && (
+                  <th className="py-4 px-6 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      checked={items.length > 0 && selectedItemIds.size === items.length}
+                      ref={input => {
+                        if (input) {
+                          input.indeterminate = selectedItemIds.size > 0 && selectedItemIds.size < items.length;
+                        }
+                      }}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedItemIds(new Set(items.map(item => item.id)));
+                        } else {
+                          setSelectedItemIds(new Set());
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-305 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="py-4 px-6">ID</th>
                 <th className="py-4 px-6">Image</th>
                 <th className="py-4 px-6">Product Details</th>
                 <th className="py-4 px-6">Category</th>
                 <th className="py-4 px-6 text-right">Price / MRP</th>
                 <th className="py-4 px-6 text-center">Stock Level</th>
+                <th className="py-4 px-6 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {items.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50/30 transition-colors">
+                <tr key={item.id} className={`hover:bg-gray-50/30 transition-colors ${selectedItemIds.has(item.id) ? 'bg-indigo-50/10' : ''}`}>
+                  {isSelectionMode && (
+                    <td className="py-4 px-6 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedItemIds.has(item.id)}
+                        onChange={() => {
+                          const next = new Set(selectedItemIds);
+                          if (next.has(item.id)) {
+                            next.delete(item.id);
+                          } else {
+                            next.add(item.id);
+                          }
+                          setSelectedItemIds(next);
+                        }}
+                        className="w-4 h-4 rounded border-gray-305 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </td>
+                  )}
                   <td className="py-4 px-6 font-bold text-gray-400">#{item.id}</td>
                   <td className="py-4 px-6">
                     <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden">
@@ -338,6 +738,48 @@ export default function AdminHQ() {
                     }`}>
                       {item.Stock ?? 'N/A'} units
                     </span>
+                  </td>
+                  <td className="py-4 px-6 text-center relative">
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
+                        className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-500 hover:text-gray-900 border-none bg-transparent cursor-pointer transition-colors"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      
+                      {activeMenuId === item.id && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
+                          <div className="absolute right-6 top-10 bg-white border border-gray-150 rounded-xl shadow-lg p-1.5 z-20 min-w-[100px] animate-drop-in">
+                            <button
+                              onClick={() => handleStartEdit(item)}
+                              className="flex items-center w-full text-left bg-transparent border-none text-gray-700 hover:bg-gray-50 py-2 px-3 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="flex items-center w-full text-left bg-transparent border-none text-red-600 hover:bg-red-50 hover:text-red-700 py-2 px-3 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsSelectionMode(true);
+                                const next = new Set(selectedItemIds);
+                                next.add(item.id);
+                                setSelectedItemIds(next);
+                                setActiveMenuId(null);
+                              }}
+                              className="flex items-center w-full text-left bg-transparent border-none text-gray-700 hover:bg-gray-50 py-2 px-3 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                            >
+                              Select
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -523,6 +965,293 @@ export default function AdminHQ() {
         {activeTab === 'items' && renderItemsTab()}
         {activeTab === 'orders' && renderOrdersTab()}
       </div>
+
+      {/* Add Item Modal */}
+      {showAddItemModal && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[500px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Add Catalog Product</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Insert item directly into database</p>
+              </div>
+              <button 
+                onClick={() => setShowAddItemModal(false)}
+                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddItemSubmit} className="p-6 flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Product Name</label>
+                  <input
+                    type="text"
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    placeholder="e.g. Fresh Mangoes"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                    required
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Weight / Vol</label>
+                  <input
+                    type="text"
+                    value={itemWeight}
+                    onChange={(e) => setItemWeight(e.target.value)}
+                    placeholder="e.g. 500g, 1L"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category</label>
+                  {categories.length === 0 ? (
+                    <span className="text-xs text-amber-500 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-100">
+                      Add a category first!
+                    </span>
+                  ) : (
+                    <select
+                      value={itemCategory}
+                      onChange={(e) => setItemCategory(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-bold cursor-pointer"
+                      required
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Selling Price (₹)</label>
+                  <input
+                    type="number"
+                    value={itemPrice}
+                    onChange={(e) => setItemPrice(e.target.value)}
+                    placeholder="e.g. 150"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Original MRP (₹)</label>
+                  <input
+                    type="number"
+                    value={itemMrp}
+                    onChange={(e) => setItemMrp(e.target.value)}
+                    placeholder="e.g. 180"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Image URL</label>
+                  <input
+                    type="text"
+                    value={itemImage}
+                    onChange={(e) => setItemImage(e.target.value)}
+                    placeholder="e.g. https://images.unsplash.com/..."
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Initial Stock Quantity</label>
+                  <input
+                    type="number"
+                    value={itemStock}
+                    onChange={(e) => setItemStock(e.target.value)}
+                    placeholder="e.g. 100"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingItem || categories.length === 0}
+                className="w-full mt-4 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl border-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer disabled:bg-gray-300"
+              >
+                {isSubmittingItem ? 'Adding to database...' : 'Insert Product'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {showAddCatModal && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[420px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Add Category Tab</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Insert new category into database</p>
+              </div>
+              <button 
+                onClick={() => setShowAddCatModal(false)}
+                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddCatSubmit} className="p-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category Name</label>
+                <input
+                  type="text"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  placeholder="e.g. Bakery, Fruits"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category Image URL or Emoji</label>
+                <input
+                  type="text"
+                  value={catImage}
+                  onChange={(e) => setCatImage(e.target.value)}
+                  placeholder="e.g. 🍞 or https://images.unsplash.com/..."
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingCat}
+                className="w-full mt-4 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl border-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer disabled:bg-gray-300"
+              >
+                {isSubmittingCat ? 'Adding to database...' : 'Insert Category'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Item Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[500px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Edit Catalog Product</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Modify properties in real-time database</p>
+              </div>
+              <button 
+                onClick={() => setEditingItem(null)}
+                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditItemSubmit} className="p-6 flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Product Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="e.g. Fresh Mangoes"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                    required
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Weight / Vol</label>
+                  <input
+                    type="text"
+                    value={editWeight}
+                    onChange={(e) => setEditWeight(e.target.value)}
+                    placeholder="e.g. 500g, 1L"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-bold cursor-pointer"
+                    required
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Selling Price (₹)</label>
+                  <input
+                    type="number"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    placeholder="e.g. 150"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Original MRP (₹)</label>
+                  <input
+                    type="number"
+                    value={editMrp}
+                    onChange={(e) => setEditMrp(e.target.value)}
+                    placeholder="e.g. 180"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Image URL</label>
+                  <input
+                    type="text"
+                    value={editImage}
+                    onChange={(e) => setEditImage(e.target.value)}
+                    placeholder="e.g. https://images.unsplash.com/..."
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Initial Stock Quantity</label>
+                  <input
+                    type="number"
+                    value={editStock}
+                    onChange={(e) => setEditStock(e.target.value)}
+                    placeholder="e.g. 100"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingEdit}
+                className="w-full mt-4 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl border-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer disabled:bg-gray-300"
+              >
+                {isSubmittingEdit ? 'Saving changes...' : 'Save Product'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
