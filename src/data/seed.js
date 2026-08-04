@@ -48,35 +48,61 @@ const initialCategories = [
 ];
 
 async function seed() {
-  console.log("Seeding items to Supabase (using your exact schema)...");
+  console.log("Seeding/updating items to Supabase (using your exact schema)...");
   
-  // Attempt to delete existing rows
-  try {
-    await supabase.from('items').delete().neq('id', 0);
-  } catch (e) {
-    console.log("Note: Could not clear existing items.");
-  }
+  const { data: existingItems } = await supabase.from('items').select('id');
+  const existingIds = new Set(existingItems?.map(x => x.id) || []);
+  const itemsToInsert = allItems.filter(item => !existingIds.has(item.id));
 
-  const { data, error } = await supabase.from('items').insert(allItems).select();
-  if (error) {
-    console.error("Error seeding items:", error.message);
+  if (itemsToInsert.length > 0) {
+    const { data, error } = await supabase.from('items').insert(itemsToInsert).select();
+    if (error) {
+      console.error("Error seeding items:", error.message);
+    } else {
+      console.log(`Successfully seeded ${data.length} new items to Supabase!`);
+    }
   } else {
-    console.log(`Successfully seeded ${data.length} items to Supabase!`);
+    console.log("All items are already seeded in Supabase.");
   }
 
-  console.log("Seeding categories to Supabase...");
-  // Attempt to delete existing categories
-  try {
-    await supabase.from('category').delete().neq('id', 0);
-  } catch (e) {
-    console.log("Note: Could not clear existing categories.");
-  }
+  console.log("Seeding/updating categories to Supabase...");
+  const { data: existingCats } = await supabase.from('category').select('id');
+  const existingCatIds = new Set(existingCats?.map(x => x.id) || []);
+  const catsToInsert = initialCategories.filter(cat => !existingCatIds.has(cat.id));
 
-  const { data: catData, error: catError } = await supabase.from('category').insert(initialCategories).select();
-  if (catError) {
-    console.error("Error seeding categories:", catError.message);
+  if (catsToInsert.length > 0) {
+    const { data: catData, error: catError } = await supabase.from('category').insert(catsToInsert).select();
+    if (catError) {
+      console.error("Error seeding categories:", catError.message);
+    } else {
+      console.log(`Successfully seeded ${catData.length} new categories to Supabase!`);
+    }
   } else {
-    console.log(`Successfully seeded ${catData.length} categories to Supabase!`);
+    console.log("All categories are already seeded in Supabase.");
+  }
+
+  console.log("Seeding/updating admin config to Supabase...");
+  const adminPassword = process.env.VITE_ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    console.log("Note: Skipping admin config seeding (VITE_ADMIN_PASSWORD not set in environment).");
+  } else {
+    const { data: existingConfigs } = await supabase.from('admin_config').select('key');
+    const existingKeys = new Set(existingConfigs?.map(x => x.key) || []);
+    const configsToInsert = [
+      { key: 'admin_password', value: adminPassword }
+    ].filter(c => !existingKeys.has(c.key));
+
+    if (configsToInsert.length > 0) {
+      const { data: configData, error: configError } = await supabase.from('admin_config').insert(configsToInsert).select();
+      if (configError) {
+        console.error("Error seeding admin config:", configError.message);
+      } else {
+        console.log("Successfully seeded admin password config to Supabase!");
+      }
+    } else {
+      console.log("Admin config is already seeded in Supabase.");
+    }
   }
 }
 

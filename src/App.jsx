@@ -5,6 +5,7 @@ import HeroBanner from './components/HeroBanner';
 import ProductSection from './components/ProductSection';
 import CategorySection from './components/CategorySection';
 import CartPage from './components/CartPage';
+import AdminHQ from './components/AdminHQ';
 import { snackProducts, groceryProducts } from './data/products';
 import { categories as fallbackCategories } from './data/categories';
 import { supabase } from './lib/supabase';
@@ -168,6 +169,12 @@ function App() {
                   onUpdateQty={handleUpdateQty}
                   onNavigateHome={() => navigate('/')}
                 />
+              } 
+            />
+            <Route 
+              path="/hq" 
+              element={
+                <AdminHQ />
               } 
             />
           </Routes>
