@@ -1,5 +1,6 @@
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -14,7 +15,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
   
   const grandTotal = subtotal + deliveryCharge;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     setIsCheckingOut(true);
     const orderId = `FP-${Math.floor(100000 + Math.random() * 900000)}`;
     setPlacedOrderId(orderId);
@@ -28,6 +29,33 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
     message += `\n*Grand Total:* ₹${grandTotal}`;
     const waUrl = `https://wa.me/919719214408?text=${encodeURIComponent(message)}`;
+
+    // Prepare DB insert payload
+    const orderItems = cartItems.map(item => ({
+      product_id: item.product.id,
+      name: item.product.name,
+      weight: item.product.weight,
+      quantity: item.quantity,
+      price: item.product.price
+    }));
+
+    try {
+      // Save order to Supabase expected_orders table
+      const { error } = await supabase.from('expected_orders').insert({
+        id: orderId,
+        items: orderItems,
+        subtotal: subtotal,
+        rider_effort: deliveryCharge,
+        grand_total: grandTotal,
+        status: 'pending'
+      });
+      
+      if (error) {
+        console.error("Failed to save order to database:", error.message);
+      }
+    } catch (err) {
+      console.error("Error saving order to database:", err);
+    }
 
     setTimeout(() => {
       setIsCheckingOut(false);
