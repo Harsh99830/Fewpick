@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { 
-  Lock, LogOut, RefreshCw, Clock, Package, 
-  LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical 
+import {
+  Lock, LogOut, RefreshCw, Clock, Package,
+  LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -13,6 +13,7 @@ export default function AdminHQ() {
 
   // Tabs state: 'dashboard', 'items', 'orders'
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [ordersSubTab, setOrdersSubTab] = useState('expected');
 
   // Database States
   const [orders, setOrders] = useState([]);
@@ -254,13 +255,13 @@ export default function AdminHQ() {
 
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
-    
+
     try {
       const { error } = await supabase
         .from('items')
         .delete()
         .eq('id', itemId);
-        
+
       if (error) throw error;
       setItems(prev => prev.filter(item => item.id !== itemId));
     } catch (err) {
@@ -329,7 +330,7 @@ export default function AdminHQ() {
       if (error) throw error;
 
       // Update local state list
-      setItems(prev => prev.map(item => 
+      setItems(prev => prev.map(item =>
         item.id === editingItem.id ? { ...item, ...updatedFields } : item
       ));
 
@@ -344,16 +345,18 @@ export default function AdminHQ() {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
+      const updates = { status: newStatus };
+
       const { error } = await supabase
         .from('expected_orders')
-        .update({ status: newStatus })
+        .update(updates)
         .eq('id', orderId);
 
       if (error) throw error;
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status: newStatus } : order
+          order.id === orderId ? { ...order, ...updates } : order
         )
       );
     } catch (err) {
@@ -362,13 +365,55 @@ export default function AdminHQ() {
     }
   };
 
+  const handleConfirmOrder = async (orderId) => {
+    try {
+      const updates = { confirm: 'yes', status: 'pending' };
+      const { error } = await supabase
+        .from('expected_orders')
+        .update(updates)
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? { ...order, ...updates } : order
+        )
+      );
+    } catch (err) {
+      console.error('Confirm order error:', err);
+      alert('Failed to confirm order.');
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    try {
+      const updates = { confirm: 'yes', status: 'cancelled' };
+      const { error } = await supabase
+        .from('expected_orders')
+        .update(updates)
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? { ...order, ...updates } : order
+        )
+      );
+    } catch (err) {
+      console.error('Cancel order error:', err);
+      alert('Failed to cancel order.');
+    }
+  };
+
   // Computations
-  const completedOrders = orders.filter((o) => o.status === 'completed');
-  const totalOrders = orders.length;
+  const completedOrders = orders.filter((o) => o.confirm === 'yes' && ['completed', 'delivered', 'on the way'].includes(o.status));
+  const totalOrders = orders.filter((o) => o.confirm === 'yes').length;
   const totalSales = completedOrders.reduce((acc, curr) => acc + curr.grand_total, 0);
-  const pendingOrders = orders.filter((o) => o.status === 'pending').length;
+  const pendingOrders = orders.filter((o) => o.confirm !== 'yes').length;
   const averageOrderValue = completedOrders.length > 0 ? Math.round(totalSales / completedOrders.length) : 0;
-  
+
   // Stock checks
   const lowStockItems = items.filter((item) => item.Stock !== null && item.Stock < 20);
 
@@ -379,7 +424,7 @@ export default function AdminHQ() {
         <div className="w-14 h-14 bg-indigo-50 text-[#6366f1] rounded-2xl flex items-center justify-center mb-6 border border-indigo-100 shadow-[0_4px_12px_rgba(99,102,241,0.05)]">
           <Lock size={26} />
         </div>
-        
+
         <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-[-0.02em]">FewPick HQ Login</h2>
         <p className="text-sm text-gray-500 text-center mb-8">
           Enter your admin credentials to access databases and configuration controls.
@@ -418,10 +463,10 @@ export default function AdminHQ() {
 
   const getChartData = () => {
     if (!startDate || !endDate) return [];
-    
+
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     const counts = {};
     orders.forEach(order => {
       const orderDate = new Date(order.created_at).toISOString().split('T')[0];
@@ -430,27 +475,27 @@ export default function AdminHQ() {
 
     const data = [];
     let current = new Date(start);
-    
+
     let loopLimit = 0;
     while (current <= end && loopLimit < 31) {
       const dateStr = current.toISOString().split('T')[0];
       const count = counts[dateStr] || 0;
-      
+
       const formattedLabel = current.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'
       });
-      
+
       data.push({
         date: dateStr,
         label: formattedLabel,
         count: count
       });
-      
+
       current.setDate(current.getDate() + 1);
       loopLimit++;
     }
-    
+
     return data;
   };
 
@@ -501,7 +546,7 @@ export default function AdminHQ() {
               <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Daily Orders</h3>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Order frequency over selected range</p>
             </div>
-            
+
             <div className="flex items-center gap-3 flex-wrap text-xs font-semibold text-gray-500">
               <div className="flex items-center gap-1.5">
                 <span>From:</span>
@@ -543,15 +588,14 @@ export default function AdminHQ() {
                       <div className="absolute -top-3 scale-0 group-hover:scale-100 transition-all duration-150 bg-gray-900 text-white text-[9px] font-black px-2 py-1 rounded shadow whitespace-nowrap z-10">
                         {day.count} {day.count === 1 ? 'order' : 'orders'}
                       </div>
-                      
+
                       {/* Bar */}
-                      <div 
-                        style={{ height: `${Math.max(barHeight, 4)}%` }} 
-                        className={`w-full max-w-[32px] rounded-t-md transition-all duration-300 relative ${
-                          day.count > 0 
-                            ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.05)]' 
+                      <div
+                        style={{ height: `${Math.max(barHeight, 4)}%` }}
+                        className={`w-full max-w-[32px] rounded-t-md transition-all duration-300 relative ${day.count > 0
+                            ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.05)]'
                             : 'bg-gray-100'
-                        }`}
+                          }`}
                       >
                         {day.count > 0 && (
                           <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-black text-white hidden sm:block">
@@ -563,7 +607,7 @@ export default function AdminHQ() {
                   );
                 })}
               </div>
-              
+
               {/* Labels */}
               <div className="flex justify-between gap-1 px-1">
                 {chartData.map((day, idx) => (
@@ -729,13 +773,12 @@ export default function AdminHQ() {
                     </div>
                   </td>
                   <td className="py-4 px-6 text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                      item.Stock === 0 
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.Stock === 0
                         ? 'bg-red-50 text-red-600 border border-red-100'
-                        : item.Stock < 20 
+                        : item.Stock < 20
                           ? 'bg-amber-50 text-amber-600 border border-amber-100'
                           : 'bg-green-50 text-green-600 border border-green-100'
-                    }`}>
+                      }`}>
                       {item.Stock ?? 'N/A'} units
                     </span>
                   </td>
@@ -747,7 +790,7 @@ export default function AdminHQ() {
                       >
                         <MoreVertical size={16} />
                       </button>
-                      
+
                       {activeMenuId === item.id && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
@@ -791,88 +834,184 @@ export default function AdminHQ() {
   );
 
   // Sub-tab: Orders List
-  const renderOrdersTab = () => (
-    <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Expected Orders Queue</h2>
-        <span className="text-[10px] font-extrabold px-2.5 py-1 bg-gray-50 border border-gray-200 text-gray-500 rounded-full">
-          {orders.length} orders
-        </span>
+  const renderOrdersTab = () => {
+    const expectedOrders = orders.filter(o => o.confirm !== 'yes');
+    const confirmedOrders = orders.filter(o => o.confirm === 'yes');
+
+    return (
+      <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
+        <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Orders Queue</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Manage expected and confirmed checkouts</p>
+          </div>
+          <div className="flex bg-gray-100 p-1 rounded-xl flex-shrink-0 self-start sm:self-center">
+            <button
+              onClick={() => setOrdersSubTab('expected')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5 ${ordersSubTab === 'expected'
+                  ? 'bg-white text-gray-900 shadow-sm font-black'
+                  : 'bg-transparent text-gray-500 hover:text-gray-900'
+                }`}
+            >
+              Expected
+              <span className="text-[9px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                {expectedOrders.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setOrdersSubTab('confirmed')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5 ${ordersSubTab === 'confirmed'
+                  ? 'bg-white text-gray-900 shadow-sm font-black'
+                  : 'bg-transparent text-gray-500 hover:text-gray-900'
+                }`}
+            >
+              Confirmed
+              <span className="text-[9px] font-black bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">
+                {confirmedOrders.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {isLoadingOrders ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <span className="text-xs font-semibold text-gray-400">Syncing queue...</span>
+          </div>
+        ) : ordersError ? (
+          <div className="text-center py-16 px-4 text-xs font-semibold text-red-500">{ordersError}</div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            <Clock size={36} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-sm font-bold">No orders found</p>
+            <p className="text-xs mt-1">Expected orders logged during WhatsApp checkout will appear here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-wider">
+                  <th className="py-4 px-6">Order ID</th>
+                  <th className="py-4 px-6">Timestamp</th>
+                  <th className="py-4 px-6">Items & Quantities</th>
+                  <th className="py-4 px-6 text-right">Grand Total</th>
+                  <th className="py-4 px-6 text-center">{ordersSubTab === 'expected' ? 'Action' : 'Status'}</th>
+                </tr>
+              </thead>
+
+              {ordersSubTab === 'expected' ? (
+                <tbody className="divide-y divide-gray-100">
+                  {expectedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-16 text-center text-xs font-semibold text-gray-405">
+                        No expected orders pending
+                      </td>
+                    </tr>
+                  ) : (
+                    expectedOrders.map((order) => {
+                      const itemsList = Array.isArray(order.items) ? order.items : [];
+                      const formattedDate = new Date(order.created_at).toLocaleString();
+
+                      return (
+                        <tr key={order.id} className="hover:bg-gray-50/30 transition-colors">
+                          <td className="py-4 px-6 font-extrabold text-gray-900">{order.id}</td>
+                          <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
+                          <td className="py-4 px-6">
+                            <div className="flex flex-col gap-1 max-w-[320px]">
+                              {itemsList.map((item, idx) => (
+                                <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4">
+                                  <span className="truncate font-semibold">{item.name} <span className="text-[10px] text-gray-400">({item.weight})</span></span>
+                                  <span className="font-mono text-[10px] font-bold bg-gray-50 px-1.5 py-0.5 rounded flex-shrink-0">x{item.quantity}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-gray-900 text-base whitespace-nowrap">
+                            ₹{order.grand_total}
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleConfirmOrder(order.id)}
+                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-extrabold transition-all cursor-pointer border-none shadow-sm"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => handleCancelOrder(order.id)}
+                                className="px-3 py-1.5 bg-white border border-gray-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-extrabold transition-all cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              ) : (
+                <tbody className="divide-y divide-gray-100">
+                  {confirmedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-16 text-center text-xs font-semibold text-gray-450">
+                        No confirmed orders processed
+                      </td>
+                    </tr>
+                  ) : (
+                    confirmedOrders.map((order) => {
+                      const itemsList = Array.isArray(order.items) ? order.items : [];
+                      const formattedDate = new Date(order.created_at).toLocaleString();
+                      let statusBg = 'bg-amber-50 text-amber-700 border-amber-200';
+                      if (order.status === 'completed') statusBg = 'bg-green-50 text-green-700 border-green-200';
+                      if (order.status === 'delivered') statusBg = 'bg-teal-50 text-teal-700 border-teal-200';
+                      if (order.status === 'on the way') statusBg = 'bg-blue-50 text-blue-700 border-blue-200';
+                      if (order.status === 'cancelled') statusBg = 'bg-red-50 text-red-700 border-red-200';
+
+                      return (
+                        <tr key={order.id} className="hover:bg-gray-50/30 transition-colors">
+                          <td className="py-4 px-6 font-extrabold text-gray-900">{order.id}</td>
+                          <td className="py-4 px-6 text-xs text-gray-550 whitespace-nowrap">{formattedDate}</td>
+                          <td className="py-4 px-6">
+                            <div className="flex flex-col gap-1 max-w-[320px]">
+                              {itemsList.map((item, idx) => (
+                                <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4">
+                                  <span className="truncate font-semibold">{item.name} <span className="text-[10px] text-gray-400">({item.weight})</span></span>
+                                  <span className="font-mono text-[10px] font-bold bg-gray-50 px-1.5 py-0.5 rounded flex-shrink-0">x{item.quantity}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-gray-900 text-base whitespace-nowrap">
+                            ₹{order.grand_total}
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex items-center justify-center">
+                              <select
+                                value={order.status}
+                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold focus:outline-none transition-all cursor-pointer ${statusBg}`}
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="completed">Completed</option>
+                                <option value="on the way">On the Way</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                              </select>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              )}
+            </table>
+          </div>
+        )}
       </div>
-
-      {isLoadingOrders ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-          <span className="text-xs font-semibold text-gray-400">Syncing with Expected Orders queue...</span>
-        </div>
-      ) : ordersError ? (
-        <div className="text-center py-16 px-4 text-xs font-semibold text-red-500">{ordersError}</div>
-      ) : orders.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <Clock size={36} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-sm font-bold">No orders found</p>
-          <p className="text-xs mt-1">Expected orders logged during WhatsApp checkout will appear here.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-wider">
-                <th className="py-4 px-6">Order ID</th>
-                <th className="py-4 px-6">Timestamp</th>
-                <th className="py-4 px-6">Items & Quantities</th>
-                <th className="py-4 px-6 text-right">Grand Total</th>
-                <th className="py-4 px-6 text-center">Status Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {orders.map((order) => {
-                const itemsList = Array.isArray(order.items) ? order.items : [];
-                const formattedDate = new Date(order.created_at).toLocaleString();
-
-                let statusBg = 'bg-amber-50 text-amber-700 border-amber-200';
-                if (order.status === 'completed') statusBg = 'bg-green-50 text-green-700 border-green-200';
-                if (order.status === 'cancelled') statusBg = 'bg-red-50 text-red-700 border-red-200';
-
-                return (
-                  <tr key={order.id} className="hover:bg-gray-50/30 transition-colors">
-                    <td className="py-4 px-6 font-extrabold text-gray-900">{order.id}</td>
-                    <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col gap-1 max-w-[320px]">
-                        {itemsList.map((item, idx) => (
-                          <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4">
-                            <span className="truncate font-semibold">{item.name} <span className="text-[10px] text-gray-400">({item.weight})</span></span>
-                            <span className="font-mono text-[10px] font-bold bg-gray-50 px-1.5 py-0.5 rounded flex-shrink-0">x{item.quantity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-right font-black text-gray-900 text-base whitespace-nowrap">
-                      ₹{order.grand_total}
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="flex items-center justify-center">
-                        <select
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold focus:outline-none transition-all cursor-pointer ${statusBg}`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="completed">Completed</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   // Main Page Layout with Sidebar
   return (
@@ -883,39 +1022,36 @@ export default function AdminHQ() {
           <h2 className="text-base font-black text-gray-900 tracking-[-0.02em]">FewPick HQ</h2>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Control Panel</p>
         </div>
-        
+
         <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-none">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${
-              activeTab === 'dashboard'
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'dashboard'
                 ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
                 : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <LayoutDashboard size={16} />
             Dashboard
           </button>
-          
+
           <button
             onClick={() => setActiveTab('items')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${
-              activeTab === 'items'
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'items'
                 ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
                 : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <ShoppingBag size={16} />
             Items Catalog
           </button>
-          
+
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${
-              activeTab === 'orders'
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'orders'
                 ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
                 : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <ClipboardList size={16} />
             Expected Orders
@@ -975,14 +1111,14 @@ export default function AdminHQ() {
                 <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Add Catalog Product</h3>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Insert item directly into database</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAddItemModal(false)}
                 className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
-            
+
             <form onSubmit={handleAddItemSubmit} className="p-6 flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 flex flex-col gap-1">
@@ -996,7 +1132,7 @@ export default function AdminHQ() {
                     required
                   />
                 </div>
-                
+
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Weight / Vol</label>
                   <input
@@ -1095,14 +1231,14 @@ export default function AdminHQ() {
                 <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Add Category Tab</h3>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Insert new category into database</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAddCatModal(false)}
                 className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
-            
+
             <form onSubmit={handleAddCatSubmit} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category Name</label>
@@ -1148,14 +1284,14 @@ export default function AdminHQ() {
                 <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Edit Catalog Product</h3>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Modify properties in real-time database</p>
               </div>
-              <button 
+              <button
                 onClick={() => setEditingItem(null)}
                 className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
-            
+
             <form onSubmit={handleEditItemSubmit} className="p-6 flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 flex flex-col gap-1">
@@ -1169,7 +1305,7 @@ export default function AdminHQ() {
                     required
                   />
                 </div>
-                
+
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Weight / Vol</label>
                   <input

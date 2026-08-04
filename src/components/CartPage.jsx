@@ -47,7 +47,8 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
         subtotal: subtotal,
         rider_effort: deliveryCharge,
         grand_total: grandTotal,
-        status: 'pending'
+        status: 'pending',
+        confirm: 'No'
       });
       
       if (error) {

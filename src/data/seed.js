@@ -104,6 +104,81 @@ async function seed() {
       console.log("Admin config is already seeded in Supabase.");
     }
   }
+
+  console.log("Seeding/updating expected orders to Supabase...");
+  const { count: orderCount, error: countError } = await supabase
+    .from('expected_orders')
+    .select('*', { count: 'exact', head: true });
+
+  if (countError) {
+    console.error("Error checking expected orders:", countError.message);
+  } else if (orderCount === 0) {
+    const sampleOrders = [
+      {
+        id: 'FP-482910',
+        items: [
+          { name: 'Classic Salted Potato Chips', weight: '150g', price: 60, quantity: 2 },
+          { name: 'Fresh Farm Bread', weight: '400g', price: 45, quantity: 1 }
+        ],
+        subtotal: 165,
+        rider_effort: 10,
+        grand_total: 175,
+        status: 'completed',
+        confirm: 'yes',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'FP-857319',
+        items: [
+          { name: 'Double Chocolate Fudge Cookies', weight: '250g', price: 120, quantity: 1 },
+          { name: 'Vanilla Ice Cream Tub', weight: '1L', price: 250, quantity: 1 }
+        ],
+        subtotal: 370,
+        rider_effort: 10,
+        grand_total: 380,
+        status: 'pending',
+        confirm: 'No',
+        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'FP-392015',
+        items: [
+          { name: 'Organic Milk Carton', weight: '1L', price: 75, quantity: 3 }
+        ],
+        subtotal: 225,
+        rider_effort: 10,
+        grand_total: 235,
+        status: 'completed',
+        confirm: 'yes',
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'FP-104928',
+        items: [
+          { name: 'Salted Butter Block', weight: '500g', price: 260, quantity: 1 }
+        ],
+        subtotal: 260,
+        rider_effort: 10,
+        grand_total: 270,
+        status: 'cancelled',
+        confirm: 'No',
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+
+    const { data: orderData, error: orderError } = await supabase
+      .from('expected_orders')
+      .insert(sampleOrders)
+      .select();
+
+    if (orderError) {
+      console.error("Error seeding expected orders:", orderError.message);
+    } else {
+      console.log(`Successfully seeded ${orderData.length} sample expected orders!`);
+    }
+  } else {
+    console.log("Expected orders table already has entries. Skipping seeding.");
+  }
 }
 
 seed();
