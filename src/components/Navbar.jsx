@@ -9,10 +9,15 @@ const moreLinks = [
   { label: 'Help & Support' },
 ];
 
-export default function Navbar({ cartCount }) {
+export default function Navbar({ cartCount, onNavigate }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleNavigate = (page) => {
+    setMenuOpen(false);
+    onNavigate(page);
+  };
 
   const searchWrapperClass = `flex-1 max-w-[580px] h-11 flex items-center bg-[#f3f4f6] border-2 border-transparent rounded-xl px-3.5 transition-all overflow-hidden hover:bg-[#eff0f5] ${
     searchFocused ? '!bg-white !border-orange-500 shadow-[0_0_0_4px_rgba(249,115,22,0.12)]' : ''
@@ -23,10 +28,13 @@ export default function Navbar({ cartCount }) {
       <nav className="max-w-[1440px] mx-auto relative">
         <div className="flex items-center gap-3 md:gap-5 px-4 md:px-6 py-2.5">
           {/* Logo */}
-          <div className="flex items-baseline gap-px flex-shrink-0 no-underline">
+          <button 
+            onClick={() => handleNavigate('home')} 
+            className="flex items-baseline gap-px flex-shrink-0 no-underline bg-transparent border-none cursor-pointer p-0 select-none align-baseline text-left outline-none font-inherit"
+          >
             <span className="text-[1.6rem] font-extrabold text-[#1a1c2e] tracking-[-1px]">Few</span>
             <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px]">Pick</span>
-          </div>
+          </button>
 
           {/* Location — hidden on mobile */}
           <button className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] flex-shrink-0">
@@ -74,7 +82,10 @@ export default function Navbar({ cartCount }) {
             </div>
 
             {/* Cart */}
-            <button className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827]">
+            <button 
+              onClick={() => handleNavigate('cart')}
+              className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
+            >
               <ShoppingCart size={22} />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
@@ -86,7 +97,10 @@ export default function Navbar({ cartCount }) {
 
           {/* Mobile: cart + hamburger */}
           <div className="flex md:hidden items-center gap-3 ml-auto">
-            <button className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827]">
+            <button 
+              onClick={() => handleNavigate('cart')}
+              className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
+            >
               <ShoppingCart size={22} />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">

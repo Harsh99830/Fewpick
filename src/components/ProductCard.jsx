@@ -10,12 +10,13 @@ const badgeColorMap = {
   purple: 'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
-export default function ProductCard({ product }) {
-  const [qty, setQty] = useState(0);
+export default function ProductCard({ product, cartItems = [], onUpdateQty }) {
+  const cartItem = cartItems.find((item) => item.product.id === product.id);
+  const qty = cartItem ? cartItem.quantity : 0;
 
-  const handleAdd = () => setQty(1);
-  const handleInc = () => setQty((q) => q + 1);
-  const handleDec = () => setQty((q) => (q <= 1 ? 0 : q - 1));
+  const handleAdd = () => onUpdateQty(product.id, 1);
+  const handleInc = () => onUpdateQty(product.id, qty + 1);
+  const handleDec = () => onUpdateQty(product.id, qty - 1);
 
   const discountColor = product.discount >= 50 ? 'bg-red-600' : 'bg-orange-600';
 
