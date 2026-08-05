@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
-  LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical
+  LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
+  FolderKanban, Edit2, Trash2, CheckSquare
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -11,9 +12,21 @@ export default function AdminHQ() {
   const [authError, setAuthError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Tabs state: 'dashboard', 'items', 'orders'
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [ordersSubTab, setOrdersSubTab] = useState('expected');
+  // Tabs state: 'dashboard', 'items', 'categories', 'orders'
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('fewpick_admin_active_tab') || 'dashboard';
+  });
+  const [ordersSubTab, setOrdersSubTab] = useState(() => {
+    return sessionStorage.getItem('fewpick_admin_orders_subtab') || 'expected';
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem('fewpick_admin_active_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    sessionStorage.setItem('fewpick_admin_orders_subtab', ordersSubTab);
+  }, [ordersSubTab]);
 
   // Database States
   const [orders, setOrders] = useState([]);
@@ -25,7 +38,7 @@ export default function AdminHQ() {
   const [ordersError, setOrdersError] = useState('');
   const [itemsError, setItemsError] = useState('');
 
-  // Selection and Edit States
+  // Selection and Edit States for Items
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
@@ -38,6 +51,15 @@ export default function AdminHQ() {
   const [editCategory, setEditCategory] = useState('');
   const [editStock, setEditStock] = useState('');
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  // Selection and Edit States for Categories
+  const [selectedCatIds, setSelectedCatIds] = useState(new Set());
+  const [isCatSelectionMode, setIsCatSelectionMode] = useState(false);
+
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatImage, setEditCatImage] = useState('');
+  const [isSubmittingEditCat, setIsSubmittingEditCat] = useState(false);
 
   // Modals visibility states
   const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -184,7 +206,20 @@ export default function AdminHQ() {
 
     setIsSubmittingItem(true);
     try {
+      // Find highest existing ID to avoid items_pkey duplicate key errors
+      const { data: maxItemData } = await supabase
+        .from('items')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+
+      let nextItemId = null;
+      if (maxItemData && maxItemData[0] && !isNaN(parseInt(maxItemData[0].id, 10))) {
+        nextItemId = parseInt(maxItemData[0].id, 10) + 1;
+      }
+
       const newItem = {
+        ...(nextItemId ? { id: nextItemId } : {}),
         name: itemName,
         weight: itemWeight || null,
         price: parseInt(itemPrice),
@@ -227,7 +262,23 @@ export default function AdminHQ() {
 
     setIsSubmittingCat(true);
     try {
+      // Find highest existing ID to avoid category_pkey duplicate key errors
+      const { data: maxCatData } = await supabase
+        .from('category')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+
+      let nextCatId = 1;
+      if (maxCatData && maxCatData[0] && !isNaN(parseInt(maxCatData[0].id, 10))) {
+        nextCatId = parseInt(maxCatData[0].id, 10) + 1;
+      } else if (categories.length > 0) {
+        const maxInState = Math.max(...categories.map(c => parseInt(c.id, 10) || 0));
+        if (maxInState > 0) nextCatId = maxInState + 1;
+      }
+
       const newCat = {
+        id: nextCatId,
         name: catName,
         image: catImage || null
       };
@@ -340,6 +391,108 @@ export default function AdminHQ() {
       alert('Failed to update product: ' + err.message);
     } finally {
       setIsSubmittingEdit(false);
+    }
+  };
+
+  // Category Handlers
+  const handleSelectCat = (catId) => {
+    setSelectedCatIds(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) {
+        next.delete(catId);
+      } else {
+        next.add(catId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllCats = () => {
+    if (selectedCatIds.size === categories.length) {
+      setSelectedCatIds(new Set());
+    } else {
+      setSelectedCatIds(new Set(categories.map(c => c.id)));
+    }
+  };
+
+  const handleDeleteCategory = async (catId) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('category')
+        .delete()
+        .eq('id', catId);
+
+      if (error) throw error;
+
+      setCategories(prev => prev.filter(c => c.id !== catId));
+      setSelectedCatIds(prev => {
+        const next = new Set(prev);
+        next.delete(catId);
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete category: ' + err.message);
+    }
+  };
+
+  const handleBulkDeleteCategories = async () => {
+    if (selectedCatIds.size === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedCatIds.size} selected categories?`)) return;
+
+    try {
+      const idsArray = Array.from(selectedCatIds);
+      const { error } = await supabase
+        .from('category')
+        .delete()
+        .in('id', idsArray);
+
+      if (error) throw error;
+
+      setCategories(prev => prev.filter(c => !selectedCatIds.has(c.id)));
+      setSelectedCatIds(new Set());
+      setIsCatSelectionMode(false);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete selected categories: ' + err.message);
+    }
+  };
+
+  const handleOpenEditCat = (cat) => {
+    setEditingCategory(cat);
+    setEditCatName(cat.name || '');
+    setEditCatImage(cat.image || '');
+  };
+
+  const handleEditCatSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingCategory || !editCatName) return;
+
+    setIsSubmittingEditCat(true);
+    try {
+      const updates = {
+        name: editCatName,
+        image: editCatImage || null
+      };
+
+      const { error } = await supabase
+        .from('category')
+        .update(updates)
+        .eq('id', editingCategory.id);
+
+      if (error) throw error;
+
+      setCategories(prev =>
+        prev.map(c => (c.id === editingCategory.id ? { ...c, ...updates } : c))
+      );
+      setEditingCategory(null);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update category: ' + err.message);
+    } finally {
+      setIsSubmittingEditCat(false);
     }
   };
 
@@ -617,8 +770,8 @@ export default function AdminHQ() {
                         <div
                           style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 5 : 0)}%` }}
                           className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.count > 0
-                              ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.15)]'
-                              : 'bg-gray-100'
+                            ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.15)]'
+                            : 'bg-gray-100'
                             }`}
                         >
                           {day.count > 0 && (
@@ -632,8 +785,8 @@ export default function AdminHQ() {
                         <div
                           style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 5 : 0)}%` }}
                           className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.revenue > 0
-                              ? 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.15)]'
-                              : 'bg-gray-100'
+                            ? 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.15)]'
+                            : 'bg-gray-100'
                             }`}
                         >
                           {day.revenue > 0 && (
@@ -814,10 +967,10 @@ export default function AdminHQ() {
                   </td>
                   <td className="py-4 px-6 text-center">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.Stock === 0
-                        ? 'bg-red-50 text-red-600 border border-red-100'
-                        : item.Stock < 20
-                          ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                          : 'bg-green-50 text-green-600 border border-green-100'
+                      ? 'bg-red-50 text-red-600 border border-red-100'
+                      : item.Stock < 20
+                        ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                        : 'bg-green-50 text-green-600 border border-green-100'
                       }`}>
                       {item.Stock ?? 'N/A'} units
                     </span>
@@ -873,6 +1026,175 @@ export default function AdminHQ() {
     </div>
   );
 
+  // Sub-tab: Categories List
+  const renderCategoriesTab = () => {
+    return (
+      <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
+        {/* Header Controls */}
+        <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Category Management</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+              {categories.length} total categories registered in store
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => setShowAddCatModal(true)}
+              className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none shadow-sm flex items-center gap-1.5"
+            >
+              <Plus size={14} />
+              Add Category
+            </button>
+
+            <button
+              onClick={() => {
+                setIsCatSelectionMode(!isCatSelectionMode);
+                if (isCatSelectionMode) setSelectedCatIds(new Set());
+              }}
+              className={`px-3 py-2 border text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${isCatSelectionMode
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+              <CheckSquare size={14} />
+              {isCatSelectionMode ? 'Cancel Selection' : 'Select Categories'}
+            </button>
+
+            {isCatSelectionMode && (
+              <>
+                <button
+                  onClick={handleSelectAllCats}
+                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none hover:bg-gray-200"
+                >
+                  {selectedCatIds.size === categories.length ? 'Deselect All' : 'Select All'}
+                </button>
+
+                {selectedCatIds.size > 0 && (
+                  <button
+                    onClick={handleBulkDeleteCategories}
+                    className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none flex items-center gap-1"
+                  >
+                    <Trash2 size={14} />
+                    Delete Selected ({selectedCatIds.size})
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Categories Table */}
+        {isLoadingCategories ? (
+          <div className="p-12 text-center text-xs font-bold text-gray-400">
+            Loading category registry...
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="p-16 text-center text-xs font-bold text-gray-400">
+            No categories registered yet. Click "Add Category" to create one.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-150 bg-gray-50/50 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                  {isCatSelectionMode && (
+                    <th className="py-3 px-4 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={categories.length > 0 && selectedCatIds.size === categories.length}
+                        onChange={handleSelectAllCats}
+                        className="rounded accent-gray-900 cursor-pointer"
+                      />
+                    </th>
+                  )}
+                  <th className="py-3 px-6">ID</th>
+                  <th className="py-3 px-6">Icon / Image</th>
+                  <th className="py-3 px-6">Category Name</th>
+                  <th className="py-3 px-6">Linked Products</th>
+                  <th className="py-3 px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {categories.map((cat) => {
+                  const isSelected = selectedCatIds.has(cat.id);
+                  const linkedItemsCount = items.filter(
+                    (i) => i.category && i.category.toLowerCase() === (cat.name || '').toLowerCase()
+                  ).length;
+
+                  const isImageURL = cat.image && (cat.image.startsWith('http') || cat.image.startsWith('/'));
+
+                  return (
+                    <tr
+                      key={cat.id}
+                      className={`hover:bg-gray-50/50 transition-colors ${isSelected ? 'bg-indigo-50/20' : ''
+                        }`}
+                    >
+                      {isCatSelectionMode && (
+                        <td className="py-4 px-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectCat(cat.id)}
+                            className="rounded accent-gray-900 cursor-pointer"
+                          />
+                        </td>
+                      )}
+                      <td className="py-4 px-6 text-xs font-extrabold text-gray-400 font-mono">
+                        #{cat.id}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-150 text-xl font-bold">
+                          {isImageURL ? (
+                            <img
+                              src={cat.image}
+                              alt={cat.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.onerror = null; e.target.src = ''; }}
+                            />
+                          ) : (
+                            cat.image || '📁'
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 font-extrabold text-gray-900 text-sm">
+                        {cat.name}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
+                          {linkedItemsCount} {linkedItemsCount === 1 ? 'item' : 'items'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenEditCat(cat)}
+                            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer border-none"
+                            title="Edit Category"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(cat.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer border-none"
+                            title="Delete Category"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Sub-tab: Orders List
   const renderOrdersTab = () => {
     const expectedOrders = orders.filter(o => o.confirm !== 'yes');
@@ -889,8 +1211,8 @@ export default function AdminHQ() {
             <button
               onClick={() => setOrdersSubTab('expected')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5 ${ordersSubTab === 'expected'
-                  ? 'bg-white text-gray-900 shadow-sm font-black'
-                  : 'bg-transparent text-gray-500 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm font-black'
+                : 'bg-transparent text-gray-500 hover:text-gray-900'
                 }`}
             >
               Expected
@@ -901,8 +1223,8 @@ export default function AdminHQ() {
             <button
               onClick={() => setOrdersSubTab('confirmed')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5 ${ordersSubTab === 'confirmed'
-                  ? 'bg-white text-gray-900 shadow-sm font-black'
-                  : 'bg-transparent text-gray-500 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm font-black'
+                : 'bg-transparent text-gray-500 hover:text-gray-900'
                 }`}
             >
               Confirmed
@@ -1033,7 +1355,6 @@ export default function AdminHQ() {
                                 className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold focus:outline-none transition-all cursor-pointer ${statusBg}`}
                               >
                                 <option value="pending">Pending</option>
-                                <option value="completed">Completed</option>
                                 <option value="on the way">On the Way</option>
                                 <option value="delivered">Delivered</option>
                                 <option value="cancelled">Cancelled</option>
@@ -1067,8 +1388,8 @@ export default function AdminHQ() {
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'dashboard'
-                ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-                : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
               }`}
           >
             <LayoutDashboard size={16} />
@@ -1078,8 +1399,8 @@ export default function AdminHQ() {
           <button
             onClick={() => setActiveTab('items')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'items'
-                ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-                : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
               }`}
           >
             <ShoppingBag size={16} />
@@ -1087,10 +1408,21 @@ export default function AdminHQ() {
           </button>
 
           <button
+            onClick={() => setActiveTab('categories')}
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'categories'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+          >
+            <FolderKanban size={16} />
+            Categories
+          </button>
+
+          <button
             onClick={() => setActiveTab('orders')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'orders'
-                ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-                : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
               }`}
           >
             <ClipboardList size={16} />
@@ -1115,16 +1447,26 @@ export default function AdminHQ() {
         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
           <div>
             <h2 className="text-xl font-black text-gray-900 capitalize tracking-[-0.02em]">
-              {activeTab === 'dashboard' ? 'Overview' : activeTab === 'items' ? 'Items Catalog' : 'Expected Orders Queue'}
+              {activeTab === 'dashboard'
+                ? 'Overview'
+                : activeTab === 'items'
+                  ? 'Items Catalog'
+                  : activeTab === 'categories'
+                    ? 'Categories Management'
+                    : 'Expected Orders Queue'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={activeTab === 'items' ? fetchItems : fetchOrders}
-              disabled={isLoadingOrders || isLoadingItems}
+              onClick={() => {
+                fetchItems();
+                fetchCategories();
+                fetchOrders();
+              }}
+              disabled={isLoadingOrders || isLoadingItems || isLoadingCategories}
               className="p-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
             >
-              <RefreshCw size={12} className={isLoadingOrders || isLoadingItems ? 'animate-spin' : ''} />
+              <RefreshCw size={12} className={isLoadingOrders || isLoadingItems || isLoadingCategories ? 'animate-spin' : ''} />
               Sync
             </button>
             <button
@@ -1139,6 +1481,7 @@ export default function AdminHQ() {
         {/* Tab Contents */}
         {activeTab === 'dashboard' && renderDashboardTab()}
         {activeTab === 'items' && renderItemsTab()}
+        {activeTab === 'categories' && renderCategoriesTab()}
         {activeTab === 'orders' && renderOrdersTab()}
       </div>
 
@@ -1424,6 +1767,68 @@ export default function AdminHQ() {
               >
                 {isSubmittingEdit ? 'Saving changes...' : 'Save Product'}
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Category Modal */}
+      {editingCategory && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[450px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Edit Category</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Update category details in database</p>
+              </div>
+              <button
+                onClick={() => setEditingCategory(null)}
+                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditCatSubmit} className="p-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category Name</label>
+                <input
+                  type="text"
+                  value={editCatName}
+                  onChange={(e) => setEditCatName(e.target.value)}
+                  placeholder="e.g. Fresh Fruits"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Image / Emoji</label>
+                <input
+                  type="text"
+                  value={editCatImage}
+                  onChange={(e) => setEditCatImage(e.target.value)}
+                  placeholder="Emoji (e.g. 🍎) or Image URL"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCategory(null)}
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer border-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingEditCat}
+                  className="flex-1 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer border-none disabled:bg-gray-400"
+                >
+                  {isSubmittingEditCat ? 'Saving...' : 'Save Category'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
