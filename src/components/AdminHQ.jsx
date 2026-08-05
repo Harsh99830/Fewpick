@@ -468,9 +468,11 @@ export default function AdminHQ() {
     const end = new Date(endDate);
 
     const counts = {};
+    const revenues = {};
     orders.forEach(order => {
       const orderDate = new Date(order.created_at).toISOString().split('T')[0];
       counts[orderDate] = (counts[orderDate] || 0) + 1;
+      revenues[orderDate] = (revenues[orderDate] || 0) + (Number(order.grand_total) || 0);
     });
 
     const data = [];
@@ -480,6 +482,7 @@ export default function AdminHQ() {
     while (current <= end && loopLimit < 31) {
       const dateStr = current.toISOString().split('T')[0];
       const count = counts[dateStr] || 0;
+      const revenue = revenues[dateStr] || 0;
 
       const formattedLabel = current.toLocaleDateString('en-US', {
         month: 'short',
@@ -489,7 +492,8 @@ export default function AdminHQ() {
       data.push({
         date: dateStr,
         label: formattedLabel,
-        count: count
+        count: count,
+        revenue: revenue
       });
 
       current.setDate(current.getDate() + 1);
@@ -503,6 +507,8 @@ export default function AdminHQ() {
   const renderDashboardTab = () => {
     const chartData = getChartData();
     const maxCount = Math.max(...chartData.map(d => d.count), 0);
+    const maxRevenue = Math.max(...chartData.map(d => d.revenue), 0);
+    const hasData = chartData.some(d => d.count > 0 || d.revenue > 0);
 
     return (
       <div className="flex flex-col gap-6">
@@ -539,15 +545,27 @@ export default function AdminHQ() {
           </div>
         </div>
 
-        {/* Daily Orders Bar Chart */}
+        {/* Daily Performance Bar Chart */}
         <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
             <div>
-              <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Daily Orders</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Order frequency over selected range</p>
+              <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Daily Orders & Revenue</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Order count and daily revenue breakdown</p>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap text-xs font-semibold text-gray-500">
+            <div className="flex items-center gap-4 flex-wrap text-xs font-semibold text-gray-500">
+              {/* Legend */}
+              <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-150 text-[11px] font-bold">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500 inline-block"></span>
+                  <span className="text-gray-700">Orders</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>
+                  <span className="text-gray-700">Revenue</span>
+                </div>
+              </div>
+
               <div className="flex items-center gap-1.5">
                 <span>From:</span>
                 <input
@@ -573,42 +591,64 @@ export default function AdminHQ() {
             <div className="flex items-center justify-center h-[200px] text-xs text-gray-400 font-bold">
               Invalid date range selected.
             </div>
-          ) : maxCount === 0 ? (
+          ) : !hasData ? (
             <div className="flex items-center justify-center h-[200px] text-xs text-gray-400 font-bold">
-              No orders logged during this period.
+              No orders or revenue logged during this period.
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               <div className="h-[220px] flex items-end justify-between gap-1 pt-6 px-1 border-b border-gray-100">
                 {chartData.map((day, idx) => {
-                  const barHeight = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                  const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                  const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+
                   return (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end relative">
-                      {/* Tooltip */}
-                      <div className="absolute -top-3 scale-0 group-hover:scale-100 transition-all duration-150 bg-gray-900 text-white text-[9px] font-black px-2 py-1 rounded shadow whitespace-nowrap z-10">
-                        {day.count} {day.count === 1 ? 'order' : 'orders'}
+                      {/* Hover Tooltip */}
+                      <div className="absolute -top-7 scale-0 group-hover:scale-100 transition-all duration-150 bg-gray-900 text-white text-[9px] font-extrabold px-2.5 py-1 rounded-md shadow-lg whitespace-nowrap z-20 flex items-center gap-2 pointer-events-none">
+                        <span>{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-emerald-400">₹{day.revenue.toLocaleString()}</span>
                       </div>
 
-                      {/* Bar */}
-                      <div
-                        style={{ height: `${Math.max(barHeight, 4)}%` }}
-                        className={`w-full max-w-[32px] rounded-t-md transition-all duration-300 relative ${day.count > 0
-                            ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.05)]'
-                            : 'bg-gray-100'
-                          }`}
-                      >
-                        {day.count > 0 && (
-                          <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-black text-white hidden sm:block">
-                            {day.count}
-                          </span>
-                        )}
+                      {/* Dual Bars */}
+                      <div className="w-full flex items-end justify-center gap-0.5 h-full">
+                        {/* Orders Bar */}
+                        <div
+                          style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 5 : 0)}%` }}
+                          className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.count > 0
+                              ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.15)]'
+                              : 'bg-gray-100'
+                            }`}
+                        >
+                          {day.count > 0 && (
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-white hidden sm:block">
+                              {day.count}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Revenue Bar */}
+                        <div
+                          style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 5 : 0)}%` }}
+                          className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.revenue > 0
+                              ? 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.15)]'
+                              : 'bg-gray-100'
+                            }`}
+                        >
+                          {day.revenue > 0 && (
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-white hidden sm:block truncate max-w-full px-0.5">
+                              ₹{day.revenue > 999 ? `${Math.round(day.revenue / 1000)}k` : day.revenue}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Labels */}
+              {/* Day Labels */}
               <div className="flex justify-between gap-1 px-1">
                 {chartData.map((day, idx) => (
                   <div key={idx} className="flex-1 text-center">
