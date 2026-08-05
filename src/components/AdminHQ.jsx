@@ -200,26 +200,23 @@ export default function AdminHQ() {
     }
   };
 
+  const generateShortId = (length = 8) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
   const handleAddItemSubmit = async (e) => {
     e.preventDefault();
     if (!itemName || !itemPrice) return;
 
     setIsSubmittingItem(true);
     try {
-      // Find highest existing ID to avoid items_pkey duplicate key errors
-      const { data: maxItemData } = await supabase
-        .from('items')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(1);
-
-      let nextItemId = null;
-      if (maxItemData && maxItemData[0] && !isNaN(parseInt(maxItemData[0].id, 10))) {
-        nextItemId = parseInt(maxItemData[0].id, 10) + 1;
-      }
-
       const newItem = {
-        ...(nextItemId ? { id: nextItemId } : {}),
+        id: generateShortId(8),
         name: itemName,
         weight: itemWeight || null,
         price: parseInt(itemPrice),
@@ -262,23 +259,8 @@ export default function AdminHQ() {
 
     setIsSubmittingCat(true);
     try {
-      // Find highest existing ID to avoid category_pkey duplicate key errors
-      const { data: maxCatData } = await supabase
-        .from('category')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(1);
-
-      let nextCatId = 1;
-      if (maxCatData && maxCatData[0] && !isNaN(parseInt(maxCatData[0].id, 10))) {
-        nextCatId = parseInt(maxCatData[0].id, 10) + 1;
-      } else if (categories.length > 0) {
-        const maxInState = Math.max(...categories.map(c => parseInt(c.id, 10) || 0));
-        if (maxInState > 0) nextCatId = maxInState + 1;
-      }
-
       const newCat = {
-        id: nextCatId,
+        id: generateShortId(8),
         name: catName,
         image: catImage || null
       };
@@ -563,7 +545,7 @@ export default function AdminHQ() {
   // Computations
   const completedOrders = orders.filter((o) => o.confirm === 'yes' && ['completed', 'delivered', 'on the way'].includes(o.status));
   const totalOrders = orders.filter((o) => o.confirm === 'yes').length;
-  const totalSales = completedOrders.reduce((acc, curr) => acc + curr.grand_total, 0);
+  const totalSales = completedOrders.reduce((acc, curr) => acc + (Number(curr.grand_total) || 0) + (curr.status === 'delivered' ? 10 : 0), 0);
   const pendingOrders = orders.filter((o) => o.confirm !== 'yes').length;
   const averageOrderValue = completedOrders.length > 0 ? Math.round(totalSales / completedOrders.length) : 0;
 
@@ -625,7 +607,8 @@ export default function AdminHQ() {
     orders.forEach(order => {
       const orderDate = new Date(order.created_at).toISOString().split('T')[0];
       counts[orderDate] = (counts[orderDate] || 0) + 1;
-      revenues[orderDate] = (revenues[orderDate] || 0) + (Number(order.grand_total) || 0);
+      const orderRev = (Number(order.grand_total) || 0) + (order.status === 'delivered' ? 10 : 0);
+      revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
     });
 
     const data = [];
@@ -818,7 +801,7 @@ export default function AdminHQ() {
     );
   };  // Sub-tab: Items List
   const renderItemsTab = () => (
-    <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
+    <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] min-h-[320px]">
       {isSelectionMode ? (
         <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -854,22 +837,13 @@ export default function AdminHQ() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                if (categories.length > 0 && !itemCategory) {
-                  setItemCategory(categories[0].name);
-                }
+                setItemCategory(categories[0]?.name || '');
                 setShowAddItemModal(true);
               }}
               className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none"
             >
               <Plus size={14} />
               Add Item
-            </button>
-            <button
-              onClick={() => setShowAddCatModal(true)}
-              className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-[#6366f1] rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none"
-            >
-              <Plus size={14} />
-              Add Category
             </button>
           </div>
         </div>
@@ -885,7 +859,7 @@ export default function AdminHQ() {
       ) : items.length === 0 ? (
         <div className="text-center py-20 text-gray-400">No items found in your catalog.</div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[260px] pb-16">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-wider">
@@ -987,7 +961,7 @@ export default function AdminHQ() {
                       {activeMenuId === item.id && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
-                          <div className="absolute right-6 top-10 bg-white border border-gray-150 rounded-xl shadow-lg p-1.5 z-20 min-w-[100px] animate-drop-in">
+                          <div className="absolute right-6 top-8 bg-white border border-gray-150 rounded-xl shadow-xl p-1.5 z-20 min-w-[110px] animate-drop-in">
                             <button
                               onClick={() => handleStartEdit(item)}
                               className="flex items-center w-full text-left bg-transparent border-none text-gray-700 hover:bg-gray-50 py-2 px-3 rounded-lg text-xs font-bold cursor-pointer transition-colors"
