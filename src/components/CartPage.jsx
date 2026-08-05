@@ -15,9 +15,18 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
   
   const grandTotal = subtotal + deliveryCharge;
 
+  const generateShortId = (length = 8) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
   const handleCheckout = async () => {
     setIsCheckingOut(true);
-    const orderId = `FP-${Math.floor(100000 + Math.random() * 900000)}`;
+    const orderId = generateShortId(8);
     setPlacedOrderId(orderId);
     
     // Formulate a clean WhatsApp order message with text details
@@ -124,49 +133,53 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
             return (
               <div
                 key={item.product.id}
-                className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-[#e8eaf0] shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all hover:border-[#e0e2f0]"
+                className="flex items-center gap-2.5 sm:gap-4 bg-white p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-[#e8eaf0] shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-all hover:border-[#e0e2f0]"
               >
                 {/* Image */}
-                <div className="w-20 h-20 bg-gray-50 rounded-xl flex-shrink-0 flex items-center justify-center p-2 border border-gray-100">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-50 rounded-lg sm:rounded-xl flex-shrink-0 flex items-center justify-center p-1.5 border border-gray-100 overflow-hidden">
                   <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain" />
                 </div>
 
                 {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <span className="text-[0.65rem] font-extrabold text-orange-600 bg-orange-50 px-2 py-0.5 rounded uppercase tracking-wider">
-                    {item.product.weight}
-                  </span>
-                  <h3 className="text-sm font-bold text-gray-900 mt-1 mb-0.5 truncate">{item.product.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-base font-extrabold text-gray-900">₹{item.product.price}</span>
-                    <span className="text-xs text-gray-400 line-through">₹{item.product.mrp}</span>
+                <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                  {item.product.weight && (
+                    <span className="text-[0.6rem] font-extrabold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase tracking-wider self-start">
+                      {item.product.weight}
+                    </span>
+                  )}
+                  <h3 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight truncate">{item.product.name}</h3>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs sm:text-sm font-black text-gray-900">₹{item.product.price}</span>
+                    {item.product.mrp && item.product.mrp > item.product.price && (
+                      <span className="text-[10px] text-gray-400 line-through">₹{item.product.mrp}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Quantity + Actions */}
-                <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
                     <button
                       onClick={() => onUpdateQty(item.product.id, item.quantity - 1)}
-                      className="p-2 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer border-none"
+                      className="p-1 sm:p-1.5 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer border-none flex items-center justify-center"
                     >
-                      <Minus size={14} />
+                      <Minus size={13} />
                     </button>
-                    <span className="w-8 text-center text-sm font-extrabold text-gray-800">{item.quantity}</span>
+                    <span className="w-6 sm:w-7 text-center text-xs font-extrabold text-gray-800">{item.quantity}</span>
                     <button
                       onClick={() => onUpdateQty(item.product.id, item.quantity + 1)}
-                      className="p-2 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer border-none"
+                      className="p-1 sm:p-1.5 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer border-none flex items-center justify-center"
                     >
-                      <Plus size={14} />
+                      <Plus size={13} />
                     </button>
                   </div>
 
                   <button
                     onClick={() => onUpdateQty(item.product.id, 0)}
-                    className="p-2 text-gray-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-all cursor-pointer border-none"
+                    className="p-1.5 text-gray-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-all cursor-pointer border-none flex items-center justify-center"
                     title="Remove item"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>

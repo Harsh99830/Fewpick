@@ -61,6 +61,9 @@ export default function AdminHQ() {
   const [editCatImage, setEditCatImage] = useState('');
   const [isSubmittingEditCat, setIsSubmittingEditCat] = useState(false);
 
+  // Order Details Modal State
+  const [viewingOrder, setViewingOrder] = useState(null);
+
   // Modals visibility states
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showAddCatModal, setShowAddCatModal] = useState(false);
@@ -1249,13 +1252,21 @@ export default function AdminHQ() {
                       const formattedDate = new Date(order.created_at).toLocaleString();
 
                       return (
-                        <tr key={order.id} className="hover:bg-gray-50/30 transition-colors">
-                          <td className="py-4 px-6 font-extrabold text-gray-900">{order.id}</td>
+                        <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td 
+                            onClick={() => setViewingOrder(order)}
+                            className="py-4 px-6 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
+                          >
+                            {order.id}
+                          </td>
                           <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
-                          <td className="py-4 px-6">
+                          <td 
+                            onClick={() => setViewingOrder(order)}
+                            className="py-4 px-6 cursor-pointer group"
+                          >
                             <div className="flex flex-col gap-1 max-w-[320px]">
                               {itemsList.map((item, idx) => (
-                                <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4">
+                                <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4 group-hover:text-indigo-600 transition-colors">
                                   <span className="truncate font-semibold">{item.name} <span className="text-[10px] text-gray-400">({item.weight})</span></span>
                                   <span className="font-mono text-[10px] font-bold bg-gray-50 px-1.5 py-0.5 rounded flex-shrink-0">x{item.quantity}</span>
                                 </div>
@@ -1305,13 +1316,21 @@ export default function AdminHQ() {
                       if (order.status === 'cancelled') statusBg = 'bg-red-50 text-red-700 border-red-200';
 
                       return (
-                        <tr key={order.id} className="hover:bg-gray-50/30 transition-colors">
-                          <td className="py-4 px-6 font-extrabold text-gray-900">{order.id}</td>
+                        <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td 
+                            onClick={() => setViewingOrder(order)}
+                            className="py-4 px-6 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
+                          >
+                            {order.id}
+                          </td>
                           <td className="py-4 px-6 text-xs text-gray-550 whitespace-nowrap">{formattedDate}</td>
-                          <td className="py-4 px-6">
+                          <td 
+                            onClick={() => setViewingOrder(order)}
+                            className="py-4 px-6 cursor-pointer group"
+                          >
                             <div className="flex flex-col gap-1 max-w-[320px]">
                               {itemsList.map((item, idx) => (
-                                <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4">
+                                <div key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-4 group-hover:text-indigo-600 transition-colors">
                                   <span className="truncate font-semibold">{item.name} <span className="text-[10px] text-gray-400">({item.weight})</span></span>
                                   <span className="font-mono text-[10px] font-bold bg-gray-50 px-1.5 py-0.5 rounded flex-shrink-0">x{item.quantity}</span>
                                 </div>
@@ -1804,6 +1823,114 @@ export default function AdminHQ() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {viewingOrder && (
+        <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[540px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-gray-950">Order Details</h3>
+                  <span className="text-xs font-mono font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">
+                    #{viewingOrder.id}
+                  </span>
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+                  Placed on {new Date(viewingOrder.created_at).toLocaleString()}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingOrder(null)}
+                className="w-8 h-8 rounded-lg bg-white text-gray-400 hover:text-gray-950 flex items-center justify-center border border-gray-200 cursor-pointer transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex flex-col gap-5">
+              {/* Status Banner */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Status</span>
+                <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800">
+                  {viewingOrder.confirm === 'yes' ? viewingOrder.status : 'Pending Confirmation'}
+                </span>
+              </div>
+
+              {/* Items List in Sequence */}
+              <div>
+                <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">
+                  Ordered Items ({(viewingOrder.items || []).length})
+                </h4>
+                <div className="divide-y divide-gray-100 border border-gray-150 rounded-xl overflow-hidden bg-white">
+                  {(viewingOrder.items || []).map((item, idx) => {
+                    const catalogItem = items.find(i => String(i.id) === String(item.product_id) || i.name === item.name);
+                    const itemImg = item.image || catalogItem?.image;
+                    const itemPrice = item.price || catalogItem?.price || 0;
+                    const itemTotal = itemPrice * (item.quantity || 1);
+
+                    return (
+                      <div key={idx} className="p-3.5 flex items-center gap-3.5 hover:bg-gray-50/50 transition-colors">
+                        <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {itemImg ? (
+                            <img src={itemImg} alt={item.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Package size={20} className="text-gray-300" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-xs font-extrabold text-gray-900 truncate m-0">{item.name}</h5>
+                          <span className="text-[10px] text-gray-400 font-semibold">{item.weight || 'N/A'}</span>
+                        </div>
+                        <div className="text-right flex flex-col items-end flex-shrink-0">
+                          <span className="text-xs font-mono font-black text-gray-900">₹{itemTotal}</span>
+                          <span className="text-[10px] text-gray-400 font-bold">
+                            ₹{itemPrice} × {item.quantity}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Cost Summary Breakdown */}
+              <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-2 border border-gray-150">
+                <div className="flex justify-between text-xs text-gray-500 font-medium">
+                  <span>Subtotal</span>
+                  <span className="font-mono font-bold text-gray-800">
+                    ₹{viewingOrder.subtotal || (viewingOrder.items || []).reduce((acc, i) => acc + ((i.price || 0) * (i.quantity || 1)), 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 font-medium">
+                  <span>Rider's Effort / Delivery</span>
+                  <span className="font-mono font-bold text-gray-800">₹{viewingOrder.rider_effort || 10}</span>
+                </div>
+                {viewingOrder.status === 'delivered' && (
+                  <div className="flex justify-between text-[11px] text-emerald-600 font-bold">
+                    <span>Delivered Order Bonus</span>
+                    <span className="font-mono">+₹10</span>
+                  </div>
+                )}
+                <div className="h-px bg-gray-200 my-1" />
+                <div className="flex justify-between text-sm font-black text-gray-900">
+                  <span>Grand Total</span>
+                  <span className="font-mono text-base">₹{viewingOrder.grand_total}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button
+                onClick={() => setViewingOrder(null)}
+                className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
