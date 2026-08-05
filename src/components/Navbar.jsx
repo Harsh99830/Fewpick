@@ -1,20 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, MapPin, ChevronDown, Menu, X, Package } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Menu, X, Package } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
-
-const moreLinks = [
-  { label: 'Contact Us', page: 'contact' },
-  { label: 'About Us' },
-  { label: 'Careers' },
-  { label: 'Blog' },
-  { label: 'Help & Support' },
-];
 
 export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty }) {
   const navigate = useNavigate();
   const [searchFocused, setSearchFocused] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -138,32 +129,13 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             </div>
 
             {/* Right section — hidden on mobile */}
-            <div className="hidden md:flex items-center gap-9 ml-auto flex-shrink-0">
-              {/* More dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setMoreOpen(true)}
-                onMouseLeave={() => setMoreOpen(false)}
+            <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0">
+              <button
+                onClick={() => handleNavigate('contact')}
+                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600"
               >
-                <button className="flex items-center gap-1 bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-0.5 transition-colors hover:text-[#111827]">
-                  More <ChevronDown size={14} className={moreOpen ? 'rotate-180 transition-transform duration-200' : 'transition-transform duration-200'} />
-                </button>
-                {moreOpen && (
-                  <div className="absolute top-full right-0 min-w-[180px] pt-2.5 z-[100]">
-                    <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.1)] p-1.5 animate-drop-in">
-                      {moreLinks.map((link) => (
-                        <button
-                          key={link.label}
-                          onClick={() => handleNavigate(link.page || 'home')}
-                          className="block w-full text-left bg-transparent border-none text-sm text-[#374151] py-2.5 px-3.5 rounded-lg cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-[#111827]"
-                        >
-                          {link.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                Contact Us
+              </button>
 
               {/* Cart */}
               <button 
@@ -225,7 +197,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
           {/* Mobile menu drawer */}
           {menuOpen && (
-            <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 pb-4 max-h-[80vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
+            <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 pb-4 shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
               <button className="flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] w-full justify-start mt-3">
                 <MapPin size={16} className="text-[#6366f1] flex-shrink-0" />
                 <div className="flex flex-col items-start">
@@ -234,11 +206,12 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                 </div>
               </button>
               <div className="h-px bg-[#f1f3f9] my-1.5" />
-              {moreLinks.map((link) => (
-                <button key={link.label} className="w-full text-left bg-transparent border-none text-[0.95rem] text-[#374151] py-3 px-3.5 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6]">
-                  {link.label}
-                </button>
-              ))}
+              <button
+                onClick={() => handleNavigate('contact')}
+                className="w-full text-left bg-transparent border-none text-[0.95rem] font-semibold text-[#374151] py-3 px-3.5 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-indigo-600"
+              >
+                Contact Us
+              </button>
             </div>
           )}
         </nav>
