@@ -12,10 +12,13 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
   const handleNavigate = (page) => {
     setMenuOpen(false);
-    setMoreOpen(false);
-    if (page === 'contact') {
+    if (page === 'home') {
+      navigate('/');
+    } else if (page === 'cart') {
+      navigate('/cart');
+    } else if (page === 'contact') {
       navigate('/contact');
-    } else {
+    } else if (onNavigate) {
       onNavigate(page);
     }
   };
@@ -88,23 +91,23 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             {/* Logo */}
             <button 
               onClick={() => handleNavigate('home')} 
-              className="flex items-baseline gap-px flex-shrink-0 no-underline bg-transparent border-none cursor-pointer p-0 select-none align-baseline text-left outline-none font-inherit"
+              className="flex items-baseline gap-px flex-shrink-0 no-underline bg-transparent border-none cursor-pointer p-0 select-none align-baseline text-left outline-none font-inherit relative z-10"
             >
-              <span className="text-[1.6rem] font-extrabold text-[#1a1c2e] tracking-[-1px]">Few</span>
-              <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px]">Pick</span>
+              <span className="text-[1.6rem] font-extrabold text-[#1a1c2e] tracking-[-1px] pointer-events-none">Few</span>
+              <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px] pointer-events-none">Pick</span>
             </button>
 
             {/* Location — hidden on mobile */}
-            <button className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] flex-shrink-0">
-              <MapPin size={16} className="text-[#6366f1] flex-shrink-0" />
-              <div className="flex flex-col items-start">
+            <button className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] flex-shrink-0 relative z-10">
+              <MapPin size={16} className="text-[#6366f1] flex-shrink-0 pointer-events-none" />
+              <div className="flex flex-col items-start pointer-events-none">
                 <span className="text-[0.625rem] font-medium text-[#9ca3af] uppercase tracking-[0.05em]">Deliver to</span>
                 <span className="text-xs font-bold text-[#1f2937] flex items-center gap-0.5">Poornima University</span>
               </div>
             </button>
 
             {/* Search — Desktop */}
-            <div className="hidden md:block flex-1 max-w-[580px] relative">
+            <div className="hidden md:block flex-1 max-w-[580px] relative z-10">
               <div className={searchWrapperClass}>
                 <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
                 <input
@@ -129,7 +132,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             </div>
 
             {/* Right section — hidden on mobile */}
-            <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0">
+            <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0 relative z-10">
               <button
                 onClick={() => handleNavigate('contact')}
                 className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600"
@@ -142,9 +145,9 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                 onClick={() => handleNavigate('cart')}
                 className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
               >
-                <ShoppingCart size={22} />
+                <ShoppingCart size={22} className="pointer-events-none" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px] pointer-events-none">
                     {cartCount}
                   </span>
                 )}
@@ -152,14 +155,14 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             </div>
 
             {/* Mobile: cart + hamburger */}
-            <div className="flex md:hidden items-center gap-3 ml-auto">
+            <div className="flex md:hidden items-center gap-3 ml-auto relative z-10">
               <button 
                 onClick={() => handleNavigate('cart')}
                 className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
               >
-                <ShoppingCart size={22} />
+                <ShoppingCart size={22} className="pointer-events-none" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px] pointer-events-none">
                     {cartCount}
                   </span>
                 )}
