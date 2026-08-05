@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, ShoppingCart, MapPin, ChevronDown, Menu, X } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, ChevronDown, Menu, X, Package } from 'lucide-react';
+import ProductDetailModal from './ProductDetailModal';
 
 const moreLinks = [
   { label: 'About Us' },
@@ -9,144 +10,238 @@ const moreLinks = [
   { label: 'Help & Support' },
 ];
 
-export default function Navbar({ cartCount, onNavigate }) {
+export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const handleNavigate = (page) => {
     setMenuOpen(false);
     onNavigate(page);
   };
 
+  const filteredProducts = searchQuery.trim() === '' ? [] : products.filter(p =>
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 7);
+
   const searchWrapperClass = `flex-1 max-w-[580px] h-11 flex items-center bg-[#f3f4f6] border-2 border-transparent rounded-xl px-3.5 transition-all overflow-hidden hover:bg-[#eff0f5] ${
-    searchFocused ? '!bg-white !border-orange-500 shadow-[0_0_0_4px_rgba(249,115,22,0.12)]' : ''
+    searchFocused || searchQuery ? '!bg-white !border-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]' : ''
   }`;
 
-  return (
-    <header className="sticky top-0 z-[100] bg-white border-b border-[#e8eaf0] shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
-      <nav className="max-w-[1440px] mx-auto relative">
-        <div className="flex items-center gap-3 md:gap-5 px-4 md:px-6 py-2.5">
-          {/* Logo */}
-          <button 
-            onClick={() => handleNavigate('home')} 
-            className="flex items-baseline gap-px flex-shrink-0 no-underline bg-transparent border-none cursor-pointer p-0 select-none align-baseline text-left outline-none font-inherit"
-          >
-            <span className="text-[1.6rem] font-extrabold text-[#1a1c2e] tracking-[-1px]">Few</span>
-            <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px]">Pick</span>
-          </button>
+  const renderSearchResults = () => {
+    if (!searchQuery.trim()) return null;
 
-          {/* Location — hidden on mobile */}
-          <button className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] flex-shrink-0">
-            <MapPin size={16} className="text-[#6366f1] flex-shrink-0" />
-            <div className="flex flex-col items-start">
-              <span className="text-[0.625rem] font-medium text-[#9ca3af] uppercase tracking-[0.05em]">Deliver to</span>
-              <span className="text-xs font-bold text-[#1f2937] flex items-center gap-0.5">Poornima University</span>
-            </div>
-          </button>
-
-          {/* Search — hidden on mobile (separate bar shown below) */}
-          <div className={`hidden md:flex ${searchWrapperClass}`}>
-            <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
-            <input
-              type="text"
-              className="flex-1 bg-transparent border-none outline-none px-3 text-sm font-inherit text-[#1f2937] h-full placeholder:text-[#9ca3af]"
-              placeholder="Search essentials, groceries and more..."
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
+    return (
+      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-[250] animate-drop-in">
+        {filteredProducts.length === 0 ? (
+          <div className="p-6 text-center text-gray-400 text-xs font-semibold">
+            No items matching "<span className="text-gray-700 font-bold">{searchQuery}</span>"
           </div>
-
-          {/* Right section — hidden on mobile */}
-          <div className="hidden md:flex items-center gap-9 ml-auto flex-shrink-0">
-            {/* More dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setMoreOpen(true)}
-              onMouseLeave={() => setMoreOpen(false)}
-            >
-              <button className="flex items-center gap-1 bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-0.5 transition-colors hover:text-[#111827]">
-                More <ChevronDown size={14} className={moreOpen ? 'rotate-180 transition-transform duration-200' : 'transition-transform duration-200'} />
-              </button>
-              {moreOpen && (
-                <div className="absolute top-full right-0 min-w-[180px] pt-2.5 z-[100]">
-                  <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.1)] p-1.5 animate-drop-in">
-                    {moreLinks.map((link) => (
-                      <button key={link.label} className="block w-full text-left bg-transparent border-none text-sm text-[#374151] py-2.5 px-3.5 rounded-lg cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-[#111827]">
-                        {link.label}
-                      </button>
-                    ))}
-                  </div>
+        ) : (
+          <div className="divide-y divide-gray-100 max-h-[360px] overflow-y-auto">
+            <div className="px-4 py-2 bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+              Product Suggestions ({filteredProducts.length})
+            </div>
+            {filteredProducts.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => {
+                  setSelectedProduct(p);
+                  setSearchQuery('');
+                  setSearchFocused(false);
+                }}
+                className="flex items-center gap-3.5 p-3 hover:bg-indigo-50/40 cursor-pointer transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {p.image ? (
+                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package size={18} className="text-gray-300" />
+                  )}
                 </div>
-              )}
-            </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-extrabold text-gray-900 truncate m-0 group-hover:text-indigo-600 transition-colors">
+                    {p.name}
+                  </h4>
+                  <span className="text-[10px] text-gray-400 font-medium">{p.weight || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2 py-0.5 rounded">
+                    {p.category}
+                  </span>
+                  <span className="text-xs font-black text-gray-900">₹{p.price}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-            {/* Cart */}
+  return (
+    <>
+      <header className="sticky top-0 z-[100] bg-white border-b border-[#e8eaf0] shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
+        <nav className="max-w-[1440px] mx-auto relative">
+          <div className="flex items-center gap-3 md:gap-5 px-4 md:px-6 py-2.5">
+            {/* Logo */}
             <button 
-              onClick={() => handleNavigate('cart')}
-              className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
+              onClick={() => handleNavigate('home')} 
+              className="flex items-baseline gap-px flex-shrink-0 no-underline bg-transparent border-none cursor-pointer p-0 select-none align-baseline text-left outline-none font-inherit"
             >
-              <ShoppingCart size={22} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
-                  {cartCount}
-                </span>
-              )}
+              <span className="text-[1.6rem] font-extrabold text-[#1a1c2e] tracking-[-1px]">Few</span>
+              <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px]">Pick</span>
             </button>
-          </div>
 
-          {/* Mobile: cart + hamburger */}
-          <div className="flex md:hidden items-center gap-3 ml-auto">
-            <button 
-              onClick={() => handleNavigate('cart')}
-              className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
-            >
-              <ShoppingCart size={22} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-            <button className="flex items-center justify-center w-[38px] h-[38px] bg-transparent border-none cursor-pointer text-[#374151] rounded-lg transition-colors hover:bg-[#f3f4f6]" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile search bar — full width below nav */}
-        <div className="block md:hidden px-4 pb-2.5">
-          <div className={searchWrapperClass}>
-            <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
-            <input
-              type="text"
-              className="flex-1 bg-transparent border-none outline-none px-3 text-sm text-[#1f2937] h-full placeholder:text-[#9ca3af]"
-              placeholder="Search essentials, groceries and more..."
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
-          </div>
-        </div>
-
-        {/* Mobile menu drawer */}
-        {menuOpen && (
-          <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 pb-4 max-h-[80vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
-            <button className="flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] w-full justify-start mt-3">
+            {/* Location — hidden on mobile */}
+            <button className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] flex-shrink-0">
               <MapPin size={16} className="text-[#6366f1] flex-shrink-0" />
               <div className="flex flex-col items-start">
                 <span className="text-[0.625rem] font-medium text-[#9ca3af] uppercase tracking-[0.05em]">Deliver to</span>
                 <span className="text-xs font-bold text-[#1f2937] flex items-center gap-0.5">Poornima University</span>
               </div>
             </button>
-            <div className="h-px bg-[#f1f3f9] my-1.5" />
-            {moreLinks.map((link) => (
-              <button key={link.label} className="w-full text-left bg-transparent border-none text-[0.95rem] text-[#374151] py-3 px-3.5 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6]">
-                {link.label}
+
+            {/* Search — Desktop */}
+            <div className="hidden md:block flex-1 max-w-[580px] relative">
+              <div className={searchWrapperClass}>
+                <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent border-none outline-none px-3 text-sm font-inherit text-[#1f2937] h-full placeholder:text-[#9ca3af]"
+                  placeholder="Search essentials, groceries and more..."
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              {renderSearchResults()}
+            </div>
+
+            {/* Right section — hidden on mobile */}
+            <div className="hidden md:flex items-center gap-9 ml-auto flex-shrink-0">
+              {/* More dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setMoreOpen(true)}
+                onMouseLeave={() => setMoreOpen(false)}
+              >
+                <button className="flex items-center gap-1 bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-0.5 transition-colors hover:text-[#111827]">
+                  More <ChevronDown size={14} className={moreOpen ? 'rotate-180 transition-transform duration-200' : 'transition-transform duration-200'} />
+                </button>
+                {moreOpen && (
+                  <div className="absolute top-full right-0 min-w-[180px] pt-2.5 z-[100]">
+                    <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.1)] p-1.5 animate-drop-in">
+                      {moreLinks.map((link) => (
+                        <button key={link.label} className="block w-full text-left bg-transparent border-none text-sm text-[#374151] py-2.5 px-3.5 rounded-lg cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-[#111827]">
+                          {link.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Cart */}
+              <button 
+                onClick={() => handleNavigate('cart')}
+                className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
+              >
+                <ShoppingCart size={22} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
+                    {cartCount}
+                  </span>
+                )}
               </button>
-            ))}
+            </div>
+
+            {/* Mobile: cart + hamburger */}
+            <div className="flex md:hidden items-center gap-3 ml-auto">
+              <button 
+                onClick={() => handleNavigate('cart')}
+                className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
+              >
+                <ShoppingCart size={22} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-[3px]">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+              <button className="flex items-center justify-center w-[38px] h-[38px] bg-transparent border-none cursor-pointer text-[#374151] rounded-lg transition-colors hover:bg-[#f3f4f6]" onClick={() => setMenuOpen(!menuOpen)}>
+                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
-        )}
-      </nav>
-    </header>
+
+          {/* Mobile search bar — full width below nav */}
+          <div className="block md:hidden px-4 pb-2.5 relative">
+            <div className={searchWrapperClass}>
+              <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-none outline-none px-3 text-sm text-[#1f2937] h-full placeholder:text-[#9ca3af]"
+                placeholder="Search essentials, groceries and more..."
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            {renderSearchResults()}
+          </div>
+
+          {/* Mobile menu drawer */}
+          {menuOpen && (
+            <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 pb-4 max-h-[80vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
+              <button className="flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] w-full justify-start mt-3">
+                <MapPin size={16} className="text-[#6366f1] flex-shrink-0" />
+                <div className="flex flex-col items-start">
+                  <span className="text-[0.625rem] font-medium text-[#9ca3af] uppercase tracking-[0.05em]">Deliver to</span>
+                  <span className="text-xs font-bold text-[#1f2937] flex items-center gap-0.5">Poornima University</span>
+                </div>
+              </button>
+              <div className="h-px bg-[#f1f3f9] my-1.5" />
+              {moreLinks.map((link) => (
+                <button key={link.label} className="w-full text-left bg-transparent border-none text-[0.95rem] text-[#374151] py-3 px-3.5 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6]">
+                  {link.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </nav>
+      </header>
+
+      {/* Product Quick View / Detail Modal */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          cartItems={cartItems}
+          onUpdateQty={onUpdateQty}
+        />
+      )}
+    </>
   );
 }

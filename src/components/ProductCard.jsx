@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Minus, Star } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 
 const badgeColorMap = {
   orange: 'bg-orange-50 text-orange-700 border border-orange-200',
@@ -44,19 +44,19 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty }) {
 
       {/* Info */}
       <div className="py-2 px-2.5 sm:py-3.5 sm:px-3.5 flex flex-col flex-1">
-        <div className="flex items-center gap-[3px] mb-[5px]">
-          <Star size={11} className="text-amber-500 fill-amber-500" />
-          <span className="text-[0.72rem] font-bold text-gray-700">{product.rating}</span>
-          <span className="text-[0.65rem] text-gray-400">({(product.reviews / 1000).toFixed(1)}k)</span>
-        </div>
-
         <h3 className="text-[0.75rem] sm:text-[0.82rem] font-bold text-gray-900 mb-0.5 leading-[1.35]">{product.name}</h3>
         <p className="text-[0.72rem] text-gray-400 mb-2.5">{product.weight}</p>
 
         <div className="flex items-baseline gap-1.5 flex-wrap mb-3">
           <span className="text-[0.95rem] sm:text-[1.1rem] font-extrabold text-gray-900">₹{product.price}</span>
-          <span className="text-xs text-gray-300 line-through">₹{product.mrp}</span>
-          <span className="text-[0.65rem] text-green-600 font-bold bg-green-50 py-px px-[5px] rounded">Save ₹{product.mrp - product.price}</span>
+          {product.mrp > product.price && (
+            <>
+              <span className="text-xs text-gray-300 line-through">₹{product.mrp}</span>
+              <span className="text-[0.65rem] text-green-600 font-bold bg-green-50 py-px px-[5px] rounded">
+                Save ₹{product.mrp - product.price}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Add to cart */}

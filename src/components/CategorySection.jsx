@@ -9,7 +9,7 @@ export default function CategorySection({ categories = [] }) {
     <section className="py-2">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[1.35rem] font-extrabold text-gray-900 m-0 tracking-[-0.02em]">
-          Shop From <span className="text-[#6366f1]">Top Categories</span>
+          Shop From Top Categories
         </h2>
       </div>
 
