@@ -5,6 +5,7 @@ import HeroBanner from './components/HeroBanner';
 import ProductSection from './components/ProductSection';
 import CategorySection from './components/CategorySection';
 import CartPage from './components/CartPage';
+import CategoryPage from './components/CategoryPage';
 import AdminHQ from './components/AdminHQ';
 import { snackProducts, groceryProducts } from './data/products';
 import { categories as fallbackCategories } from './data/categories';
@@ -184,6 +185,17 @@ function App() {
                   cartItems={cartItems}
                   onUpdateQty={handleUpdateQty}
                   onNavigateHome={() => navigate('/')}
+                />
+              } 
+            />
+            <Route 
+              path="/category/:categoryName" 
+              element={
+                <CategoryPage
+                  products={allProducts}
+                  categories={categories}
+                  cartItems={cartItems}
+                  onUpdateQty={handleUpdateQty}
                 />
               } 
             />
