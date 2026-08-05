@@ -65,13 +65,12 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
       }
     } catch (err) {
       console.error("Error saving order to database:", err);
-    }
-
-    setTimeout(() => {
+    } finally {
       setIsCheckingOut(false);
       setOrderPlaced(true);
-      window.open(waUrl, '_blank');
-    }, 1200); // simulate API call and open WhatsApp
+      // Open WhatsApp directly via location.href to prevent popup blocking on mobile
+      window.location.href = waUrl;
+    }
   };
 
   if (orderPlaced) {
