@@ -1,16 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, MapPin, ChevronDown, Menu, X, Package } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 
 const moreLinks = [
+  { label: 'Contact Us', page: 'contact' },
   { label: 'About Us' },
-  { label: 'Contact Us' },
   { label: 'Careers' },
   { label: 'Blog' },
   { label: 'Help & Support' },
 ];
 
 export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty }) {
+  const navigate = useNavigate();
   const [searchFocused, setSearchFocused] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,7 +21,12 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
   const handleNavigate = (page) => {
     setMenuOpen(false);
-    onNavigate(page);
+    setMoreOpen(false);
+    if (page === 'contact') {
+      navigate('/contact');
+    } else {
+      onNavigate(page);
+    }
   };
 
   const filteredProducts = searchQuery.trim() === '' ? [] : products.filter(p =>
@@ -145,7 +152,11 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                   <div className="absolute top-full right-0 min-w-[180px] pt-2.5 z-[100]">
                     <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.1)] p-1.5 animate-drop-in">
                       {moreLinks.map((link) => (
-                        <button key={link.label} className="block w-full text-left bg-transparent border-none text-sm text-[#374151] py-2.5 px-3.5 rounded-lg cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-[#111827]">
+                        <button
+                          key={link.label}
+                          onClick={() => handleNavigate(link.page || 'home')}
+                          className="block w-full text-left bg-transparent border-none text-sm text-[#374151] py-2.5 px-3.5 rounded-lg cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-[#111827]"
+                        >
                           {link.label}
                         </button>
                       ))}
