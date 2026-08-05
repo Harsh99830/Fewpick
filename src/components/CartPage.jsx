@@ -4,8 +4,6 @@ import { supabase } from '../lib/supabase';
 
 export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [placedOrderId, setPlacedOrderId] = useState('');
 
   // Computations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -27,7 +25,6 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
   const handleCheckout = async () => {
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
-    setPlacedOrderId(orderId);
     
     // Formulate a clean WhatsApp order message with text details
     let message = `*New Order from FewPick (${orderId})*\n\n`;
@@ -67,31 +64,10 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
       console.error("Error saving order to database:", err);
     } finally {
       setIsCheckingOut(false);
-      setOrderPlaced(true);
-      // Open WhatsApp directly via location.href to prevent popup blocking on mobile
+      // Open WhatsApp directly without flashing Thank You UI
       window.location.href = waUrl;
     }
   };
-
-  if (orderPlaced) {
-    return (
-      <div className="max-w-[480px] py-16 px-4 mx-auto text-center flex flex-col items-center animate-drop-in">
-        <div className="text-sm font-bold text-green-600 mb-3.5 flex items-center justify-center gap-1.5">
-          <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" /> Order Confirmed
-        </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-[-0.02em]">Thank you for your order!</h2>
-        <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-          Your order <span className="font-semibold text-gray-800">{placedOrderId}</span> has been successfully placed. We're getting it ready and it will be delivered within <span className="font-semibold text-gray-800">10 minutes</span>.
-        </p>
-        <button
-          onClick={onNavigateHome}
-          className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none"
-        >
-          Continue Shopping
-        </button>
-      </div>
-    );
-  }
 
   if (cartItems.length === 0) {
     return (
