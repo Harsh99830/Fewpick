@@ -1028,8 +1028,8 @@ export default function AdminHQ() {
                 if (isCatSelectionMode) setSelectedCatIds(new Set());
               }}
               className={`px-3 py-2 border text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${isCatSelectionMode
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
                 }`}
             >
               <CheckSquare size={14} />

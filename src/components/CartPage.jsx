@@ -76,10 +76,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
           Your order <span className="font-semibold text-gray-800">{placedOrderId}</span> has been successfully placed. We're getting it ready and it will be delivered within <span className="font-semibold text-gray-800">10 minutes</span>.
         </p>
         <button
-          onClick={() => {
-            cartItems.forEach(item => onUpdateQty(item.product.id, 0));
-            onNavigateHome();
-          }}
+          onClick={onNavigateHome}
           className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none"
         >
           Continue Shopping

@@ -32,12 +32,28 @@ const getCategoryColors = (id) => {
 };
 
 function App() {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fewpick_cart_items');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('Error loading cart from localStorage:', e);
+      return [];
+    }
+  });
   const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('fewpick_cart_items', JSON.stringify(cartItems));
+    } catch (e) {
+      console.error('Error saving cart to localStorage:', e);
+    }
+  }, [cartItems]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
