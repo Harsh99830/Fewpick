@@ -546,11 +546,11 @@ export default function AdminHQ() {
   };
 
   // Computations
-  const completedOrders = orders.filter((o) => o.confirm === 'yes' && ['completed', 'delivered', 'on the way'].includes(o.status));
+  const deliveredOrders = orders.filter((o) => o.confirm === 'yes' && ['delivered', 'completed'].includes(o.status));
   const totalOrders = orders.filter((o) => o.confirm === 'yes').length;
-  const totalSales = completedOrders.reduce((acc, curr) => acc + (Number(curr.grand_total) || 0) + (curr.status === 'delivered' ? 10 : 0), 0);
+  const totalSales = deliveredOrders.length * 10;
   const pendingOrders = orders.filter((o) => o.confirm !== 'yes').length;
-  const averageOrderValue = completedOrders.length > 0 ? Math.round(totalSales / completedOrders.length) : 0;
+  const averageOrderValue = deliveredOrders.length > 0 ? Math.round(totalSales / deliveredOrders.length) : 0;
 
   // Stock checks
   const lowStockItems = items.filter((item) => item.Stock !== null && item.Stock < 20);
@@ -609,8 +609,11 @@ export default function AdminHQ() {
     const revenues = {};
     orders.forEach(order => {
       const orderDate = new Date(order.created_at).toISOString().split('T')[0];
-      counts[orderDate] = (counts[orderDate] || 0) + 1;
-      const orderRev = (Number(order.grand_total) || 0) + (order.status === 'delivered' ? 10 : 0);
+      if (order.confirm === 'yes') {
+        counts[orderDate] = (counts[orderDate] || 0) + 1;
+      }
+      const isDelivered = order.confirm === 'yes' && ['delivered', 'completed'].includes(order.status);
+      const orderRev = isDelivered ? 10 : 0;
       revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
     });
 
