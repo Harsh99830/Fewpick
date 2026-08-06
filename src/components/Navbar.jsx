@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 
 export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchFocused, setSearchFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  const isSearchHidden = ['/cart', '/contact', '/hq'].includes(location.pathname);
 
   const handleNavigate = (page) => {
     setMenuOpen(false);
@@ -104,29 +107,31 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             </button>
 
             {/* Search — Desktop */}
-            <div className="hidden md:block flex-1 max-w-[580px] relative z-10">
-              <div className={searchWrapperClass}>
-                <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none px-3 text-sm font-inherit text-[#1f2937] h-full placeholder:text-[#9ca3af]"
-                  placeholder="Search essentials, groceries and more..."
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
+            {!isSearchHidden && (
+              <div className="hidden md:block flex-1 max-w-[580px] relative z-10">
+                <div className={searchWrapperClass}>
+                  <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent border-none outline-none px-3 text-sm font-inherit text-[#1f2937] h-full placeholder:text-[#9ca3af]"
+                    placeholder="Search essentials, groceries and more..."
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {renderSearchResults()}
               </div>
-              {renderSearchResults()}
-            </div>
+            )}
 
             {/* Right section — hidden on mobile */}
             <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0 relative z-10">
@@ -181,29 +186,31 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
           )}
 
           {/* Mobile search bar — full width below nav */}
-          <div className="block md:hidden px-4 pt-2.5 pb-2.5 relative">
-            <div className={searchWrapperClass}>
-              <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent border-none outline-none px-3 text-sm text-[#1f2937] h-full placeholder:text-[#9ca3af]"
-                placeholder="Search essentials, groceries and more..."
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
-                >
-                  <X size={14} />
-                </button>
-              )}
+          {!isSearchHidden && (
+            <div className="block md:hidden px-4 pt-2.5 pb-2.5 relative">
+              <div className={searchWrapperClass}>
+                <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent border-none outline-none px-3 text-sm text-[#1f2937] h-full placeholder:text-[#9ca3af]"
+                  placeholder="Search essentials, groceries and more..."
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              {renderSearchResults()}
             </div>
-            {renderSearchResults()}
-          </div>
+          )}
 
           {/* Mobile menu drawer */}
           {menuOpen && (
