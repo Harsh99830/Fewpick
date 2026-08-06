@@ -181,7 +181,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
           )}
 
           {/* Mobile search bar — full width below nav */}
-          <div className="block md:hidden px-4 pb-2.5 relative">
+          <div className="block md:hidden px-4 pt-2.5 pb-2.5 relative">
             <div className={searchWrapperClass}>
               <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
               <input
