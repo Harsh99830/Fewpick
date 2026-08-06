@@ -1,33 +1,74 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import ProductCard from './ProductCard';
+import { categories as fallbackCategories } from '../data/categories';
 
-export default function CategoryPage({ products = [], cartItems = [], onUpdateQty, orderingEnabled = true }) {
+export default function CategoryPage({ products = [], categories = [], cartItems = [], onUpdateQty, orderingEnabled = true }) {
   const { categoryName } = useParams();
   const navigate = useNavigate();
 
   const decodedName = categoryName ? decodeURIComponent(categoryName) : '';
+  const displayCategories = categories.length > 0 ? categories : fallbackCategories;
 
   // Filter products by category (case-insensitive)
   const categoryProducts = products.filter(
-    p => p.category && p.category.toLowerCase() === decodedName.toLowerCase()
+    (p) => p.category && p.category.toLowerCase() === decodedName.toLowerCase()
   );
 
   return (
     <div className="w-full flex flex-col gap-6 animate-drop-in pb-12">
+      {/* Top Categories Scroll Bar */}
+      <div className="w-full flex flex-col gap-3">
+        <h2 className="text-[1.1rem] sm:text-[1.35rem] font-extrabold text-gray-900 m-0 tracking-[-0.02em]">
+          Categories
+        </h2>
+        <div className="flex flex-nowrap overflow-x-auto gap-2.5 sm:gap-4 pt-3 pb-3 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth w-full">
+          {displayCategories.map((cat) => {
+            const isSelected = cat.name.toLowerCase() === decodedName.toLowerCase();
+            const displayImage = cat.image || cat.emoji;
+            const isUrl = displayImage && (displayImage.startsWith('http') || displayImage.startsWith('/') || displayImage.includes('.'));
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => navigate(`/category/${encodeURIComponent(cat.name)}`, { replace: true })}
+                className="flex flex-col items-center gap-1.5 bg-none border-none cursor-pointer p-0.5 transition-transform hover:-translate-y-0.5 flex-shrink-0 w-[68px] sm:w-[84px] group"
+              >
+                <div
+                  className={`w-[60px] h-[60px] md:w-[72px] md:h-[72px] rounded-full flex items-center justify-center transition-all duration-[250ms] overflow-hidden ${
+                    isSelected
+                      ? 'bg-white border-2 border-gray-950 shadow-[0_0_0_3px_rgba(0,0,0,0.08)] scale-[1.04]'
+                      : 'bg-gray-50/80 border border-gray-200 opacity-80 hover:opacity-100 group-hover:border-gray-400 group-hover:scale-[1.04]'
+                  }`}
+                >
+                  {isUrl ? (
+                    <img src={displayImage} alt={cat.name} className="w-10/12 h-10/12 object-contain" />
+                  ) : (
+                    <span className="text-[1.6rem] md:text-[2rem] leading-none">{displayImage || '📦'}</span>
+                  )}
+                </div>
+                <span
+                  className={`text-[0.65rem] md:text-[0.72rem] text-center leading-[1.3] ${
+                    isSelected ? 'text-gray-950 font-black' : 'text-gray-500 font-bold'
+                  }`}
+                >
+                  {cat.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+
+
       {/* Products Grid */}
       {categoryProducts.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-150 p-12 text-center flex flex-col items-center justify-center animate-fade-in">
-          <div className="text-4xl mb-3">🛒</div>
-          <h3 className="text-base font-extrabold text-gray-800 mb-1">No items found</h3>
-          <p className="text-xs text-gray-400 max-w-[300px] mb-6">
-            There are currently no products registered under <span className="font-bold text-gray-700">"{decodedName}"</span>.
+        <div className="py-16 text-center flex flex-col items-center justify-center">
+          <div className="text-3xl mb-2 opacity-60">🛒</div>
+          <h3 className="text-sm font-extrabold text-gray-800 mb-1">No items found</h3>
+          <p className="text-xs text-gray-400 max-w-[280px] m-0">
+            There are currently no products registered under <span className="font-semibold text-gray-600">"{decodedName}"</span>.
           </p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer border-none"
-          >
-            Explore Other Categories
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
