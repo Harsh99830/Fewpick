@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, MapPin, Menu, X, Package } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 
-export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty }) {
+export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage }) {
   const navigate = useNavigate();
   const [searchFocused, setSearchFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,16 +36,13 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
     if (!searchQuery.trim()) return null;
 
     return (
-      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-[250] animate-drop-in">
+      <div className="absolute top-full left-3 right-3 sm:left-0 sm:right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-[250] animate-drop-in">
         {filteredProducts.length === 0 ? (
           <div className="p-6 text-center text-gray-400 text-xs font-semibold">
             No items matching "<span className="text-gray-700 font-bold">{searchQuery}</span>"
           </div>
         ) : (
           <div className="divide-y divide-gray-100 max-h-[360px] overflow-y-auto">
-            <div className="px-4 py-2 bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
-              Product Suggestions ({filteredProducts.length})
-            </div>
             {filteredProducts.map((p) => (
               <div
                 key={p.id}
@@ -172,6 +169,16 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               </button>
             </div>
           </div>
+
+          {/* Closed notice — replaces the old page banner */}
+          {!orderingEnabled && (
+            <div className="w-full bg-red-50 border-t border-red-100 px-4 md:px-6 py-2 flex items-center justify-center gap-1.5">
+              <Clock size={13} className="text-red-500 flex-shrink-0" />
+              <span className="text-[0.7rem] sm:text-xs font-bold text-red-600 text-center leading-tight">
+                {closedMessage}
+              </span>
+            </div>
+          )}
 
           {/* Mobile search bar — full width below nav */}
           <div className="block md:hidden px-4 pb-2.5 relative">

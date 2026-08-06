@@ -2,7 +2,7 @@ import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
+export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, orderingEnabled = true, closedMessage }) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Computations
@@ -23,6 +23,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
   };
 
   const handleCheckout = async () => {
+    if (!orderingEnabled) return;
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
     
@@ -186,7 +187,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome }) {
           <button
             onClick={handleCheckout}
             disabled={isCheckingOut}
-            className="w-full py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold rounded-xl shadow-[0_4px_20px_rgba(37,211,102,0.25)] transition-all transform hover:-translate-y-px active:translate-y-0 text-sm flex items-center justify-center gap-2 cursor-pointer disabled:bg-gray-400 border-none"
+            className="w-full py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold rounded-xl shadow-[0_4px_20px_rgba(37,211,102,0.25)] transition-all transform hover:-translate-y-px active:translate-y-0 text-sm flex items-center justify-center gap-2 cursor-pointer disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed border-none"
           >
             {isCheckingOut ? (
               <span className="flex items-center gap-2">

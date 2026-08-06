@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import ProductCard from './ProductCard';
 
-export default function CategoryPage({ products = [], cartItems = [], onUpdateQty }) {
+export default function CategoryPage({ products = [], cartItems = [], onUpdateQty, orderingEnabled = true }) {
   const { categoryName } = useParams();
   const navigate = useNavigate();
 
@@ -37,6 +37,7 @@ export default function CategoryPage({ products = [], cartItems = [], onUpdateQt
               product={product}
               cartItems={cartItems}
               onUpdateQty={onUpdateQty}
+              orderingEnabled={orderingEnabled}
             />
           ))}
         </div>

@@ -24,14 +24,7 @@ export default function CategorySection({ categories = [] }) {
               onClick={() => navigate(`/category/${encodeURIComponent(cat.name)}`)}
               className="flex flex-col items-center gap-2.5 bg-none border-none cursor-pointer p-1 transition-transform hover:-translate-y-1 flex-shrink-0 w-[72px] md:w-auto group"
             >
-              <div
-                className="w-[60px] h-[60px] md:w-[76px] md:h-[76px] rounded-full flex items-center justify-center transition-all duration-[250ms] group-hover:scale-[1.08] group-hover:!shadow-[0_8px_24px_rgba(0,0,0,0.12)] overflow-hidden"
-                style={{
-                  backgroundColor: cat.color,
-                  boxShadow: `0 0 0 3px ${cat.borderColor}33`,
-                  border: `2px solid ${cat.borderColor}`,
-                }}
-              >
+              <div className="w-[60px] h-[60px] md:w-[76px] md:h-[76px] rounded-full flex items-center justify-center bg-gray-50/80 border-2 border-gray-200 shadow-[0_0_0_3px_rgba(229,231,235,0.4)] transition-all duration-[250ms] group-hover:scale-[1.08] group-hover:border-gray-300 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] overflow-hidden">
                 {isUrl ? (
                   <img src={displayImage} alt={cat.name} className="w-10/12 h-10/12 object-contain" />
                 ) : (

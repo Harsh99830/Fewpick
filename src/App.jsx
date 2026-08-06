@@ -46,6 +46,8 @@ function App() {
   const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [orderingEnabled, setOrderingEnabled] = useState(true);
+  const [closedMessage, setClosedMessage] = useState("Store is closed. We'll be back soon.");
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -65,12 +67,20 @@ function App() {
     async function fetchInitialData() {
       try {
         setIsLoading(true);
-        const [itemsRes, categoryRes] = await Promise.all([
+        const [itemsRes, categoryRes, settingsRes] = await Promise.all([
           supabase.from('items').select('*'),
-          supabase.from('category').select('*')
+          supabase.from('category').select('*'),
+          supabase.from('store_settings').select('ordering_enabled, closed_message').eq('id', 1).single()
         ]);
         
         if (itemsRes.error) throw itemsRes.error;
+
+        if (!settingsRes.error && settingsRes.data) {
+          setOrderingEnabled(settingsRes.data.ordering_enabled ?? true);
+          if (settingsRes.data.closed_message) setClosedMessage(settingsRes.data.closed_message);
+        } else if (settingsRes.error) {
+          console.error('Failed to load store settings:', settingsRes.error.message);
+        }
         
         const mappedData = itemsRes.data.map(item => {
           const staticProduct = localFallbackProducts.find(p => p.id === item.id) || {};
@@ -123,6 +133,29 @@ function App() {
     fetchInitialData();
   }, []);
 
+  // Live-sync the ordering on/off toggle so it takes effect instantly for everyone browsing
+  useEffect(() => {
+    const channel = supabase
+      .channel('store_settings_live')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'store_settings' },
+        (payload) => {
+          if (payload.new && typeof payload.new.ordering_enabled === 'boolean') {
+            setOrderingEnabled(payload.new.ordering_enabled);
+          }
+          if (payload.new && payload.new.closed_message) {
+            setClosedMessage(payload.new.closed_message);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const handleUpdateQty = (productId, quantity) => {
     setCartItems((prevItems) => {
       const existingIndex = prevItems.findIndex((item) => item.product.id === productId);
@@ -161,6 +194,8 @@ function App() {
         onNavigate={handleNavigate}
         cartItems={cartItems}
         onUpdateQty={handleUpdateQty}
+        orderingEnabled={orderingEnabled}
+        closedMessage={closedMessage}
       />
 
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-2.5 py-3 pb-6 flex flex-col gap-5 md:px-6 md:py-6 md:pb-12 md:gap-12">
@@ -181,6 +216,7 @@ function App() {
                     products={allProducts} 
                     cartItems={cartItems} 
                     onUpdateQty={handleUpdateQty} 
+                    orderingEnabled={orderingEnabled}
                   />
                 </>
               } 
@@ -192,6 +228,8 @@ function App() {
                   cartItems={cartItems}
                   onUpdateQty={handleUpdateQty}
                   onNavigateHome={() => navigate('/')}
+                  orderingEnabled={orderingEnabled}
+                  closedMessage={closedMessage}
                 />
               } 
             />
@@ -203,6 +241,7 @@ function App() {
                   categories={categories}
                   cartItems={cartItems}
                   onUpdateQty={handleUpdateQty}
+                  orderingEnabled={orderingEnabled}
                 />
               } 
             />

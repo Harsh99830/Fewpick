@@ -32,6 +32,11 @@ export default function AdminHQ() {
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [orderingEnabled, setOrderingEnabled] = useState(true);
+  const [isTogglingOrdering, setIsTogglingOrdering] = useState(false);
+  const [closedMessage, setClosedMessage] = useState("Store is closed. We'll be back at 9:00 PM.");
+  const [closedMessageDraft, setClosedMessageDraft] = useState('');
+  const [isSavingMessage, setIsSavingMessage] = useState(false);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -109,6 +114,66 @@ export default function AdminHQ() {
     fetchOrders();
     fetchItems();
     fetchCategories();
+    fetchStoreSettings();
+  };
+
+  const fetchStoreSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('store_settings')
+        .select('ordering_enabled, closed_message')
+        .eq('id', 1)
+        .single();
+
+      if (error) throw error;
+      setOrderingEnabled(data?.ordering_enabled ?? true);
+      if (data?.closed_message) {
+        setClosedMessage(data.closed_message);
+        setClosedMessageDraft(data.closed_message);
+      }
+    } catch (err) {
+      console.error('Fetch store settings error:', err);
+    }
+  };
+
+  const handleSaveClosedMessage = async () => {
+    if (!closedMessageDraft.trim()) return;
+    setIsSavingMessage(true);
+    try {
+      const { error } = await supabase
+        .from('store_settings')
+        .update({ closed_message: closedMessageDraft.trim(), updated_at: new Date().toISOString() })
+        .eq('id', 1);
+
+      if (error) throw error;
+      setClosedMessage(closedMessageDraft.trim());
+    } catch (err) {
+      console.error('Save closed message error:', err);
+      alert('Failed to save message: ' + err.message);
+    } finally {
+      setIsSavingMessage(false);
+    }
+  };
+
+  const handleToggleOrdering = async () => {
+    const newValue = !orderingEnabled;
+    setIsTogglingOrdering(true);
+    setOrderingEnabled(newValue); // optimistic
+
+    try {
+      const { error } = await supabase
+        .from('store_settings')
+        .update({ ordering_enabled: newValue, updated_at: new Date().toISOString() })
+        .eq('id', 1);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Toggle ordering error:', err);
+      alert('Failed to update ordering status: ' + err.message);
+      setOrderingEnabled(!newValue); // revert on failure
+    } finally {
+      setIsTogglingOrdering(false);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -1470,6 +1535,50 @@ export default function AdminHQ() {
               className="md:hidden p-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl hover:bg-red-100/50 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
             >
               <LogOut size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* Store Ordering Control */}
+        <div className="w-full bg-white border border-gray-150 rounded-2xl px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${orderingEnabled ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            <span className="text-xs font-black text-gray-900 uppercase tracking-wider whitespace-nowrap">Store Ordering</span>
+            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap ${orderingEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+              {orderingEnabled ? 'LIVE' : 'PAUSED'}
+            </span>
+            <button
+              onClick={handleToggleOrdering}
+              disabled={isTogglingOrdering}
+              aria-label="Toggle store ordering"
+              className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 cursor-pointer border-none flex-shrink-0 disabled:opacity-60 disabled:cursor-wait ml-1 ${
+                orderingEnabled ? 'bg-emerald-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                  orderingEnabled ? 'translate-x-[18px]' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="hidden sm:block w-px h-6 bg-gray-150 flex-shrink-0" />
+
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <input
+              type="text"
+              value={closedMessageDraft}
+              onChange={(e) => setClosedMessageDraft(e.target.value)}
+              placeholder="Message shown to customers while closed"
+              className="flex-1 min-w-0 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all"
+            />
+            <button
+              onClick={handleSaveClosedMessage}
+              disabled={isSavingMessage || !closedMessageDraft.trim() || closedMessageDraft.trim() === closedMessage}
+              className="px-3 py-1.5 bg-gray-900 hover:bg-black text-white text-[11px] font-bold rounded-lg transition-all cursor-pointer border-none disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex-shrink-0"
+            >
+              {isSavingMessage ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>
