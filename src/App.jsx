@@ -82,6 +82,15 @@ function App() {
           console.error('Failed to load store settings:', settingsRes.error.message);
         }
         
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
         const mappedData = itemsRes.data.map(item => {
           const staticProduct = localFallbackProducts.find(p => p.id === item.id) || {};
           const price = item.price;
@@ -106,7 +115,7 @@ function App() {
           };
         });
         
-        setAllProducts(mappedData);
+        setAllProducts(shuffleArray(mappedData));
 
         if (!categoryRes.error && categoryRes.data) {
           const mappedCats = categoryRes.data.map(cat => {
@@ -125,7 +134,7 @@ function App() {
         }
       } catch (err) {
         console.error("Failed to load products/categories from Supabase, using local fallback data:", err.message);
-        setAllProducts(localFallbackProducts);
+        setAllProducts(shuffleArray(localFallbackProducts));
         setCategories(fallbackCategories);
       } finally {
         setIsLoading(false);
