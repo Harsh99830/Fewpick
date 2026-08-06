@@ -101,7 +101,8 @@ function App() {
             rating: staticProduct.rating || 4.5,
             reviews: staticProduct.reviews || 500,
             category: item.category || staticProduct.category || 'snack',
-            stock: item.Stock // mapping case-sensitive "Stock"
+            stock: item.Stock, // mapping case-sensitive "Stock"
+            featured: item.featured || false
           };
         });
         

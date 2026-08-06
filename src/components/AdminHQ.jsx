@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare
+  FolderKanban, Edit2, Trash2, CheckSquare, Star
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -55,6 +55,7 @@ export default function AdminHQ() {
   const [editImage, setEditImage] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [editStock, setEditStock] = useState('');
+  const [editFeatured, setEditFeatured] = useState(false);
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   // Selection and Edit States for Categories
@@ -81,6 +82,7 @@ export default function AdminHQ() {
   const [itemImage, setItemImage] = useState('');
   const [itemCategory, setItemCategory] = useState('');
   const [itemStock, setItemStock] = useState('');
+  const [itemFeatured, setItemFeatured] = useState(false);
   const [isSubmittingItem, setIsSubmittingItem] = useState(false);
 
   // Add Category Form States
@@ -291,7 +293,8 @@ export default function AdminHQ() {
         mrp: itemMrp ? parseInt(itemMrp) : null,
         image: itemImage || null,
         category: itemCategory || null,
-        Stock: itemStock ? parseInt(itemStock) : null
+        Stock: itemStock ? parseInt(itemStock) : null,
+        featured: itemFeatured
       };
 
       const { data, error } = await supabase
@@ -312,6 +315,7 @@ export default function AdminHQ() {
         setItemImage('');
         setItemCategory(categories[0]?.name || '');
         setItemStock('');
+        setItemFeatured(false);
       }
     } catch (err) {
       console.error(err);
@@ -373,6 +377,26 @@ export default function AdminHQ() {
     }
   };
 
+  const handleToggleFeatured = async (itemId, currentValue) => {
+    const newValue = !currentValue;
+    // optimistic update
+    setItems(prev => prev.map(item => item.id === itemId ? { ...item, featured: newValue } : item));
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .update({ featured: newValue })
+        .eq('id', itemId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Toggle featured error:', err);
+      alert('Failed to update featured status: ' + err.message);
+      // revert on failure
+      setItems(prev => prev.map(item => item.id === itemId ? { ...item, featured: currentValue } : item));
+    }
+  };
+
   const handleBulkDelete = async () => {
     const count = selectedItemIds.size;
     if (!window.confirm(`Are you sure you want to delete ${count} selected products?`)) return;
@@ -404,6 +428,7 @@ export default function AdminHQ() {
     setEditImage(item.image || '');
     setEditCategory(item.category || '');
     setEditStock(item.Stock || '');
+    setEditFeatured(item.featured || false);
     setActiveMenuId(null);
   };
 
@@ -420,7 +445,8 @@ export default function AdminHQ() {
         mrp: editMrp ? parseInt(editMrp) : null,
         image: editImage || null,
         category: editCategory || null,
-        Stock: editStock ? parseInt(editStock) : null
+        Stock: editStock ? parseInt(editStock) : null,
+        featured: editFeatured
       };
 
       const { error } = await supabase
@@ -961,6 +987,7 @@ export default function AdminHQ() {
                 <th className="py-4 px-6">Category</th>
                 <th className="py-4 px-6 text-right">Price / MRP</th>
                 <th className="py-4 px-6 text-center">Stock Level</th>
+                <th className="py-4 px-6 text-center">Featured</th>
                 <th className="py-4 px-6 text-center">Actions</th>
               </tr>
             </thead>
@@ -993,7 +1020,12 @@ export default function AdminHQ() {
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex flex-col">
-                      <span className="font-extrabold text-gray-900 text-xs sm:text-sm">{item.name}</span>
+                      <span className="font-extrabold text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
+                        {item.name}
+                        {item.featured && (
+                          <Star size={12} className="text-amber-500 fill-amber-500 flex-shrink-0" />
+                        )}
+                      </span>
                       <span className="text-[10px] text-gray-400 mt-0.5">{item.weight}</span>
                     </div>
                   </td>
@@ -1019,6 +1051,19 @@ export default function AdminHQ() {
                       }`}>
                       {item.Stock ?? 'N/A'} units
                     </span>
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <button
+                      onClick={() => handleToggleFeatured(item.id, item.featured)}
+                      className={`p-1.5 rounded-lg border-none cursor-pointer transition-colors ${
+                        item.featured
+                          ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
+                          : 'text-gray-300 bg-gray-50 hover:bg-gray-100 hover:text-gray-400'
+                      }`}
+                      title={item.featured ? 'Remove from Featured' : 'Mark as Featured'}
+                    >
+                      <Star size={16} fill={item.featured ? 'currentColor' : 'none'} />
+                    </button>
                   </td>
                   <td className="py-4 px-6 text-center relative">
                     <div className="flex items-center justify-center">
@@ -1696,6 +1741,19 @@ export default function AdminHQ() {
                     className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
                   />
                 </div>
+
+                <label className="flex items-center gap-2.5 col-span-2 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={itemFeatured}
+                    onChange={(e) => setItemFeatured(e.target.checked)}
+                    className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <Star size={13} className="text-amber-500" />
+                    Mark as Featured Item
+                  </span>
+                </label>
               </div>
 
               <button
@@ -1863,6 +1921,19 @@ export default function AdminHQ() {
                     className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
                   />
                 </div>
+
+                <label className="flex items-center gap-2.5 col-span-2 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={editFeatured}
+                    onChange={(e) => setEditFeatured(e.target.checked)}
+                    className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <Star size={13} className="text-amber-500" />
+                    Mark as Featured Item
+                  </span>
+                </label>
               </div>
 
               <button
