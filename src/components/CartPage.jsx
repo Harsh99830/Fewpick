@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -165,7 +165,15 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
 
         {/* Cart Summary */}
         <div className="bg-white rounded-2xl border border-[#e8eaf0] shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 flex flex-col gap-6 lg:sticky lg:top-24">
-          <h2 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-4">Bill Details</h2>
+          <div className="border-b border-gray-100 pb-4 flex flex-col gap-2">
+            <h2 className="text-lg font-black text-gray-900 m-0">Bill Details</h2>
+            <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200/80 px-3 py-1.5 rounded-lg text-xs self-start">
+              <MapPin size={13} className="text-indigo-600 flex-shrink-0" />
+              <span className="text-gray-600 font-medium">
+                Delivering to <strong className="text-gray-900 font-extrabold">Poornima University</strong> only
+              </span>
+            </div>
+          </div>
 
           {/* Bill Breakdowns */}
           <div className="flex flex-col gap-3 text-sm">
