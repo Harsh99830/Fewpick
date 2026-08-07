@@ -64,10 +64,12 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
         {/* Product Details & Compact Horizontal Variant Selector */}
         <div className="p-5 flex flex-col gap-3.5">
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded self-start">
-              {activeProduct.category || 'General'}
-            </span>
-            <h2 className="text-base font-extrabold text-gray-900 mt-1 leading-snug">
+            {activeProduct.category && (
+              <span className="text-xs font-semibold text-gray-400 capitalize">
+                {activeProduct.category}
+              </span>
+            )}
+            <h2 className="text-base font-extrabold text-gray-900 leading-snug">
               {activeProduct.name}
             </h2>
             <p className="text-xs text-gray-400 font-semibold m-0">
