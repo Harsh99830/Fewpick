@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical
+  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -1480,8 +1480,13 @@ export default function AdminHQ() {
                           >
                             {order.id}
                           </td>
-                          <td className="py-4 px-6 text-xs font-extrabold text-gray-900 whitespace-nowrap">
-                            {order.name || order.customer_name || 'Guest'}
+                          <td className="py-4 px-6 text-xs whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="font-extrabold text-gray-900">{order.name || order.customer_name || 'Guest'}</span>
+                              {order.phone && (
+                                <span className="text-[11px] font-mono text-gray-500 font-semibold mt-0.5">{order.phone}</span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
                           <td 
@@ -1547,8 +1552,13 @@ export default function AdminHQ() {
                           >
                             {order.id}
                           </td>
-                          <td className="py-4 px-6 text-xs font-extrabold text-gray-900 whitespace-nowrap">
-                            {order.name || order.customer_name || 'Guest'}
+                          <td className="py-4 px-6 text-xs whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="font-extrabold text-gray-900">{order.name || order.customer_name || 'Guest'}</span>
+                              {order.phone && (
+                                <span className="text-[11px] font-mono text-gray-500 font-semibold mt-0.5">{order.phone}</span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-550 whitespace-nowrap">{formattedDate}</td>
                           <td 
@@ -2141,6 +2151,12 @@ export default function AdminHQ() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
                   Placed on {formatOrderDate(viewingOrder.created_at)}
                 </p>
+                {viewingOrder.phone && (
+                  <p className="text-xs font-bold text-indigo-700 mt-1 flex items-center gap-1.5">
+                    <Phone size={13} />
+                    <span>{viewingOrder.phone}</span>
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setViewingOrder(null)}

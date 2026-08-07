@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Plus, Minus, MapPin, User } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -7,7 +7,11 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   const [customerName, setCustomerName] = useState(() => {
     return localStorage.getItem('fewpick_customer_name') || '';
   });
+  const [customerPhone, setCustomerPhone] = useState(() => {
+    return localStorage.getItem('fewpick_customer_phone') || '';
+  });
   const [nameError, setNameError] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   // Computations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -35,25 +39,52 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
     }
   };
 
+  const handlePhoneChange = (e) => {
+    // Only allow numbers and limit max length to 10 digits
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setCustomerPhone(digitsOnly);
+    localStorage.setItem('fewpick_customer_phone', digitsOnly);
+    if (digitsOnly.length === 10) {
+      setPhoneError('');
+    }
+  };
+
   const handleCheckout = async () => {
     if (!orderingEnabled) return;
     
-    // Validate Name field
+    let hasErr = false;
     if (!customerName || !customerName.trim()) {
       setNameError(true);
-      return;
+      hasErr = true;
     }
+
+    const cleanPhone = customerPhone.replace(/\D/g, '').trim();
+    if (!cleanPhone) {
+      setPhoneError('Mobile number is required');
+      hasErr = true;
+    } else if (cleanPhone.length !== 10) {
+      setPhoneError('Please enter a 10-digit mobile number');
+      hasErr = true;
+    } else if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setPhoneError('Please enter a valid 10-digit mobile number');
+      hasErr = true;
+    } else {
+      setPhoneError('');
+    }
+
+    if (hasErr) return;
 
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
     const cleanName = customerName.trim();
     
-    // Formulate a clean WhatsApp order message with customer name
+    // Formulate a clean WhatsApp order message with customer name & phone
     let message = `*New Order from ${cleanName} (${orderId})*\n\n`;
     cartItems.forEach((item) => {
       message += `• ${item.product.name} (${item.product.weight}) - ${item.quantity} x ₹${item.product.price} = ₹${item.product.price * item.quantity}\n`;
     });
     message += `\n*Customer Name:* ${cleanName}`;
+    message += `\n*Phone:* ${cleanPhone}`;
     message += `\n*Item Total:* ₹${subtotal}`;
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
     message += `\n*Grand Total:* ₹${grandTotal}`;
@@ -73,6 +104,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
       const { error } = await supabase.from('expected_orders').insert({
         id: orderId,
         name: cleanName,
+        phone: cleanPhone,
         items: orderItems,
         subtotal: subtotal,
         rider_effort: deliveryCharge,
@@ -192,28 +224,54 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
             <h2 className="text-lg font-black text-gray-900 m-0">Bill Details</h2>
           </div>
 
-          {/* Customer Name Input Field */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <User size={14} className="text-indigo-600" />
-                Your Name <span className="text-rose-500 font-black">*</span>
-              </span>
-              {nameError && (
-                <span className="text-[11px] font-extrabold text-rose-500">Name is required</span>
-              )}
-            </label>
-            <input
-              type="text"
-              value={customerName}
-              onChange={handleNameChange}
-              placeholder="Enter your name"
-              className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
-                nameError
-                  ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
-                  : 'border-gray-200 bg-gray-50/70 text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20'
-              }`}
-            />
+          {/* Customer Name & Phone Input Fields */}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <User size={14} className="text-indigo-600" />
+                  Your Name <span className="text-rose-500 font-black">*</span>
+                </span>
+                {nameError && (
+                  <span className="text-[11px] font-extrabold text-rose-500">Name is required</span>
+                )}
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={handleNameChange}
+                placeholder="Enter your name"
+                className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
+                  nameError
+                    ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
+                    : 'border-gray-200 bg-gray-50/70 text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20'
+                }`}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Phone size={14} className="text-indigo-600" />
+                  Mobile Number <span className="text-rose-500 font-black">*</span>
+                </span>
+                {phoneError && (
+                  <span className="text-[11px] font-extrabold text-rose-500">{phoneError}</span>
+                )}
+              </label>
+              <input
+                type="tel"
+                value={customerPhone}
+                onChange={handlePhoneChange}
+                maxLength={10}
+                placeholder="10-digit mobile number (e.g. 9876543210)"
+                className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
+                  phoneError
+                    ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
+                    : 'border-gray-200 bg-gray-50/70 text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20'
+                }`}
+              />
+            </div>
           </div>
 
           {/* Bill Breakdowns */}
