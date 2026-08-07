@@ -88,8 +88,8 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
         </div>
 
         {/* Product Details & Compact Horizontal Variant Selector */}
-        <div className="p-5 flex flex-col gap-3.5">
-          <div className="flex flex-col gap-0.5">
+        <div className="px-6 py-5 sm:px-7 sm:py-6 flex flex-col gap-3.5">
+          <div className="flex flex-col gap-0.5 px-0.5">
             {activeProduct.category && (
               <span className="text-xs font-semibold text-gray-400 capitalize">
                 {activeProduct.category}

@@ -91,7 +91,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                   setSearchQuery('');
                   setSearchFocused(false);
                 }}
-                className="flex items-center gap-3.5 p-3 hover:bg-indigo-50/40 cursor-pointer transition-colors group"
+                className="flex items-center gap-3.5 px-4.5 py-3 sm:px-5 hover:bg-indigo-50/40 cursor-pointer transition-colors group"
               >
                 <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {p.image ? (
@@ -100,17 +100,16 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                     <Package size={18} className="text-gray-300" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 px-1">
                   <h4 className="text-xs font-extrabold text-gray-900 truncate m-0 group-hover:text-indigo-600 transition-colors">
                     {p.name}
                   </h4>
                   <span className="text-[10px] text-gray-400 font-medium">{p.weight || 'N/A'}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2 py-0.5 rounded">
+                <div className="flex items-center gap-2 pl-2">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2.5 py-0.5 rounded">
                     {p.category}
                   </span>
-                  <span className="text-xs font-black text-gray-900">₹{p.price}</span>
                 </div>
               </div>
             ))}
