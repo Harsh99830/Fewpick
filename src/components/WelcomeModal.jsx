@@ -59,9 +59,9 @@ export default function WelcomeModal() {
   return (
     <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop click */}
-      <div 
-        className="fixed inset-0" 
-        onClick={() => handleClose('close')} 
+      <div
+        className="fixed inset-0"
+        onClick={() => handleClose('close')}
       />
 
       {/* Simple Minimal Card */}
@@ -89,7 +89,7 @@ export default function WelcomeModal() {
         <div className="flex flex-col gap-2.5 text-left bg-gray-50/80 p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2.5 text-xs text-gray-800 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span>Orders delivered in <strong>30-minute time slots</strong></span>
+            <span>Orders delivered in <strong>20-25 minute time slots</strong></span>
           </div>
           <div className="flex items-center gap-2.5 text-xs text-gray-800 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
