@@ -55,9 +55,9 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
 
   return (
     <div className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div 
-        className="fixed inset-0" 
-        onClick={onClose} 
+      <div
+        className="fixed inset-0"
+        onClick={onClose}
       />
 
       <div className="relative bg-white w-full max-w-[420px] rounded-3xl shadow-2xl overflow-hidden z-10 animate-drop-in border border-gray-100 flex flex-col">
@@ -129,11 +129,10 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
                     <button
                       key={v.id}
                       onClick={() => setSelectedVariantId(v.id)}
-                      className={`flex flex-col items-center justify-center px-3.5 py-1.5 rounded-xl text-left flex-shrink-0 cursor-pointer transition-all ${
-                        isSelected
+                      className={`flex flex-col items-center justify-center px-3.5 py-1.5 rounded-xl text-left flex-shrink-0 cursor-pointer transition-all ${isSelected
                           ? 'border-2 border-gray-900 bg-white shadow-sm'
                           : 'border border-gray-200 bg-gray-50/70 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <span className={`text-[0.72rem] font-bold ${isSelected ? 'text-gray-950 font-black' : 'text-gray-900'}`}>
                         {v.weight || v.name}
