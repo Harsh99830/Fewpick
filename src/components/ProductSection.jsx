@@ -1,10 +1,10 @@
 import ProductCard from './ProductCard';
 
 export default function ProductSection({ products = [], cartItems = [], onUpdateQty, orderingEnabled = true, onSelectProduct }) {
-  // Filter items marked as featured, or items with badges/category 'Featured'
-  const featuredProducts = products.filter(
-    (p) => p.is_featured === true || p.featured === true || Boolean(p.badge) || p.category === 'Featured'
-  );
+  // Filter items marked as featured and sort strictly by display_order
+  const featuredProducts = products
+    .filter((p) => p.is_featured === true || p.featured === true || Boolean(p.badge) || p.category === 'Featured')
+    .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
 
   // If no products have badges/flags, display the first 4 products as featured
   const featuredList = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 4);

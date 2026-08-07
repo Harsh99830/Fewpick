@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare, Star
+  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -56,6 +56,72 @@ export default function AdminHQ() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const [itemsError, setItemsError] = useState('');
+
+  // Drag & drop reordering for featured items
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
+
+  const handleDragStartItem = (e, index) => {
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOverItem = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverItemIndex !== index) {
+      setDragOverItemIndex(index);
+    }
+  };
+
+  const handleDropItem = async (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedItemIndex === null || draggedItemIndex === targetIndex) {
+      setDraggedItemIndex(null);
+      setDragOverItemIndex(null);
+      return;
+    }
+
+    const draggedItem = items[draggedItemIndex];
+    const targetItem = items[targetIndex];
+
+    // Only reorder if BOTH items are featured!
+    if (!draggedItem.featured || !targetItem.featured) {
+      setDraggedItemIndex(null);
+      setDragOverItemIndex(null);
+      return;
+    }
+
+    const updatedItems = [...items];
+    updatedItems.splice(draggedItemIndex, 1);
+    updatedItems.splice(targetIndex, 0, draggedItem);
+
+    // Re-index display_order for all featured items
+    let featuredOrderCounter = 1;
+    const updatesToSave = [];
+
+    const reindexedItems = updatedItems.map((item) => {
+      if (item.featured) {
+        const newOrder = featuredOrderCounter++;
+        updatesToSave.push({ id: item.id, display_order: newOrder });
+        return { ...item, display_order: newOrder };
+      }
+      return item;
+    });
+
+    setItems(reindexedItems);
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+
+    // Save display_order to Supabase database
+    try {
+      for (const update of updatesToSave) {
+        await supabase.from('items').update({ display_order: update.display_order }).eq('id', update.id);
+      }
+    } catch (err) {
+      console.error('Error saving featured item order:', err);
+    }
+  };
 
   // Selection and Edit States for Items
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
@@ -974,6 +1040,7 @@ export default function AdminHQ() {
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-wider">
+                <th className="py-4 px-2 w-8 text-center" title="Reorder Featured Items"></th>
                 {isSelectionMode && (
                   <th className="py-4 px-6 w-12 text-center">
                     <input
@@ -1006,8 +1073,34 @@ export default function AdminHQ() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((item) => (
-                <tr key={item.id} className={`hover:bg-gray-50/30 transition-colors ${selectedItemIds.has(item.id) ? 'bg-indigo-50/10' : ''}`}>
+              {items.map((item, index) => (
+                <tr 
+                  key={item.id} 
+                  className={`hover:bg-gray-50/30 transition-colors ${selectedItemIds.has(item.id) ? 'bg-indigo-50/10' : ''} ${dragOverItemIndex === index ? 'bg-indigo-50/40 border-y-2 border-indigo-500' : ''}`}
+                >
+                  <td 
+                    className="py-4 px-2 text-center"
+                    onDragOver={(e) => handleDragOverItem(e, index)}
+                    onDrop={(e) => handleDropItem(e, index)}
+                  >
+                    {item.featured ? (
+                      <div 
+                        draggable
+                        onDragStart={(e) => handleDragStartItem(e, index)}
+                        className="cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                        title="Drag to reorder featured item"
+                      >
+                        <GripVertical size={16} />
+                      </div>
+                    ) : (
+                      <div 
+                        className="p-1.5 text-gray-200 cursor-not-allowed opacity-30 inline-flex items-center justify-center"
+                        title="Only featured items can be reordered"
+                      >
+                        <GripVertical size={16} />
+                      </div>
+                    )}
+                  </td>
                   {isSelectionMode && (
                     <td className="py-4 px-6 text-center">
                       <input

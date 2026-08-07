@@ -114,7 +114,8 @@ const shuffleArray = (array) => {
             reviews: staticProduct.reviews || 500,
             category: item.category || staticProduct.category || 'snack',
             stock: item.Stock, // mapping case-sensitive "Stock"
-            featured: item.featured || false
+            featured: item.featured || false,
+            display_order: item.display_order ?? item.featured_order ?? 999
           };
         });
         
