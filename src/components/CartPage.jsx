@@ -1,9 +1,13 @@
-import { ArrowLeft, Trash2, Plus, Minus, MapPin } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, MapPin, User } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, orderingEnabled = true, closedMessage }) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [customerName, setCustomerName] = useState(() => {
+    return localStorage.getItem('fewpick_customer_name') || '';
+  });
+  const [nameError, setNameError] = useState(false);
 
   // Computations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -22,16 +26,34 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
     return result;
   };
 
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    setCustomerName(val);
+    localStorage.setItem('fewpick_customer_name', val);
+    if (val.trim()) {
+      setNameError(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!orderingEnabled) return;
+    
+    // Validate Name field
+    if (!customerName || !customerName.trim()) {
+      setNameError(true);
+      return;
+    }
+
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
+    const cleanName = customerName.trim();
     
-    // Formulate a clean WhatsApp order message with text details
-    let message = `*New Order from FewPick (${orderId})*\n\n`;
+    // Formulate a clean WhatsApp order message with customer name
+    let message = `*New Order from ${cleanName} (${orderId})*\n\n`;
     cartItems.forEach((item) => {
       message += `• ${item.product.name} (${item.product.weight}) - ${item.quantity} x ₹${item.product.price} = ₹${item.product.price * item.quantity}\n`;
     });
+    message += `\n*Customer Name:* ${cleanName}`;
     message += `\n*Item Total:* ₹${subtotal}`;
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
     message += `\n*Grand Total:* ₹${grandTotal}`;
@@ -50,6 +72,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
       // Save order to Supabase expected_orders table
       const { error } = await supabase.from('expected_orders').insert({
         id: orderId,
+        name: cleanName,
         items: orderItems,
         subtotal: subtotal,
         rider_effort: deliveryCharge,
@@ -65,7 +88,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
       console.error("Error saving order to database:", err);
     } finally {
       setIsCheckingOut(false);
-      // Open WhatsApp directly without flashing Thank You UI
+      // Open WhatsApp directly
       window.location.href = waUrl;
     }
   };
@@ -175,8 +198,32 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
             </div>
           </div>
 
+          {/* Customer Name Input Field */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <User size={14} className="text-indigo-600" />
+                Your Name <span className="text-rose-500 font-black">*</span>
+              </span>
+              {nameError && (
+                <span className="text-[11px] font-extrabold text-rose-500">Name is required</span>
+              )}
+            </label>
+            <input
+              type="text"
+              value={customerName}
+              onChange={handleNameChange}
+              placeholder="Enter your name"
+              className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
+                nameError
+                  ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
+                  : 'border-gray-200 bg-gray-50/70 text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20'
+              }`}
+            />
+          </div>
+
           {/* Bill Breakdowns */}
-          <div className="flex flex-col gap-3 text-sm">
+          <div className="flex flex-col gap-3 text-sm pt-1">
             <div className="flex justify-between text-gray-500">
               <span>Item Total</span>
               <span>₹{subtotal}</span>

@@ -20,6 +20,20 @@ export default function AdminHQ() {
     return sessionStorage.getItem('fewpick_admin_orders_subtab') || 'expected';
   });
 
+  const formatOrderDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    
+    const day = date.getDate();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    return `${day} ${month} ${year}, ${time}`;
+  };
+
   useEffect(() => {
     sessionStorage.setItem('fewpick_admin_active_tab', activeTab);
   }, [activeTab]);
@@ -1344,6 +1358,7 @@ export default function AdminHQ() {
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-wider">
                   <th className="py-4 px-6">Order ID</th>
+                  <th className="py-4 px-6">Customer Name</th>
                   <th className="py-4 px-6">Timestamp</th>
                   <th className="py-4 px-6">Items & Quantities</th>
                   <th className="py-4 px-6 text-right">Grand Total</th>
@@ -1355,14 +1370,14 @@ export default function AdminHQ() {
                 <tbody className="divide-y divide-gray-100">
                   {expectedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-16 text-center text-xs font-semibold text-gray-405">
+                      <td colSpan={6} className="py-16 text-center text-xs font-semibold text-gray-400">
                         No expected orders pending
                       </td>
                     </tr>
                   ) : (
                     expectedOrders.map((order) => {
                       const itemsList = Array.isArray(order.items) ? order.items : [];
-                      const formattedDate = new Date(order.created_at).toLocaleString();
+                      const formattedDate = formatOrderDate(order.created_at);
 
                       return (
                         <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
@@ -1371,6 +1386,9 @@ export default function AdminHQ() {
                             className="py-4 px-6 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
                           >
                             {order.id}
+                          </td>
+                          <td className="py-4 px-6 text-xs font-extrabold text-gray-900 whitespace-nowrap">
+                            {order.name || order.customer_name || 'Guest'}
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
                           <td 
@@ -1414,14 +1432,14 @@ export default function AdminHQ() {
                 <tbody className="divide-y divide-gray-100">
                   {confirmedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-16 text-center text-xs font-semibold text-gray-450">
+                      <td colSpan={6} className="py-16 text-center text-xs font-semibold text-gray-400">
                         No confirmed orders processed
                       </td>
                     </tr>
                   ) : (
                     confirmedOrders.map((order) => {
                       const itemsList = Array.isArray(order.items) ? order.items : [];
-                      const formattedDate = new Date(order.created_at).toLocaleString();
+                      const formattedDate = formatOrderDate(order.created_at);
                       let statusBg = 'bg-amber-50 text-amber-700 border-amber-200';
                       if (order.status === 'completed') statusBg = 'bg-green-50 text-green-700 border-green-200';
                       if (order.status === 'delivered') statusBg = 'bg-teal-50 text-teal-700 border-teal-200';
@@ -1435,6 +1453,9 @@ export default function AdminHQ() {
                             className="py-4 px-6 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
                           >
                             {order.id}
+                          </td>
+                          <td className="py-4 px-6 text-xs font-extrabold text-gray-900 whitespace-nowrap">
+                            {order.name || order.customer_name || 'Guest'}
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-550 whitespace-nowrap">{formattedDate}</td>
                           <td 
@@ -2017,13 +2038,15 @@ export default function AdminHQ() {
             <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-black text-gray-950">Order Details</h3>
+                  <h3 className="text-base font-black text-gray-950">
+                    {viewingOrder.name || viewingOrder.customer_name || 'Customer Order'}
+                  </h3>
                   <span className="text-xs font-mono font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">
                     #{viewingOrder.id}
                   </span>
                 </div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
-                  Placed on {new Date(viewingOrder.created_at).toLocaleString()}
+                  Placed on {formatOrderDate(viewingOrder.created_at)}
                 </p>
               </div>
               <button
