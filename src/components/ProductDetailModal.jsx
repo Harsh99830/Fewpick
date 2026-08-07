@@ -70,9 +70,9 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
         </button>
 
         {/* Product Image Header */}
-        <div className="relative bg-[#f8f9ff] aspect-[4/3] flex items-center justify-center p-6 overflow-hidden border-b border-gray-100 flex-shrink-0">
+        <div className="relative bg-[#f8f9ff] aspect-[4/3] flex items-center justify-center p-3 sm:p-4 overflow-hidden border-b border-gray-100 flex-shrink-0">
           {activeProduct.discount > 0 && (
-            <span className="absolute top-4 left-4 bg-orange-600 text-white text-[0.65rem] font-extrabold px-2.5 py-1 rounded-md shadow-sm">
+            <span className="absolute top-4 left-4 bg-orange-600 text-white text-[0.65rem] font-extrabold px-2.5 py-1 rounded-md shadow-sm z-10">
               {activeProduct.discount}% OFF
             </span>
           )}
@@ -80,7 +80,7 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
             <img
               src={activeProduct.image}
               alt={activeProduct.name}
-              className="max-w-[75%] max-h-[75%] object-contain transition-all duration-300"
+              className="w-full h-full object-contain scale-105 transition-all duration-300"
             />
           ) : (
             <div className="text-6xl">📦</div>

@@ -33,8 +33,8 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
       onClick={() => onSelectProduct && onSelectProduct(product)}
       className="bg-white rounded-xl sm:rounded-2xl border border-[#e8eaf0] overflow-hidden transition-all duration-200 cursor-pointer flex flex-col hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:border-gray-300 hover:-translate-y-0.5 group"
     >
-      {/* Balanced Image Container */}
-      <div className="relative bg-[#f8f9ff] h-[125px] sm:h-[145px] w-full flex items-center justify-center overflow-hidden p-2 sm:p-3">
+      {/* Zoomed Product Image Container */}
+      <div className="relative bg-[#f8f9ff] h-[135px] sm:h-[155px] w-full flex items-center justify-center overflow-hidden p-1.5 sm:p-2">
         {product.discount > 0 && (
           <span className={`absolute top-2 left-2 text-[0.62rem] font-black py-0.5 px-1.5 rounded tracking-tight text-white z-10 ${discountColor}`}>
             {product.discount}% OFF
@@ -48,7 +48,7 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
         <img
           src={product.image}
           alt={product.name}
-          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain scale-105 transition-transform duration-300 group-hover:scale-115"
           loading="lazy"
         />
       </div>
