@@ -264,7 +264,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                 value={customerPhone}
                 onChange={handlePhoneChange}
                 maxLength={10}
-                placeholder="10-digit mobile number (e.g. 9876543210)"
+                placeholder="Enter 10-digit mobile number"
                 className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
                   phoneError
                     ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
