@@ -133,14 +133,14 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px] pointer-events-none">Pick</span>
             </button>
 
-            {/* Location — hidden on mobile */}
-            <button className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] flex-shrink-0 relative z-10">
-              <MapPin size={16} className="text-[#6366f1] flex-shrink-0 pointer-events-none" />
-              <div className="flex flex-col items-start pointer-events-none">
-                <span className="text-[0.625rem] font-medium text-[#9ca3af] uppercase tracking-[0.05em]">Deliver to</span>
-                <span className="text-xs font-bold text-[#1f2937] flex items-center gap-0.5">Poornima University</span>
+            {/* Location Indicator */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] flex-shrink relative z-10 min-w-0">
+              <MapPin size={15} className="text-[#6366f1] flex-shrink-0 pointer-events-none" />
+              <div className="flex flex-col items-start pointer-events-none min-w-0">
+                <span className="text-[0.55rem] sm:text-[0.625rem] font-bold text-[#9ca3af] uppercase tracking-[0.05em] leading-none">Deliver to</span>
+                <span className="text-[0.7rem] sm:text-xs font-bold text-[#1f2937] truncate max-w-[125px] sm:max-w-none">Poornima University</span>
               </div>
-            </button>
+            </div>
 
             {/* Search — Desktop */}
             {!isSearchHidden && (
@@ -250,15 +250,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
           {/* Mobile menu drawer */}
           {menuOpen && (
-            <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 pb-4 shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
-              <button className="flex items-center gap-2 px-2.5 py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] cursor-pointer transition-all hover:border-[#d1d5db] hover:bg-[#f3f4f6] w-full justify-start mt-3">
-                <MapPin size={16} className="text-[#6366f1] flex-shrink-0" />
-                <div className="flex flex-col items-start">
-                  <span className="text-[0.625rem] font-medium text-[#9ca3af] uppercase tracking-[0.05em]">Deliver to</span>
-                  <span className="text-xs font-bold text-[#1f2937] flex items-center gap-0.5">Poornima University</span>
-                </div>
-              </button>
-              <div className="h-px bg-[#f1f3f9] my-1.5" />
+            <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
               <button
                 onClick={() => handleNavigate('contact')}
                 className="w-full text-left bg-transparent border-none text-[0.95rem] font-semibold text-[#374151] py-3 px-3.5 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-indigo-600"
