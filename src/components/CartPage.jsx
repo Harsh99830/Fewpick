@@ -264,7 +264,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
 
           <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-center">
             <p className="text-[11.5px] text-amber-950 font-medium leading-relaxed m-0">
-              Orders are processed in <strong>30-minute slots</strong>. For <strong>Quick Delivery</strong>, message us on WhatsApp. <strong>₹10 extra applies</strong>.
+              Orders are processed in <strong>30-minute slots</strong>. For <strong>Quick Delivery</strong>, message us after placing order. <strong>₹10 extra applies</strong>.
             </p>
           </div>
         </div>
