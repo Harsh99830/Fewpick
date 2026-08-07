@@ -190,12 +190,6 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         <div className="bg-white rounded-2xl border border-[#e8eaf0] shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 flex flex-col gap-6 lg:sticky lg:top-24">
           <div className="border-b border-gray-100 pb-4 flex flex-col gap-2">
             <h2 className="text-lg font-black text-gray-900 m-0">Bill Details</h2>
-            <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200/80 px-3 py-1.5 rounded-lg text-xs self-start">
-              <MapPin size={13} className="text-indigo-600 flex-shrink-0" />
-              <span className="text-gray-600 font-medium">
-                Delivering to <strong className="text-gray-900 font-extrabold">Poornima University</strong> only
-              </span>
-            </div>
           </div>
 
           {/* Customer Name Input Field */}
@@ -267,6 +261,12 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
               )}
             </button>
           )}
+
+          <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-center">
+            <p className="text-[11.5px] text-amber-950 font-medium leading-relaxed m-0">
+              Orders are processed in <strong>30-minute slots</strong>. For <strong>Quick Delivery</strong>, message us on WhatsApp. <strong>₹10 extra applies</strong>.
+            </p>
+          </div>
         </div>
       </div>
     </div>
