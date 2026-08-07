@@ -1,6 +1,6 @@
 import ProductCard from './ProductCard';
 
-export default function ProductSection({ products = [], cartItems = [], onUpdateQty, orderingEnabled = true }) {
+export default function ProductSection({ products = [], cartItems = [], onUpdateQty, orderingEnabled = true, onSelectProduct }) {
   // Filter items marked as featured, or items with badges/category 'Featured'
   const featuredProducts = products.filter(
     (p) => p.is_featured === true || p.featured === true || Boolean(p.badge) || p.category === 'Featured'
@@ -28,6 +28,7 @@ export default function ProductSection({ products = [], cartItems = [], onUpdate
                 cartItems={cartItems}
                 onUpdateQty={onUpdateQty}
                 orderingEnabled={orderingEnabled}
+                onSelectProduct={onSelectProduct}
               />
             ))}
           </div>
@@ -51,6 +52,7 @@ export default function ProductSection({ products = [], cartItems = [], onUpdate
                 cartItems={cartItems}
                 onUpdateQty={onUpdateQty}
                 orderingEnabled={orderingEnabled}
+                onSelectProduct={onSelectProduct}
               />
             ))}
           </div>

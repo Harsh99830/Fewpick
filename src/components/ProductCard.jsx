@@ -10,18 +10,30 @@ const badgeColorMap = {
   purple: 'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
-export default function ProductCard({ product, cartItems = [], onUpdateQty }) {
+export default function ProductCard({ product, cartItems = [], onUpdateQty, onSelectProduct }) {
   const cartItem = cartItems.find((item) => item.product.id === product.id);
   const qty = cartItem ? cartItem.quantity : 0;
 
-  const handleAdd = () => onUpdateQty(product.id, 1);
-  const handleInc = () => onUpdateQty(product.id, qty + 1);
-  const handleDec = () => onUpdateQty(product.id, qty - 1);
+  const handleAdd = (e) => {
+    e.stopPropagation();
+    onUpdateQty(product.id, 1);
+  };
+  const handleInc = (e) => {
+    e.stopPropagation();
+    onUpdateQty(product.id, qty + 1);
+  };
+  const handleDec = (e) => {
+    e.stopPropagation();
+    onUpdateQty(product.id, qty - 1);
+  };
 
   const discountColor = product.discount >= 50 ? 'bg-red-600' : 'bg-orange-600';
 
   return (
-    <article className="bg-white rounded-[14px] sm:rounded-[18px] border-[1.5px] border-[#f1f3f9] overflow-hidden transition-all duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer flex flex-col hover:shadow-[0_12px_40px_rgba(99,102,241,0.12)] hover:border-[#e0e2f0] hover:-translate-y-[3px] group">
+    <article
+      onClick={() => onSelectProduct && onSelectProduct(product)}
+      className="bg-white rounded-[14px] sm:rounded-[18px] border-[1.5px] border-[#f1f3f9] overflow-hidden transition-all duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer flex flex-col hover:shadow-[0_12px_40px_rgba(99,102,241,0.12)] hover:border-[#e0e2f0] hover:-translate-y-[3px] group"
+    >
       {/* Image */}
       <div className="relative bg-[#f8f9ff] aspect-square flex items-center justify-center overflow-hidden p-2.5 sm:p-4">
         {product.discount > 0 && (

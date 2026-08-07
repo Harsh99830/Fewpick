@@ -1,14 +1,31 @@
+import { useState, useEffect } from 'react';
 import { X, Plus, Minus } from 'lucide-react';
 
-export default function ProductDetailModal({ product, onClose, cartItems = [], onUpdateQty }) {
+export default function ProductDetailModal({ product, onClose, cartItems = [], onUpdateQty, products = [] }) {
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
+
+  useEffect(() => {
+    if (product) {
+      setSelectedVariantId(product.id);
+    }
+  }, [product]);
+
   if (!product) return null;
 
-  const cartItem = cartItems.find((item) => item.product.id === product.id);
+  const baseName = product.name.trim().toLowerCase();
+  const variants = products.filter(
+    (p) => p.name && p.name.trim().toLowerCase() === baseName
+  );
+
+  // Active product variant selected inside the modal
+  const activeProduct = variants.find((v) => v.id === selectedVariantId) || product;
+
+  const cartItem = cartItems.find((item) => item.product.id === activeProduct.id);
   const qty = cartItem ? cartItem.quantity : 0;
 
-  const handleAdd = () => onUpdateQty(product.id, 1);
-  const handleInc = () => onUpdateQty(product.id, qty + 1);
-  const handleDec = () => onUpdateQty(product.id, qty - 1);
+  const handleAdd = () => onUpdateQty(activeProduct.id, 1);
+  const handleInc = () => onUpdateQty(activeProduct.id, qty + 1);
+  const handleDec = () => onUpdateQty(activeProduct.id, qty - 1);
 
   return (
     <div className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
@@ -17,7 +34,7 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
         onClick={onClose} 
       />
 
-      <div className="relative bg-white w-full max-w-[440px] rounded-3xl shadow-2xl overflow-hidden z-10 animate-drop-in border border-gray-100">
+      <div className="relative bg-white w-full max-w-[420px] rounded-3xl shadow-2xl overflow-hidden z-10 animate-drop-in border border-gray-100 flex flex-col">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -26,76 +43,116 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
           <X size={18} />
         </button>
 
-        {/* Product Image */}
-        <div className="relative bg-[#f8f9ff] aspect-square flex items-center justify-center p-8 overflow-hidden border-b border-gray-100">
-          {product.discount > 0 && (
-            <span className="absolute top-4 left-4 bg-orange-600 text-white text-xs font-extrabold px-2.5 py-1 rounded-lg">
-              {product.discount}% OFF
+        {/* Product Image Header */}
+        <div className="relative bg-[#f8f9ff] aspect-[4/3] flex items-center justify-center p-6 overflow-hidden border-b border-gray-100 flex-shrink-0">
+          {activeProduct.discount > 0 && (
+            <span className="absolute top-4 left-4 bg-orange-600 text-white text-[0.65rem] font-extrabold px-2.5 py-1 rounded-md shadow-sm">
+              {activeProduct.discount}% OFF
             </span>
           )}
-          {product.image ? (
+          {activeProduct.image ? (
             <img
-              src={product.image}
-              alt={product.name}
-              className="max-w-[80%] max-h-[80%] object-contain"
+              src={activeProduct.image}
+              alt={activeProduct.name}
+              className="max-w-[75%] max-h-[75%] object-contain transition-all duration-300"
             />
           ) : (
             <div className="text-6xl">📦</div>
           )}
         </div>
 
-        {/* Product Details */}
-        <div className="p-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md self-start">
-              {product.category || 'General'}
+        {/* Product Details & Compact Horizontal Variant Selector */}
+        <div className="p-5 flex flex-col gap-3.5">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded self-start">
+              {activeProduct.category || 'General'}
             </span>
-            <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-snug">
-              {product.name}
+            <h2 className="text-base font-extrabold text-gray-900 mt-1 leading-snug">
+              {activeProduct.name}
             </h2>
             <p className="text-xs text-gray-400 font-semibold m-0">
-              {product.weight}
+              {activeProduct.weight || 'Standard Pack'}
             </p>
           </div>
 
+          {/* Active Price */}
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-gray-900">₹{product.price}</span>
-            {product.mrp && product.mrp > product.price && (
+            <span className="text-xl font-black text-gray-900">₹{activeProduct.price}</span>
+            {activeProduct.mrp && activeProduct.mrp > activeProduct.price && (
               <>
-                <span className="text-sm text-gray-300 line-through">₹{product.mrp}</span>
-                <span className="text-xs text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-md">
-                  Save ₹{product.mrp - product.price}
+                <span className="text-xs text-gray-300 line-through">₹{activeProduct.mrp}</span>
+                <span className="text-[0.65rem] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded">
+                  Save ₹{activeProduct.mrp - activeProduct.price}
                 </span>
               </>
             )}
           </div>
 
+          {/* Clean Horizontal Pack Size Pills */}
+          {variants.length > 1 && (
+            <div className="flex flex-col gap-1.5 pt-1 border-t border-gray-100">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Select Pack Size
+              </span>
+              <div className="flex flex-nowrap overflow-x-auto gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth w-full">
+                {variants.map((v) => {
+                  const isSelected = v.id === activeProduct.id;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariantId(v.id)}
+                      className={`flex flex-col items-center justify-center px-3.5 py-1.5 rounded-xl text-left flex-shrink-0 cursor-pointer transition-all border ${
+                        isSelected
+                          ? 'border-gray-950 bg-gray-950 text-white shadow-sm'
+                          : 'border-gray-200 bg-gray-50/80 text-gray-800 hover:bg-gray-100 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className={`text-[0.72rem] font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                        {v.weight || v.name}
+                      </span>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className={`text-[0.72rem] font-black ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                          ₹{v.price}
+                        </span>
+                        {v.mrp > v.price && (
+                          <span className={`text-[0.6rem] line-through ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                            ₹{v.mrp}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Add to Cart Controls */}
-          <div className="pt-2">
+          <div className="pt-1">
             {qty === 0 ? (
               <button
                 onClick={handleAdd}
-                className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white text-sm font-extrabold rounded-2xl transition-all shadow-[0_4px_16px_rgba(22,163,74,0.25)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none flex items-center justify-center gap-2"
+                className="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-[0_4px_14px_rgba(22,163,74,0.25)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none flex items-center justify-center gap-1.5"
               >
-                <Plus size={18} />
+                <Plus size={16} />
                 Add to Cart
               </button>
             ) : (
-              <div className="flex items-center border-2 border-green-600 rounded-2xl overflow-hidden">
+              <div className="flex items-center border-2 border-green-600 rounded-xl overflow-hidden">
                 <button
                   onClick={handleDec}
-                  className="flex-1 py-3.5 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700"
+                  className="flex-1 py-3 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700"
                 >
-                  <Minus size={18} />
+                  <Minus size={16} />
                 </button>
-                <span className="flex-1 text-center text-base font-black text-green-600">
+                <span className="flex-1 text-center text-sm font-black text-green-600">
                   {qty} in cart
                 </span>
                 <button
                   onClick={handleInc}
-                  className="flex-1 py-3.5 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700"
+                  className="flex-1 py-3 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700"
                 >
-                  <Plus size={18} />
+                  <Plus size={16} />
                 </button>
               </div>
             )}

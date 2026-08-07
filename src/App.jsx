@@ -8,6 +8,7 @@ import CartPage from './components/CartPage';
 import CategoryPage from './components/CategoryPage';
 import ContactPage from './components/ContactPage';
 import AdminHQ from './components/AdminHQ';
+import ProductDetailModal from './components/ProductDetailModal';
 import { snackProducts, groceryProducts } from './data/products';
 import { categories as fallbackCategories } from './data/categories';
 import { supabase } from './lib/supabase';
@@ -48,6 +49,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [orderingEnabled, setOrderingEnabled] = useState(true);
   const [closedMessage, setClosedMessage] = useState("Store is closed. We'll be back soon.");
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -227,6 +229,7 @@ const shuffleArray = (array) => {
                     cartItems={cartItems} 
                     onUpdateQty={handleUpdateQty} 
                     orderingEnabled={orderingEnabled}
+                    onSelectProduct={(p) => setSelectedProduct(p)}
                   />
                 </>
               } 
@@ -252,6 +255,7 @@ const shuffleArray = (array) => {
                   cartItems={cartItems}
                   onUpdateQty={handleUpdateQty}
                   orderingEnabled={orderingEnabled}
+                  onSelectProduct={(p) => setSelectedProduct(p)}
                 />
               } 
             />
@@ -270,6 +274,14 @@ const shuffleArray = (array) => {
           </Routes>
         )}
       </main>
+
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        cartItems={cartItems}
+        onUpdateQty={handleUpdateQty}
+        products={allProducts}
+      />
 
       <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto">
         <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">

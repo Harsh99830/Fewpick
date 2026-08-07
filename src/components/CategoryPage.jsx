@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import { categories as fallbackCategories } from '../data/categories';
 
-export default function CategoryPage({ products = [], categories = [], cartItems = [], onUpdateQty, orderingEnabled = true }) {
+export default function CategoryPage({ products = [], categories = [], cartItems = [], onUpdateQty, orderingEnabled = true, onSelectProduct }) {
   const { categoryName } = useParams();
   const navigate = useNavigate();
 
@@ -79,6 +79,7 @@ export default function CategoryPage({ products = [], categories = [], cartItems
               cartItems={cartItems}
               onUpdateQty={onUpdateQty}
               orderingEnabled={orderingEnabled}
+              onSelectProduct={onSelectProduct}
             />
           ))}
         </div>
