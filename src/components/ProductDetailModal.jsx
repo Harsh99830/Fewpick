@@ -20,12 +20,28 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  useEffect(() => {
+    if (product) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [product]);
+
   if (!product) return null;
 
   const baseName = product.name.trim().toLowerCase();
-  const variants = products.filter(
+  const matchingVariants = products.filter(
     (p) => p.name && p.name.trim().toLowerCase() === baseName
   );
+
+  // Clicked item comes first, followed by remaining variants sorted by ascending price
+  const clickedItem = matchingVariants.find((p) => p.id === product.id) || product;
+  const otherVariants = matchingVariants
+    .filter((p) => p.id !== product.id)
+    .sort((a, b) => a.price - b.price);
+  const variants = matchingVariants.length > 0 ? [clickedItem, ...otherVariants] : [product];
 
   // Active product variant selected inside the modal
   const activeProduct = variants.find((v) => v.id === selectedVariantId) || product;
@@ -113,21 +129,21 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
                     <button
                       key={v.id}
                       onClick={() => setSelectedVariantId(v.id)}
-                      className={`flex flex-col items-center justify-center px-3.5 py-1.5 rounded-xl text-left flex-shrink-0 cursor-pointer transition-all border ${
+                      className={`flex flex-col items-center justify-center px-3.5 py-1.5 rounded-xl text-left flex-shrink-0 cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-gray-950 bg-gray-950 text-white shadow-sm'
-                          : 'border-gray-200 bg-gray-50/80 text-gray-800 hover:bg-gray-100 hover:border-gray-300'
+                          ? 'border-2 border-gray-900 bg-white shadow-sm'
+                          : 'border border-gray-200 bg-gray-50/70 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
                       }`}
                     >
-                      <span className={`text-[0.72rem] font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                      <span className={`text-[0.72rem] font-bold ${isSelected ? 'text-gray-950 font-black' : 'text-gray-900'}`}>
                         {v.weight || v.name}
                       </span>
                       <div className="flex items-baseline gap-1 mt-0.5">
-                        <span className={`text-[0.72rem] font-black ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                        <span className={`text-[0.72rem] font-black ${isSelected ? 'text-gray-950' : 'text-gray-900'}`}>
                           ₹{v.price}
                         </span>
                         {v.mrp > v.price && (
-                          <span className={`text-[0.6rem] line-through ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                          <span className={`text-[0.6rem] line-through ${isSelected ? 'text-gray-400' : 'text-gray-400'}`}>
                             ₹{v.mrp}
                           </span>
                         )}

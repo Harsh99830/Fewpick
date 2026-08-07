@@ -275,13 +275,15 @@ const shuffleArray = (array) => {
         )}
       </main>
 
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        cartItems={cartItems}
-        onUpdateQty={handleUpdateQty}
-        products={allProducts}
-      />
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          cartItems={cartItems}
+          onUpdateQty={handleUpdateQty}
+          products={allProducts}
+        />
+      )}
 
       <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto">
         <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">

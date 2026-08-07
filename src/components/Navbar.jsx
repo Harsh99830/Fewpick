@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
+import { getUniqueProductsByName } from '../utils/productUtils';
 
 export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage }) {
   const navigate = useNavigate();
@@ -34,6 +35,18 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
     };
   }, []);
 
+  useEffect(() => {
+    if (searchFocused && searchQuery.trim()) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [searchFocused, searchQuery]);
+
   const isSearchHidden = ['/cart', '/contact', '/hq'].includes(location.pathname);
 
   const handleNavigate = (page) => {
@@ -49,10 +62,11 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
     }
   };
 
-  const filteredProducts = searchQuery.trim() === '' ? [] : products.filter(p =>
+  const rawFilteredProducts = searchQuery.trim() === '' ? [] : products.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 7);
+  );
+  const filteredProducts = getUniqueProductsByName(rawFilteredProducts).slice(0, 7);
 
   const searchWrapperClass = `flex-1 max-w-[580px] h-11 flex items-center bg-[#f3f4f6] border-2 border-transparent rounded-xl px-3.5 transition-all overflow-hidden hover:bg-[#eff0f5] ${
     searchFocused || searchQuery ? '!bg-white !border-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]' : ''
@@ -264,6 +278,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
           onClose={() => setSelectedProduct(null)}
           cartItems={cartItems}
           onUpdateQty={onUpdateQty}
+          products={products}
         />
       )}
     </>
