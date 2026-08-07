@@ -10,6 +10,16 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
     }
   }, [product]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   if (!product) return null;
 
   const baseName = product.name.trim().toLowerCase();
@@ -148,7 +158,7 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
                   <Minus size={16} />
                 </button>
                 <span className="flex-1 text-center text-sm font-black text-green-600">
-                  {qty} in cart
+                  {qty}
                 </span>
                 <button
                   onClick={handleInc}

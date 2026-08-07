@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
@@ -6,10 +6,33 @@ import ProductDetailModal from './ProductDetailModal';
 export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const searchContainerRef = useRef(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSearchFocused(false);
+        setSearchQuery('');
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setSearchFocused(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const isSearchHidden = ['/cart', '/contact', '/hq'].includes(location.pathname);
 
@@ -108,7 +131,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
             {/* Search — Desktop */}
             {!isSearchHidden && (
-              <div className="hidden md:block flex-1 max-w-[580px] relative z-10">
+              <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-[580px] relative z-10">
                 <div className={searchWrapperClass}>
                   <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
                   <input
