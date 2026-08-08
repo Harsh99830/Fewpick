@@ -123,6 +123,60 @@ export default function AdminHQ() {
     }
   };
 
+  // Drag & drop reordering for categories
+  const [draggedCatIndex, setDraggedCatIndex] = useState(null);
+  const [dragOverCatIndex, setDragOverCatIndex] = useState(null);
+
+  const handleDragStartCat = (e, index) => {
+    setDraggedCatIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOverCat = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverCatIndex !== index) {
+      setDragOverCatIndex(index);
+    }
+  };
+
+  const handleDropCat = async (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedCatIndex === null || draggedCatIndex === targetIndex) {
+      setDraggedCatIndex(null);
+      setDragOverCatIndex(null);
+      return;
+    }
+
+    const draggedCat = categories[draggedCatIndex];
+    const updatedCats = [...categories];
+    updatedCats.splice(draggedCatIndex, 1);
+    updatedCats.splice(targetIndex, 0, draggedCat);
+
+    // Re-index display_order for all categories
+    let catOrderCounter = 1;
+    const updatesToSave = [];
+
+    const reindexedCats = updatedCats.map((cat) => {
+      const newOrder = catOrderCounter++;
+      updatesToSave.push({ id: cat.id, display_order: newOrder });
+      return { ...cat, display_order: newOrder };
+    });
+
+    setCategories(reindexedCats);
+    setDraggedCatIndex(null);
+    setDragOverCatIndex(null);
+
+    // Save display_order to Supabase database
+    try {
+      for (const update of updatesToSave) {
+        await supabase.from('category').update({ display_order: update.display_order }).eq('id', update.id);
+      }
+    } catch (err) {
+      console.error('Error saving category order:', err);
+    }
+  };
+
   // Selection and Edit States for Items
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -318,13 +372,26 @@ export default function AdminHQ() {
     setIsLoadingItems(true);
     setItemsError('');
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('items')
         .select('*')
-        .order('id', { ascending: true });
+        .order('display_order', { ascending: true, nullsFirst: false });
 
-      if (error) throw error;
-      setItems(data || []);
+      if (error) {
+        const fallbackRes = await supabase.from('items').select('*').order('id', { ascending: true });
+        if (fallbackRes.error) throw fallbackRes.error;
+        data = fallbackRes.data;
+      }
+
+      // Ensure featured items display in their exact display_order sequence
+      const sortedData = [...(data || [])].sort((a, b) => {
+        if (a.featured && b.featured) {
+          return (a.display_order ?? 999) - (b.display_order ?? 999);
+        }
+        return 0;
+      });
+
+      setItems(sortedData);
     } catch (err) {
       console.error('Fetch items error:', err);
       setItemsError('Failed to load items catalog.');
@@ -336,13 +403,19 @@ export default function AdminHQ() {
   const fetchCategories = async () => {
     setIsLoadingCategories(true);
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('category')
         .select('*')
-        .order('id', { ascending: true });
+        .order('display_order', { ascending: true, nullsFirst: false });
 
-      if (error) throw error;
-      setCategories(data || []);
+      if (error) {
+        const fallbackRes = await supabase.from('category').select('*').order('id', { ascending: true });
+        if (fallbackRes.error) throw fallbackRes.error;
+        data = fallbackRes.data;
+      }
+
+      const sortedCats = [...(data || [])].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
+      setCategories(sortedCats);
     } catch (err) {
       console.error('Fetch categories error:', err);
     } finally {
@@ -1296,6 +1369,7 @@ export default function AdminHQ() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-150 bg-gray-50/50 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                  <th className="py-3 px-2 w-8 text-center" title="Reorder Categories"></th>
                   {isCatSelectionMode && (
                     <th className="py-3 px-4 w-10 text-center">
                       <input
@@ -1314,7 +1388,7 @@ export default function AdminHQ() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {categories.map((cat) => {
+                {categories.map((cat, index) => {
                   const isSelected = selectedCatIds.has(cat.id);
                   const linkedItemsCount = items.filter(
                     (i) => i.category && i.category.toLowerCase() === (cat.name || '').toLowerCase()
@@ -1325,9 +1399,22 @@ export default function AdminHQ() {
                   return (
                     <tr
                       key={cat.id}
-                      className={`hover:bg-gray-50/50 transition-colors ${isSelected ? 'bg-indigo-50/20' : ''
-                        }`}
+                      className={`hover:bg-gray-50/50 transition-colors ${isSelected ? 'bg-indigo-50/20' : ''} ${dragOverCatIndex === index ? 'bg-indigo-50/40 border-y-2 border-indigo-500' : ''}`}
                     >
+                      <td 
+                        className="py-4 px-2 text-center"
+                        onDragOver={(e) => handleDragOverCat(e, index)}
+                        onDrop={(e) => handleDropCat(e, index)}
+                      >
+                        <div 
+                          draggable
+                          onDragStart={(e) => handleDragStartCat(e, index)}
+                          className="cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                          title="Drag to reorder category"
+                        >
+                          <GripVertical size={16} />
+                        </div>
+                      </td>
                       {isCatSelectionMode && (
                         <td className="py-4 px-4 text-center">
                           <input

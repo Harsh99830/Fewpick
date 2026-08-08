@@ -122,16 +122,19 @@ const shuffleArray = (array) => {
         setAllProducts(shuffleArray(mappedData));
 
         if (!categoryRes.error && categoryRes.data) {
-          const mappedCats = categoryRes.data.map(cat => {
-            const staticColors = getCategoryColors(cat.id);
-            return {
-              id: cat.id,
-              name: cat.name,
-              image: cat.image,
-              color: staticColors.color,
-              borderColor: staticColors.borderColor
-            };
-          });
+          const mappedCats = categoryRes.data
+            .map(cat => {
+              const staticColors = getCategoryColors(cat.id);
+              return {
+                id: cat.id,
+                name: cat.name,
+                image: cat.image,
+                display_order: cat.display_order ?? 999,
+                color: staticColors.color,
+                borderColor: staticColors.borderColor
+              };
+            })
+            .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
           setCategories(mappedCats);
         } else {
           setCategories(fallbackCategories);
