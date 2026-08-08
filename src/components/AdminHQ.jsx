@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone
+  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -11,6 +11,10 @@ export default function AdminHQ() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Search states for Catalog Items and Categories
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
+  const [catSearchQuery, setCatSearchQuery] = useState('');
 
   // Tabs state: 'dashboard', 'items', 'categories', 'orders'
   const [activeTab, setActiveTab] = useState(() => {
@@ -1050,7 +1054,13 @@ export default function AdminHQ() {
       </div>
     );
   };  // Sub-tab: Items List
-  const renderItemsTab = () => (
+  const renderItemsTab = () => {
+    const filteredItems = items.filter((i) =>
+      (i.name || '').toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
+      (i.category || '').toLowerCase().includes(itemSearchQuery.toLowerCase())
+    );
+
+    return (
     <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] min-h-[320px]">
       {isSelectionMode ? (
         <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-4">
@@ -1082,15 +1092,36 @@ export default function AdminHQ() {
         <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Catalog Inventory</h2>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{items.length} Products</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+              {filteredItems.length} of {items.length} Products
+            </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 flex-wrap flex-1 max-w-[420px] justify-end">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={itemSearchQuery}
+                onChange={(e) => setItemSearchQuery(e.target.value)}
+                placeholder="Search catalog items..."
+                className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+              />
+              {itemSearchQuery && (
+                <button
+                  onClick={() => setItemSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-0.5 bg-transparent border-none cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
             <button
               onClick={() => {
                 setItemCategory(categories[0]?.name || '');
                 setShowAddItemModal(true);
               }}
-              className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none"
+              className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-none shadow-sm flex-shrink-0"
             >
               <Plus size={14} />
               Add Item
@@ -1106,8 +1137,10 @@ export default function AdminHQ() {
         </div>
       ) : itemsError ? (
         <div className="text-center py-16 px-4 text-xs font-semibold text-red-500">{itemsError}</div>
-      ) : items.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">No items found in your catalog.</div>
+      ) : filteredItems.length === 0 ? (
+        <div className="text-center py-20 text-gray-400 text-xs font-bold">
+          {itemSearchQuery ? `No items matching "${itemSearchQuery}"` : 'No items found in your catalog.'}
+        </div>
       ) : (
         <div className="overflow-x-auto min-h-[260px] pb-16">
           <table className="w-full border-collapse text-left text-sm">
@@ -1146,7 +1179,7 @@ export default function AdminHQ() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((item, index) => (
+              {filteredItems.map((item, index) => (
                 <tr 
                   key={item.id} 
                   className={`hover:bg-gray-50/30 transition-colors ${selectedItemIds.has(item.id) ? 'bg-indigo-50/10' : ''} ${dragOverItemIndex === index ? 'bg-indigo-50/40 border-y-2 border-indigo-500' : ''}`}
@@ -1295,9 +1328,14 @@ export default function AdminHQ() {
       )}
     </div>
   );
+};
 
   // Sub-tab: Categories List
   const renderCategoriesTab = () => {
+    const filteredCategories = categories.filter((c) =>
+      (c.name || '').toLowerCase().includes(catSearchQuery.toLowerCase())
+    );
+
     return (
       <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
         {/* Header Controls */}
@@ -1305,14 +1343,33 @@ export default function AdminHQ() {
           <div>
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Category Management</h2>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
-              {categories.length} total categories registered in store
+              {filteredCategories.length} of {categories.length} total categories registered
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap flex-1 max-w-[520px] justify-end">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={catSearchQuery}
+                onChange={(e) => setCatSearchQuery(e.target.value)}
+                placeholder="Search categories..."
+                className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+              />
+              {catSearchQuery && (
+                <button
+                  onClick={() => setCatSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-0.5 bg-transparent border-none cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
             <button
               onClick={() => setShowAddCatModal(true)}
-              className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none shadow-sm flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none shadow-sm flex items-center gap-1.5 flex-shrink-0"
             >
               <Plus size={14} />
               Add Category
@@ -1323,7 +1380,7 @@ export default function AdminHQ() {
                 setIsCatSelectionMode(!isCatSelectionMode);
                 if (isCatSelectionMode) setSelectedCatIds(new Set());
               }}
-              className={`px-3 py-2 border text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${isCatSelectionMode
+              className={`px-3 py-2 border text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${isCatSelectionMode
                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                 : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
                 }`}
@@ -1360,9 +1417,9 @@ export default function AdminHQ() {
           <div className="p-12 text-center text-xs font-bold text-gray-400">
             Loading category registry...
           </div>
-        ) : categories.length === 0 ? (
+        ) : filteredCategories.length === 0 ? (
           <div className="p-16 text-center text-xs font-bold text-gray-400">
-            No categories registered yet. Click "Add Category" to create one.
+            {catSearchQuery ? `No categories matching "${catSearchQuery}"` : 'No categories registered yet. Click "Add Category" to create one.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -1388,7 +1445,7 @@ export default function AdminHQ() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {categories.map((cat, index) => {
+                {filteredCategories.map((cat, index) => {
                   const isSelected = selectedCatIds.has(cat.id);
                   const linkedItemsCount = items.filter(
                     (i) => i.category && i.category.toLowerCase() === (cat.name || '').toLowerCase()
