@@ -127,6 +127,33 @@ export default function AdminHQ() {
     }
   };
 
+  const handleToggleStock = async (itemId, currentStock) => {
+    const isCurrentlyOut = currentStock === 0 || currentStock === '0' || currentStock === false;
+    const newStock = isCurrentlyOut ? 50 : 0;
+
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === itemId ? { ...item, Stock: newStock, stock: newStock } : item
+      )
+    );
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .update({ Stock: newStock })
+        .eq('id', itemId);
+
+      if (error) {
+        await supabase
+          .from('items')
+          .update({ stock: newStock })
+          .eq('id', itemId);
+      }
+    } catch (err) {
+      console.error('Failed to toggle stock status:', err);
+    }
+  };
+
   // Drag & drop reordering for categories
   const [draggedCatIndex, setDraggedCatIndex] = useState(null);
   const [dragOverCatIndex, setDragOverCatIndex] = useState(null);
@@ -1173,98 +1200,107 @@ export default function AdminHQ() {
                 <th className="py-4 px-6">Product Details</th>
                 <th className="py-4 px-6">Category</th>
                 <th className="py-4 px-6 text-right">Price / MRP</th>
-                <th className="py-4 px-6 text-center">Stock Level</th>
+                <th className="py-4 px-6 text-center">Out of Stock</th>
                 <th className="py-4 px-6 text-center">Featured</th>
                 <th className="py-4 px-6 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredItems.map((item, index) => (
-                <tr 
-                  key={item.id} 
-                  className={`hover:bg-gray-50/30 transition-colors ${selectedItemIds.has(item.id) ? 'bg-indigo-50/10' : ''} ${dragOverItemIndex === index ? 'bg-indigo-50/40 border-y-2 border-indigo-500' : ''}`}
-                >
-                  <td 
-                    className="py-4 px-2 text-center"
-                    onDragOver={(e) => handleDragOverItem(e, index)}
-                    onDrop={(e) => handleDropItem(e, index)}
+              {filteredItems.map((item, index) => {
+                const isOutOfStock = item.Stock === 0 || item.Stock === '0' || item.stock === 0;
+
+                return (
+                  <tr 
+                    key={item.id} 
+                    className={`hover:bg-gray-50/30 transition-colors ${selectedItemIds.has(item.id) ? 'bg-indigo-50/10' : ''} ${dragOverItemIndex === index ? 'bg-indigo-50/40 border-y-2 border-indigo-500' : ''}`}
                   >
-                    {item.featured ? (
-                      <div 
-                        draggable
-                        onDragStart={(e) => handleDragStartItem(e, index)}
-                        className="cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center justify-center"
-                        title="Drag to reorder featured item"
-                      >
-                        <GripVertical size={16} />
-                      </div>
-                    ) : (
-                      <div 
-                        className="p-1.5 text-gray-200 cursor-not-allowed opacity-30 inline-flex items-center justify-center"
-                        title="Only featured items can be reordered"
-                      >
-                        <GripVertical size={16} />
-                      </div>
-                    )}
-                  </td>
-                  {isSelectionMode && (
-                    <td className="py-4 px-6 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedItemIds.has(item.id)}
-                        onChange={() => {
-                          const next = new Set(selectedItemIds);
-                          if (next.has(item.id)) {
-                            next.delete(item.id);
-                          } else {
-                            next.add(item.id);
-                          }
-                          setSelectedItemIds(next);
-                        }}
-                        className="w-4 h-4 rounded border-gray-305 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                      />
-                    </td>
-                  )}
-                  <td className="py-4 px-6 font-bold text-gray-400">#{item.id}</td>
-                  <td className="py-4 px-6">
-                    <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden">
-                      <img src={item.image} alt="" className="max-w-full max-h-full object-contain" />
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex flex-col">
-                      <span className="font-extrabold text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
-                        {item.name}
-                        {item.featured && (
-                          <Star size={12} className="text-amber-500 fill-amber-500 flex-shrink-0" />
-                        )}
-                      </span>
-                      <span className="text-[10px] text-gray-400 mt-0.5">{item.weight}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                      {item.category}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right whitespace-nowrap">
-                    <div className="flex flex-col items-end">
-                      <span className="font-black text-gray-900">₹{item.price}</span>
-                      {item.mrp && item.mrp > item.price && (
-                        <span className="text-[10px] text-gray-400 line-through">₹{item.mrp}</span>
+                    <td 
+                      className="py-4 px-2 text-center"
+                      onDragOver={(e) => handleDragOverItem(e, index)}
+                      onDrop={(e) => handleDropItem(e, index)}
+                    >
+                      {item.featured ? (
+                        <div 
+                          draggable
+                          onDragStart={(e) => handleDragStartItem(e, index)}
+                          className="cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                          title="Drag to reorder featured item"
+                        >
+                          <GripVertical size={16} />
+                        </div>
+                      ) : (
+                        <div 
+                          className="p-1.5 text-gray-200 cursor-not-allowed opacity-30 inline-flex items-center justify-center"
+                          title="Only featured items can be reordered"
+                        >
+                          <GripVertical size={16} />
+                        </div>
                       )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.Stock === 0
-                      ? 'bg-red-50 text-red-600 border border-red-100'
-                      : item.Stock < 20
-                        ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                        : 'bg-green-50 text-green-600 border border-green-100'
-                      }`}>
-                      {item.Stock ?? 'N/A'} units
-                    </span>
-                  </td>
+                    </td>
+                    {isSelectionMode && (
+                      <td className="py-4 px-6 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedItemIds.has(item.id)}
+                          onChange={() => {
+                            const next = new Set(selectedItemIds);
+                            if (next.has(item.id)) {
+                              next.delete(item.id);
+                            } else {
+                              next.add(item.id);
+                            }
+                            setSelectedItemIds(next);
+                          }}
+                          className="w-4 h-4 rounded border-gray-305 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                      </td>
+                    )}
+                    <td className="py-4 px-6 font-bold text-gray-400">#{item.id}</td>
+                    <td className="py-4 px-6">
+                      <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden">
+                        <img src={item.image} alt="" className="max-w-full max-h-full object-contain" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
+                          {item.name}
+                          {item.featured && (
+                            <Star size={12} className="text-amber-500 fill-amber-500 flex-shrink-0" />
+                          )}
+                        </span>
+                        <span className="text-[10px] text-gray-400 mt-0.5">{item.weight}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex flex-col items-end">
+                        <span className="font-black text-gray-900">₹{item.price}</span>
+                        {item.mrp && item.mrp > item.price && (
+                          <span className="text-[10px] text-gray-400 line-through">₹{item.mrp}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-center whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStock(item.id, item.Stock ?? item.stock)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
+                          isOutOfStock ? 'bg-gray-300 hover:bg-gray-400' : 'bg-[#10b981] hover:bg-emerald-600'
+                        }`}
+                        title={isOutOfStock ? 'Click to mark In Stock (ON)' : 'Click to mark Out of Stock (OFF)'}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            isOutOfStock ? 'translate-x-0' : 'translate-x-5'
+                          }`}
+                        />
+                      </button>
+                    </td>
                   <td className="py-4 px-6 text-center">
                     <button
                       onClick={() => handleToggleFeatured(item.id, item.featured)}
@@ -1321,8 +1357,9 @@ export default function AdminHQ() {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              );
+            })}
+              </tbody>
           </table>
         </div>
       )}

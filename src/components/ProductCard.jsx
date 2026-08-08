@@ -72,8 +72,12 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
           )}
         </div>
 
-        {/* Balanced Add Button */}
-        {qty === 0 ? (
+        {/* Add Button or Out of Stock Badge */}
+        {(product.Stock === 0 || product.Stock === '0' || product.stock === 0) ? (
+          <div className="w-full py-1.5 sm:py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-400 text-xs font-bold text-center mt-auto cursor-not-allowed select-none">
+            Out of Stock
+          </div>
+        ) : qty === 0 ? (
           <button
             className="w-full py-1.5 sm:py-2 border border-green-600 rounded-lg bg-transparent text-green-600 text-xs font-extrabold cursor-pointer flex items-center justify-center gap-1 transition-all hover:bg-green-600 hover:text-white mt-auto"
             onClick={handleAdd}

@@ -156,7 +156,11 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
 
           {/* Add to Cart Controls */}
           <div className="pt-1">
-            {qty === 0 ? (
+            {(activeProduct.Stock === 0 || activeProduct.Stock === '0' || activeProduct.stock === 0) ? (
+              <div className="w-full py-3 bg-gray-100 border border-gray-200 text-gray-400 text-xs font-black rounded-xl text-center cursor-not-allowed select-none">
+                Out of Stock
+              </div>
+            ) : qty === 0 ? (
               <button
                 onClick={handleAdd}
                 className="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-[0_4px_14px_rgba(22,163,74,0.25)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none flex items-center justify-center gap-1.5"
