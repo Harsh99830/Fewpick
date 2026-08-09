@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search
+  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search, Store
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -50,6 +50,7 @@ export default function AdminHQ() {
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [shops, setShops] = useState([]);
   const [orderingEnabled, setOrderingEnabled] = useState(true);
   const [isTogglingOrdering, setIsTogglingOrdering] = useState(false);
   const [closedMessage, setClosedMessage] = useState("Store is closed. We'll be back at 9:00 PM.");
@@ -58,8 +59,20 @@ export default function AdminHQ() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const [itemsError, setItemsError] = useState('');
+
+  // Add Item & Edit Item Shop Choice States
+  const [itemShopId, setItemShopId] = useState('');
+  const [editShopId, setEditShopId] = useState('');
+
+  // Add Shop Form States
+  const [showAddShopModal, setShowAddShopModal] = useState(false);
+  const [shopName, setShopName] = useState('');
+  const [shopImage, setShopImage] = useState('');
+  const [shopDescription, setShopDescription] = useState('');
+  const [isSubmittingShop, setIsSubmittingShop] = useState(false);
 
   // Drag & drop reordering for featured items
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
@@ -281,6 +294,7 @@ export default function AdminHQ() {
     fetchOrders();
     fetchItems();
     fetchCategories();
+    fetchShops();
     fetchStoreSettings();
   };
 
@@ -454,6 +468,109 @@ export default function AdminHQ() {
     }
   };
 
+  const fetchShops = async () => {
+    setIsLoadingShops(true);
+    try {
+      let { data, error } = await supabase
+        .from('shops')
+        .select('*')
+        .order('id', { ascending: true });
+
+      const closedIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
+
+      if (error || !data) {
+        console.warn('Shops fetch error:', error?.message);
+        setShops([]);
+      } else {
+        const syncedShops = data.map(s => ({
+          ...s,
+          is_open: closedIds.includes(String(s.id)) ? false : (s.is_open ?? true)
+        }));
+        setShops(syncedShops);
+      }
+    } catch (err) {
+      console.error('Fetch shops error:', err);
+    } finally {
+      setIsLoadingShops(false);
+    }
+  };
+
+  const handleAddShopSubmit = async (e) => {
+    e.preventDefault();
+    if (!shopName.trim()) return;
+
+    setIsSubmittingShop(true);
+    try {
+      const newShop = {
+        name: shopName.trim(),
+        image: shopImage.trim() || null,
+        description: shopDescription.trim() || null,
+        is_open: true
+      };
+
+      const { data, error } = await supabase
+        .from('shops')
+        .insert([newShop])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        setShops((prev) => [...prev, data[0]]);
+        setShowAddShopModal(false);
+        setShopName('');
+        setShopImage('');
+        setShopDescription('');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create shop: ' + err.message);
+    } finally {
+      setIsSubmittingShop(false);
+    }
+  };
+
+  const handleDeleteShop = async (shopId) => {
+    if (!confirm('Are you sure you want to delete this shop?')) return;
+    try {
+      const { error } = await supabase.from('shops').delete().eq('id', shopId);
+      if (error) throw error;
+      setShops((prev) => prev.filter((s) => s.id !== shopId));
+    } catch (err) {
+      alert('Failed to delete shop: ' + err.message);
+    }
+  };
+
+  const handleToggleShopStatus = async (shopId, currentIsOpen) => {
+    const newIsOpen = currentIsOpen === false || currentIsOpen === 'false' ? true : false;
+
+    setShops((prevShops) => {
+      const updated = prevShops.map((s) => (s.id === shopId ? { ...s, is_open: newIsOpen, status: newIsOpen ? 'open' : 'closed' } : s));
+      
+      const closedShopIds = updated
+        .filter(s => s.is_open === false || s.is_open === 'false' || s.status === 'closed')
+        .map(s => String(s.id));
+      
+      localStorage.setItem('fewpick_closed_shops', JSON.stringify(closedShopIds));
+      window.dispatchEvent(new Event('shops_updated'));
+      
+      return updated;
+    });
+
+    try {
+      const { error } = await supabase
+        .from('shops')
+        .update({ is_open: newIsOpen })
+        .eq('id', shopId);
+
+      if (error) {
+        console.warn('Supabase update notice:', error.message);
+      }
+    } catch (err) {
+      console.error('Toggle shop status error:', err);
+    }
+  };
+
   const generateShortId = (length = 8) => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -469,6 +586,8 @@ export default function AdminHQ() {
 
     setIsSubmittingItem(true);
     try {
+      const selectedShop = shops.find(s => String(s.id) === String(itemShopId));
+
       const newItem = {
         id: generateShortId(8),
         name: itemName,
@@ -477,6 +596,8 @@ export default function AdminHQ() {
         mrp: itemMrp ? parseInt(itemMrp) : null,
         image: itemImage || null,
         category: itemCategory || null,
+        shop_id: itemShopId ? itemShopId : null,
+        shop_name: selectedShop ? selectedShop.name : null,
         Stock: itemStock ? parseInt(itemStock) : null,
         featured: itemFeatured
       };
@@ -498,6 +619,7 @@ export default function AdminHQ() {
         setItemMrp('');
         setItemImage('');
         setItemCategory(categories[0]?.name || '');
+        setItemShopId('');
         setItemStock('');
         setItemFeatured(false);
       }
@@ -611,7 +733,8 @@ export default function AdminHQ() {
     setEditMrp(item.mrp || '');
     setEditImage(item.image || '');
     setEditCategory(item.category || '');
-    setEditStock(item.Stock || '');
+    setEditShopId(item.shop_id || '');
+    setEditStock(item.Stock ?? item.stock ?? '');
     setEditFeatured(item.featured || false);
     setActiveMenuId(null);
   };
@@ -622,6 +745,8 @@ export default function AdminHQ() {
 
     setIsSubmittingEdit(true);
     try {
+      const selectedShop = shops.find(s => String(s.id) === String(editShopId));
+
       const updatedFields = {
         name: editName,
         weight: editWeight || null,
@@ -629,6 +754,8 @@ export default function AdminHQ() {
         mrp: editMrp ? parseInt(editMrp) : null,
         image: editImage || null,
         category: editCategory || null,
+        shop_id: editShopId ? editShopId : null,
+        shop_name: selectedShop ? selectedShop.name : null,
         Stock: editStock ? parseInt(editStock) : null,
         featured: editFeatured
       };
@@ -1199,6 +1326,7 @@ export default function AdminHQ() {
                 <th className="py-4 px-6">Image</th>
                 <th className="py-4 px-6">Product Details</th>
                 <th className="py-4 px-6">Category</th>
+                <th className="py-4 px-6">Assigned Shop</th>
                 <th className="py-4 px-6 text-right">Price / MRP</th>
                 <th className="py-4 px-6 text-center">Out of Stock</th>
                 <th className="py-4 px-6 text-center">Featured</th>
@@ -1207,7 +1335,12 @@ export default function AdminHQ() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredItems.map((item, index) => {
-                const isOutOfStock = item.Stock === 0 || item.Stock === '0' || item.stock === 0;
+                const assignedShop = shops.find(
+                  (s) => String(s.id) === String(item.shop_id) || (s.name || '').toLowerCase() === (item.shop_name || '').toLowerCase()
+                );
+                const isShopClosed = assignedShop && (assignedShop.is_open === false || assignedShop.is_open === 'false' || assignedShop.status === 'closed');
+                const isItemExplicitlyOut = item.Stock === 0 || item.Stock === '0' || item.stock === 0;
+                const isOutOfStock = isItemExplicitlyOut || isShopClosed;
 
                 return (
                   <tr 
@@ -1276,6 +1409,20 @@ export default function AdminHQ() {
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
                         {item.category}
                       </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {assignedShop ? (
+                        <span className={`text-[10px] font-extrabold px-2 py-1 rounded-md border flex items-center gap-1 w-max ${
+                          isShopClosed ? 'bg-red-50 text-red-700 border-red-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                        }`}>
+                          <Store size={11} />
+                          {assignedShop.name} {isShopClosed ? '(Closed)' : ''}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-gray-400 italic">
+                          No Shop Assigned
+                        </span>
+                      )}
                     </td>
                     <td className="py-4 px-6 text-right whitespace-nowrap">
                       <div className="flex flex-col items-end">
@@ -1573,6 +1720,129 @@ export default function AdminHQ() {
     );
   };
 
+  // Sub-tab: Shops List
+  const renderShopsTab = () => {
+    return (
+      <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden min-h-[320px]">
+        {/* Header Controls */}
+        <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Shops Management</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+              {shops.length} total shops registered in store
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowAddShopModal(true)}
+            className="px-3.5 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none shadow-sm flex items-center gap-1.5 self-start md:self-auto"
+          >
+            <Plus size={14} />
+            Create New Shop
+          </button>
+        </div>
+
+        {/* Shops Table */}
+        {isLoadingShops ? (
+          <div className="p-12 text-center text-xs font-bold text-gray-400">
+            Loading shops registry...
+          </div>
+        ) : shops.length === 0 ? (
+          <div className="p-16 text-center flex flex-col items-center gap-3 text-gray-400">
+            <Store size={36} className="text-gray-300" />
+            <p className="text-xs font-bold text-gray-600">No shops created yet</p>
+            <p className="text-[11px] text-gray-400 max-w-[320px]">
+              Click "Create New Shop" above to register a shop so catalog items can be assigned to it.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-150 bg-gray-50/50 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                  <th className="py-3 px-6">Shop ID</th>
+                  <th className="py-3 px-6">Image / Icon</th>
+                  <th className="py-3 px-6">Shop Name</th>
+                  <th className="py-3 px-6">Description</th>
+                  <th className="py-3 px-6">Assigned Products</th>
+                  <th className="py-3 px-6 text-center">Shop Status (ON/OFF)</th>
+                  <th className="py-3 px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {shops.map((shop) => {
+                  const linkedItemsCount = items.filter(
+                    (i) => String(i.shop_id) === String(shop.id) || (i.shop_name || '').toLowerCase() === (shop.name || '').toLowerCase()
+                  ).length;
+                  const isImageURL = shop.image && (shop.image.startsWith('http') || shop.image.startsWith('/'));
+                  const isShopClosed = shop.is_open === false || shop.is_open === 'false' || shop.status === 'closed';
+
+                  return (
+                    <tr key={shop.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 px-6 text-xs font-extrabold text-gray-400 font-mono">
+                        #{shop.id}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-center overflow-hidden text-xl font-bold">
+                          {isImageURL ? (
+                            <img
+                              src={shop.image}
+                              alt={shop.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.onerror = null; e.target.src = ''; }}
+                            />
+                          ) : (
+                            shop.image || '🏪'
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 font-extrabold text-gray-900 text-sm">
+                        {shop.name}
+                      </td>
+                      <td className="py-4 px-6 text-xs text-gray-500 max-w-[240px] truncate">
+                        {shop.description || 'No description provided'}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          {linkedItemsCount} {linkedItemsCount === 1 ? 'item' : 'items'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleShopStatus(shop.id, shop.is_open ?? true)}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
+                            isShopClosed ? 'bg-gray-300 hover:bg-gray-400' : 'bg-[#10b981] hover:bg-emerald-600'
+                          }`}
+                          title={isShopClosed ? 'Click to OPEN shop (ON)' : 'Click to CLOSE shop (OFF)'}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              isShopClosed ? 'translate-x-0' : 'translate-x-5'
+                            }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => handleDeleteShop(shop.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer border-none"
+                          title="Delete Shop"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Sub-tab: Orders List
   const renderOrdersTab = () => {
     const expectedOrders = orders.filter(o => o.confirm !== 'yes');
@@ -1830,6 +2100,17 @@ export default function AdminHQ() {
           </button>
 
           <button
+            onClick={() => setActiveTab('shops')}
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'shops'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+          >
+            <Store size={16} />
+            Store Shops
+          </button>
+
+          <button
             onClick={() => setActiveTab('orders')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'orders'
               ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
@@ -1864,7 +2145,9 @@ export default function AdminHQ() {
                   ? 'Items Catalog'
                   : activeTab === 'categories'
                     ? 'Categories Management'
-                    : 'Expected Orders Queue'}
+                    : activeTab === 'shops'
+                      ? 'Store Shops Management'
+                      : 'Expected Orders Queue'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -1872,12 +2155,13 @@ export default function AdminHQ() {
               onClick={() => {
                 fetchItems();
                 fetchCategories();
+                fetchShops();
                 fetchOrders();
               }}
-              disabled={isLoadingOrders || isLoadingItems || isLoadingCategories}
+              disabled={isLoadingOrders || isLoadingItems || isLoadingCategories || isLoadingShops}
               className="p-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
             >
-              <RefreshCw size={12} className={isLoadingOrders || isLoadingItems || isLoadingCategories ? 'animate-spin' : ''} />
+              <RefreshCw size={12} className={isLoadingOrders || isLoadingItems || isLoadingCategories || isLoadingShops ? 'animate-spin' : ''} />
               Sync
             </button>
             <button
@@ -1937,6 +2221,7 @@ export default function AdminHQ() {
         {activeTab === 'dashboard' && renderDashboardTab()}
         {activeTab === 'items' && renderItemsTab()}
         {activeTab === 'categories' && renderCategoriesTab()}
+        {activeTab === 'shops' && renderShopsTab()}
         {activeTab === 'orders' && renderOrdersTab()}
       </div>
 
@@ -1997,6 +2282,42 @@ export default function AdminHQ() {
                     >
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Choose Shop</span>
+                    {shops.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddItemModal(false);
+                          setActiveTab('shops');
+                        }}
+                        className="text-[10px] font-black text-indigo-600 hover:underline cursor-pointer bg-transparent border-none p-0"
+                      >
+                        + Create Shop First
+                      </button>
+                    )}
+                  </label>
+                  {shops.length === 0 ? (
+                    <div className="text-xs text-amber-700 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                      No shops created yet. Click "+ Create Shop First" to add one.
+                    </div>
+                  ) : (
+                    <select
+                      value={itemShopId}
+                      onChange={(e) => setItemShopId(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-bold cursor-pointer"
+                    >
+                      <option value="">-- Select Shop (Optional) --</option>
+                      {shops.map((shop) => (
+                        <option key={shop.id} value={shop.id}>
+                          {shop.name}
+                        </option>
                       ))}
                     </select>
                   )}
@@ -2180,6 +2501,28 @@ export default function AdminHQ() {
                       <option key={cat.id} value={cat.name}>{cat.name}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="flex flex-col gap-1 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choose Shop</label>
+                  {shops.length === 0 ? (
+                    <div className="text-xs text-amber-700 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                      No shops created yet.
+                    </div>
+                  ) : (
+                    <select
+                      value={editShopId}
+                      onChange={(e) => setEditShopId(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-bold cursor-pointer"
+                    >
+                      <option value="">-- Select Shop (Optional) --</option>
+                      {shops.map((shop) => (
+                        <option key={shop.id} value={shop.id}>
+                          {shop.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -2427,6 +2770,70 @@ export default function AdminHQ() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Shop Modal */}
+      {showAddShopModal && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[440px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Create New Shop</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Register a shop in database</p>
+              </div>
+              <button
+                onClick={() => setShowAddShopModal(false)}
+                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddShopSubmit} className="p-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Shop Name *</label>
+                <input
+                  type="text"
+                  value={shopName}
+                  onChange={(e) => setShopName(e.target.value)}
+                  placeholder="e.g. Poornima Mart, Campus Snacks"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Shop Image URL / Emoji</label>
+                <input
+                  type="text"
+                  value={shopImage}
+                  onChange={(e) => setShopImage(e.target.value)}
+                  placeholder="e.g. 🏪 or https://..."
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Description</label>
+                <textarea
+                  value={shopDescription}
+                  onChange={(e) => setShopDescription(e.target.value)}
+                  placeholder="Brief description of the shop..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingShop || !shopName.trim()}
+                className="w-full mt-2 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl border-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer disabled:bg-gray-300"
+              >
+                {isSubmittingShop ? 'Creating Shop...' : 'Create Shop'}
+              </button>
+            </form>
           </div>
         </div>
       )}

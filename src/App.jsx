@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroBanner from './components/HeroBanner';
@@ -62,6 +62,8 @@ function App() {
     }
   }, [cartItems]);
 
+  const [shops, setShops] = useState([]);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
@@ -70,13 +72,22 @@ function App() {
     async function fetchInitialData() {
       try {
         setIsLoading(true);
-        const [itemsRes, categoryRes, settingsRes] = await Promise.all([
+        const [itemsRes, categoryRes, settingsRes, shopsRes] = await Promise.all([
           supabase.from('items').select('*'),
           supabase.from('category').select('*'),
-          supabase.from('store_settings').select('ordering_enabled, closed_message').eq('id', 1).single()
+          supabase.from('store_settings').select('ordering_enabled, closed_message').eq('id', 1).single(),
+          supabase.from('shops').select('*')
         ]);
         
         if (itemsRes.error) throw itemsRes.error;
+
+        if (shopsRes) {
+          if (shopsRes.error) {
+            console.error('Failed to load shops in App.jsx:', shopsRes.error.message);
+          } else if (shopsRes.data) {
+            setShops(shopsRes.data);
+          }
+        }
 
         if (!settingsRes.error && settingsRes.data) {
           setOrderingEnabled(settingsRes.data.ordering_enabled ?? true);
@@ -85,14 +96,14 @@ function App() {
           console.error('Failed to load store settings:', settingsRes.error.message);
         }
         
-const shuffleArray = (array) => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
+        const shuffleArray = (array) => {
+          const shuffled = [...array];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          return shuffled;
+        };
 
         const mappedData = itemsRes.data.map(item => {
           const staticProduct = localFallbackProducts.find(p => p.id === item.id) || {};
@@ -113,7 +124,10 @@ const shuffleArray = (array) => {
             rating: staticProduct.rating || 4.5,
             reviews: staticProduct.reviews || 500,
             category: item.category || staticProduct.category || 'snack',
-            stock: item.Stock, // mapping case-sensitive "Stock"
+            shop_id: item.shop_id || null,
+            shop_name: item.shop_name || null,
+            Stock: item.Stock ?? item.stock,
+            stock: item.Stock ?? item.stock,
             featured: item.featured || false,
             display_order: item.display_order ?? item.featured_order ?? 999
           };
@@ -150,7 +164,7 @@ const shuffleArray = (array) => {
     fetchInitialData();
   }, []);
 
-  // Live-sync the ordering on/off toggle so it takes effect instantly for everyone browsing
+  // Live-sync the ordering on/off toggle and shops status so it takes effect instantly
   useEffect(() => {
     const channel = supabase
       .channel('store_settings_live')
@@ -168,10 +182,92 @@ const shuffleArray = (array) => {
       )
       .subscribe();
 
+    const shopsChannel = supabase
+      .channel('shops_live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shops' },
+        async () => {
+          const { data } = await supabase.from('shops').select('*');
+          if (data) setShops(data);
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(shopsChannel);
     };
   }, []);
+
+  // Listen for local and real-time shop updates
+  useEffect(() => {
+    const syncClosedShops = () => {
+      const closedIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
+      setShops((prev) =>
+        prev.map((s) => ({
+          ...s,
+          is_open: closedIds.includes(String(s.id)) ? false : s.is_open
+        }))
+      );
+    };
+
+    window.addEventListener('shops_updated', syncClosedShops);
+    window.addEventListener('storage', syncClosedShops);
+
+    return () => {
+      window.removeEventListener('shops_updated', syncClosedShops);
+      window.removeEventListener('storage', syncClosedShops);
+    };
+  }, []);
+
+  const processedProducts = useMemo(() => {
+    const closedShopIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
+
+    return allProducts.map((product) => {
+      // 1. Item's own stock always wins first
+      const directStock = product.Stock ?? product.stock;
+      if (directStock === 0 || directStock === '0') {
+        return { ...product, isOutOfStock: true };
+      }
+
+      // 2. If this item isn't linked to any shop, it's unaffected by shop toggles
+      const itemShopIdStr = product.shop_id != null ? String(product.shop_id).trim() : '';
+      const itemShopNameClean = product.shop_name ? String(product.shop_name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
+
+      if (!itemShopIdStr && !itemShopNameClean) {
+        return { ...product, isOutOfStock: false };
+      }
+
+      // 3. Otherwise, check ONLY this item's own assigned shop — no cross-item name matching
+      const matchingShop = shops.find((s) => {
+        const sIdStr = s.id != null ? String(s.id).trim() : '';
+        const sNameClean = s.name ? String(s.name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
+
+        if (itemShopIdStr && sIdStr && itemShopIdStr === sIdStr) return true;
+        if (itemShopNameClean && sNameClean && itemShopNameClean === sNameClean) return true;
+        return false;
+      });
+
+      let isShopClosed = false;
+      if (matchingShop) {
+        isShopClosed =
+          closedShopIds.includes(String(matchingShop.id)) ||
+          matchingShop.is_open === false ||
+          matchingShop.is_open === 'false' ||
+          matchingShop.status === 'closed' ||
+          matchingShop.status === 'PAUSED' ||
+          matchingShop.status === 'OFF';
+      } else if (itemShopIdStr && closedShopIds.includes(itemShopIdStr)) {
+        isShopClosed = true;
+      }
+
+      return {
+        ...product,
+        isOutOfStock: isShopClosed
+      };
+    });
+  }, [allProducts, shops]);
 
   const handleUpdateQty = (productId, quantity) => {
     setCartItems((prevItems) => {
@@ -206,7 +302,7 @@ const shuffleArray = (array) => {
   return (
     <>
       <Navbar 
-        products={allProducts}
+        products={processedProducts}
         cartCount={cartCount} 
         onNavigate={handleNavigate}
         cartItems={cartItems}
@@ -230,7 +326,7 @@ const shuffleArray = (array) => {
                   <HeroBanner />
                   <CategorySection categories={categories} />
                   <ProductSection 
-                    products={allProducts} 
+                    products={processedProducts} 
                     cartItems={cartItems} 
                     onUpdateQty={handleUpdateQty} 
                     orderingEnabled={orderingEnabled}
@@ -255,7 +351,7 @@ const shuffleArray = (array) => {
               path="/category/:categoryName" 
               element={
                 <CategoryPage
-                  products={allProducts}
+                  products={processedProducts}
                   categories={categories}
                   cartItems={cartItems}
                   onUpdateQty={handleUpdateQty}
@@ -282,11 +378,11 @@ const shuffleArray = (array) => {
 
       {selectedProduct && (
         <ProductDetailModal
-          product={selectedProduct}
+          product={processedProducts.find(p => p.id === selectedProduct.id) || selectedProduct}
           onClose={() => setSelectedProduct(null)}
           cartItems={cartItems}
           onUpdateQty={handleUpdateQty}
-          products={allProducts}
+          products={processedProducts}
         />
       )}
 

@@ -156,7 +156,7 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
 
           {/* Add to Cart Controls */}
           <div className="pt-1">
-            {(activeProduct.Stock === 0 || activeProduct.Stock === '0' || activeProduct.stock === 0) ? (
+            {(activeProduct.isOutOfStock || activeProduct.Stock === 0 || activeProduct.Stock === '0' || activeProduct.stock === 0) ? (
               <div className="w-full py-3 bg-gray-100 border border-gray-200 text-gray-400 text-xs font-black rounded-xl text-center cursor-not-allowed select-none">
                 Out of Stock
               </div>
