@@ -67,6 +67,9 @@ export default function AdminHQ() {
   const [itemShopId, setItemShopId] = useState('');
   const [editShopId, setEditShopId] = useState('');
 
+  // View Shop Items Modal state
+  const [viewingShop, setViewingShop] = useState(null);
+
   // Add Shop Form States
   const [showAddShopModal, setShowAddShopModal] = useState(false);
   const [shopName, setShopName] = useState('');
@@ -1796,16 +1799,25 @@ export default function AdminHQ() {
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6 font-extrabold text-gray-900 text-sm">
+                      <td
+                        onClick={() => setViewingShop(shop)}
+                        className="py-4 px-6 font-extrabold text-gray-900 text-sm hover:text-indigo-600 cursor-pointer underline decoration-dotted underline-offset-4"
+                        title="Click to view attached products"
+                      >
                         {shop.name}
                       </td>
                       <td className="py-4 px-6 text-xs text-gray-500 max-w-[240px] truncate">
                         {shop.description || 'No description provided'}
                       </td>
                       <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        <button
+                          type="button"
+                          onClick={() => setViewingShop(shop)}
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer border border-indigo-100"
+                          title="Click to view attached products"
+                        >
                           {linkedItemsCount} {linkedItemsCount === 1 ? 'item' : 'items'}
-                        </span>
+                        </button>
                       </td>
                       <td className="py-4 px-6 text-center whitespace-nowrap">
                         <button
@@ -2834,6 +2846,144 @@ export default function AdminHQ() {
                 {isSubmittingShop ? 'Creating Shop...' : 'Create Shop'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Shop Attached Items Modal Overlay */}
+      {viewingShop && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[750px] max-h-[85vh] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden flex flex-col animate-drop-in">
+            {/* Header */}
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/60">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl font-bold overflow-hidden">
+                  {viewingShop.image && (viewingShop.image.startsWith('http') || viewingShop.image.startsWith('/')) ? (
+                    <img src={viewingShop.image} alt={viewingShop.name} className="w-full h-full object-cover" />
+                  ) : (
+                    viewingShop.image || '🏪'
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-gray-950 flex items-center gap-2 m-0">
+                    {viewingShop.name}
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                      viewingShop.is_open === false || viewingShop.is_open === 'false' || viewingShop.status === 'closed'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      {viewingShop.is_open === false || viewingShop.is_open === 'false' || viewingShop.status === 'closed' ? 'CLOSED (OFF)' : 'OPEN (LIVE)'}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] font-semibold text-gray-400 m-0 mt-0.5">
+                    {items.filter(i => String(i.shop_id) === String(viewingShop.id) || (i.shop_name || '').toLowerCase() === (viewingShop.name || '').toLowerCase()).length} products attached to this shop
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewingShop(null)}
+                className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-gray-950 flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content / Attached Items Table */}
+            <div className="p-5 overflow-y-auto flex-1">
+              {(() => {
+                const shopItems = items.filter(
+                  (i) => String(i.shop_id) === String(viewingShop.id) || (i.shop_name || '').toLowerCase() === (viewingShop.name || '').toLowerCase()
+                );
+
+                if (shopItems.length === 0) {
+                  return (
+                    <div className="py-14 text-center flex flex-col items-center gap-3 text-gray-400">
+                      <ShoppingBag size={36} className="text-gray-300" />
+                      <p className="text-xs font-extrabold text-gray-700">No products attached to this shop yet</p>
+                      <p className="text-[11px] text-gray-400 max-w-[340px]">
+                        When adding or editing a product in Items Catalog, select <strong className="text-gray-600">{viewingShop.name}</strong> from the <span className="underline">Choose Shop</span> dropdown.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-150 bg-gray-50/50 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                          <th className="py-2.5 px-4">Item ID</th>
+                          <th className="py-2.5 px-4">Image</th>
+                          <th className="py-2.5 px-4">Product Name</th>
+                          <th className="py-2.5 px-4">Category</th>
+                          <th className="py-2.5 px-4 text-right">Price</th>
+                          <th className="py-2.5 px-4 text-center">Stock Toggle</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {shopItems.map((item) => {
+                          const isItemOutOfStock = item.Stock === 0 || item.Stock === '0' || item.stock === 0;
+
+                          return (
+                            <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                              <td className="py-3 px-4 text-xs font-bold text-gray-400 font-mono">#{item.id}</td>
+                              <td className="py-3 px-4">
+                                <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center p-1 overflow-hidden">
+                                  <img src={item.image} alt="" className="max-w-full max-h-full object-contain" />
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex flex-col">
+                                  <span className="font-extrabold text-gray-900 text-xs">{item.name}</span>
+                                  <span className="text-[10px] text-gray-400">{item.weight}</span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                  {item.category}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right font-black text-gray-900 text-xs">
+                                ₹{item.price}
+                              </td>
+                              <td className="py-3 px-4 text-center whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleStock(item.id, item.Stock ?? item.stock)}
+                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
+                                    isItemOutOfStock ? 'bg-gray-300' : 'bg-[#10b981]'
+                                  }`}
+                                  title={isItemOutOfStock ? 'Mark In Stock' : 'Mark Out of Stock'}
+                                >
+                                  <span
+                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                      isItemOutOfStock ? 'translate-x-0' : 'translate-x-4'
+                                    }`}
+                                  />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <span className="text-[11px] text-gray-400 font-semibold">
+                You can toggle product stock directly in this overlay
+              </span>
+              <button
+                onClick={() => setViewingShop(null)}
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+              >
+                Close Overlay
+              </button>
+            </div>
           </div>
         </div>
       )}
