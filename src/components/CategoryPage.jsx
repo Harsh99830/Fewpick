@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { categories as fallbackCategories } from '../data/categories';
 
@@ -16,12 +17,23 @@ export default function CategoryPage({ products = [], categories = [], cartItems
 
   return (
     <div className="w-full flex flex-col gap-6 animate-drop-in pb-12">
-      {/* Top Categories Scroll Bar */}
+      {/* Top Header & Categories Scroll Bar */}
       <div className="w-full flex flex-col gap-3">
-        <h2 className="text-[1.1rem] sm:text-[1.35rem] font-extrabold text-gray-900 m-0 tracking-[-0.02em]">
-          Categories
-        </h2>
-        <div className="flex flex-nowrap overflow-x-auto gap-2.5 sm:gap-4 pt-3 pb-3 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth w-full">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-gray-200 text-gray-700 hover:text-gray-950 hover:bg-gray-50 active:scale-95 transition-all shadow-sm flex-shrink-0 cursor-pointer"
+            aria-label="Go back to Home"
+          >
+            <ArrowLeft className="w-5 h-5 sm:w-5 sm:h-5" />
+          </button>
+          <div className="flex items-baseline gap-2 overflow-hidden">
+            <h2 className="text-[1.1rem] sm:text-[1.35rem] font-extrabold text-gray-900 m-0 tracking-[-0.02em] truncate">
+              {decodedName ? decodedName : 'Categories'}
+            </h2>
+          </div>
+        </div>
+        <div className="flex flex-nowrap overflow-x-auto gap-2.5 sm:gap-4 pt-2 pb-3 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth w-full">
           {displayCategories.map((cat) => {
             const isSelected = cat.name.toLowerCase() === decodedName.toLowerCase();
             const displayImage = cat.image || cat.emoji;
