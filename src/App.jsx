@@ -266,6 +266,11 @@ function App() {
         ...product,
         isOutOfStock: isShopClosed
       };
+    }).sort((a, b) => {
+      const aOut = Boolean(a.isOutOfStock || a.Stock === 0 || a.Stock === '0' || a.stock === 0);
+      const bOut = Boolean(b.isOutOfStock || b.Stock === 0 || b.Stock === '0' || b.stock === 0);
+      if (aOut === bOut) return 0;
+      return aOut ? 1 : -1;
     });
   }, [allProducts, shops]);
 
