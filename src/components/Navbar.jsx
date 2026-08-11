@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import { getUniqueProductsByName } from '../utils/productUtils';
 
-export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage }) {
+export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage, openMessage }) {
   const navigate = useNavigate();
   const location = useLocation();
   const searchContainerRef = useRef(null);
@@ -211,15 +211,22 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             </div>
           </div>
 
-          {/* Closed notice — replaces the old page banner */}
-          {!orderingEnabled && (
+          {/* Store status notice banner below navbar header */}
+          {!orderingEnabled ? (
             <div className="w-full bg-red-50 border-t border-red-100 px-4 md:px-6 py-2 flex items-center justify-center gap-1.5">
               <Clock size={13} className="text-red-500 flex-shrink-0" />
               <span className="text-[0.7rem] sm:text-xs font-bold text-red-600 text-center leading-tight">
                 {closedMessage}
               </span>
             </div>
-          )}
+          ) : openMessage && openMessage.trim() ? (
+            <div className="w-full bg-emerald-50 border-t border-emerald-100 px-4 md:px-6 py-2 flex items-center justify-center gap-1.5">
+              <Sparkles size={13} className="text-emerald-600 flex-shrink-0" />
+              <span className="text-[0.7rem] sm:text-xs font-bold text-emerald-700 text-center leading-tight">
+                {openMessage}
+              </span>
+            </div>
+          ) : null}
 
           {/* Mobile search bar — full width below nav */}
           {!isSearchHidden && (

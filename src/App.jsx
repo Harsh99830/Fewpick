@@ -50,6 +50,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [orderingEnabled, setOrderingEnabled] = useState(true);
   const [closedMessage, setClosedMessage] = useState("Store is closed. We'll be back soon.");
+  const [openMessage, setOpenMessage] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -75,7 +76,7 @@ function App() {
         const [itemsRes, categoryRes, settingsRes, shopsRes] = await Promise.all([
           supabase.from('items').select('*'),
           supabase.from('category').select('*'),
-          supabase.from('store_settings').select('ordering_enabled, closed_message').eq('id', 1).single(),
+          supabase.from('store_settings').select('*').eq('id', 1).single(),
           supabase.from('shops').select('*')
         ]);
         
@@ -92,6 +93,7 @@ function App() {
         if (!settingsRes.error && settingsRes.data) {
           setOrderingEnabled(settingsRes.data.ordering_enabled ?? true);
           if (settingsRes.data.closed_message) setClosedMessage(settingsRes.data.closed_message);
+          if (settingsRes.data.open_message) setOpenMessage(settingsRes.data.open_message);
         } else if (settingsRes.error) {
           console.error('Failed to load store settings:', settingsRes.error.message);
         }
@@ -177,6 +179,9 @@ function App() {
           }
           if (payload.new && payload.new.closed_message) {
             setClosedMessage(payload.new.closed_message);
+          }
+          if (payload.new && payload.new.open_message !== undefined) {
+            setOpenMessage(payload.new.open_message || '');
           }
         }
       )
@@ -314,6 +319,7 @@ function App() {
         onUpdateQty={handleUpdateQty}
         orderingEnabled={orderingEnabled}
         closedMessage={closedMessage}
+        openMessage={openMessage}
       />
 
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-2.5 py-3 pb-6 flex flex-col gap-5 md:px-6 md:py-6 md:pb-12 md:gap-12">

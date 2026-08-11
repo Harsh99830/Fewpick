@@ -55,6 +55,8 @@ export default function AdminHQ() {
   const [isTogglingOrdering, setIsTogglingOrdering] = useState(false);
   const [closedMessage, setClosedMessage] = useState("Store is closed. We'll be back at 9:00 PM.");
   const [closedMessageDraft, setClosedMessageDraft] = useState('');
+  const [openMessage, setOpenMessage] = useState('');
+  const [openMessageDraft, setOpenMessageDraft] = useState('');
   const [isSavingMessage, setIsSavingMessage] = useState(false);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
@@ -305,7 +307,7 @@ export default function AdminHQ() {
     try {
       const { data, error } = await supabase
         .from('store_settings')
-        .select('ordering_enabled, closed_message')
+        .select('*')
         .eq('id', 1)
         .single();
 
@@ -315,24 +317,45 @@ export default function AdminHQ() {
         setClosedMessage(data.closed_message);
         setClosedMessageDraft(data.closed_message);
       }
+      if (data?.open_message !== undefined) {
+        setOpenMessage(data.open_message || '');
+        setOpenMessageDraft(data.open_message || '');
+      }
     } catch (err) {
       console.error('Fetch store settings error:', err);
     }
   };
 
-  const handleSaveClosedMessage = async () => {
-    if (!closedMessageDraft.trim()) return;
+  const handleSaveStoreMessages = async () => {
     setIsSavingMessage(true);
     try {
-      const { error } = await supabase
+      // First try saving both fields
+      let { error } = await supabase
         .from('store_settings')
-        .update({ closed_message: closedMessageDraft.trim(), updated_at: new Date().toISOString() })
+        .update({
+          closed_message: closedMessageDraft.trim(),
+          open_message: openMessageDraft.trim(),
+          updated_at: new Date().toISOString()
+        })
         .eq('id', 1);
+
+      // If open_message column doesn't exist yet, fall back to updating closed_message only
+      if (error && error.message?.includes("open_message")) {
+        const fallback = await supabase
+          .from('store_settings')
+          .update({
+            closed_message: closedMessageDraft.trim(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', 1);
+        error = fallback.error;
+      }
 
       if (error) throw error;
       setClosedMessage(closedMessageDraft.trim());
+      setOpenMessage(openMessageDraft.trim());
     } catch (err) {
-      console.error('Save closed message error:', err);
+      console.error('Save store messages error:', err);
       alert('Failed to save message: ' + err.message);
     } finally {
       setIsSavingMessage(false);
@@ -2212,16 +2235,31 @@ export default function AdminHQ() {
           <div className="hidden sm:block w-px h-6 bg-gray-150 flex-shrink-0" />
 
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <input
-              type="text"
-              value={closedMessageDraft}
-              onChange={(e) => setClosedMessageDraft(e.target.value)}
-              placeholder="Message shown to customers while closed"
-              className="flex-1 min-w-0 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all"
-            />
+            {orderingEnabled ? (
+              <input
+                type="text"
+                value={openMessageDraft}
+                onChange={(e) => setOpenMessageDraft(e.target.value)}
+                placeholder="Open announcement banner (e.g. Free delivery on orders over ₹199! ✨)"
+                className="flex-1 min-w-0 px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-400"
+              />
+            ) : (
+              <input
+                type="text"
+                value={closedMessageDraft}
+                onChange={(e) => setClosedMessageDraft(e.target.value)}
+                placeholder="Message shown to customers while closed"
+                className="flex-1 min-w-0 px-3 py-1.5 bg-red-50/50 border border-red-200 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all placeholder:text-gray-400"
+              />
+            )}
             <button
-              onClick={handleSaveClosedMessage}
-              disabled={isSavingMessage || !closedMessageDraft.trim() || closedMessageDraft.trim() === closedMessage}
+              onClick={handleSaveStoreMessages}
+              disabled={
+                isSavingMessage ||
+                (orderingEnabled
+                  ? openMessageDraft.trim() === openMessage
+                  : closedMessageDraft.trim() === closedMessage)
+              }
               className="px-3 py-1.5 bg-gray-900 hover:bg-black text-white text-[11px] font-bold rounded-lg transition-all cursor-pointer border-none disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex-shrink-0"
             >
               {isSavingMessage ? 'Saving...' : 'Save'}
