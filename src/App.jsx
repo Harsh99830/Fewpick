@@ -230,29 +230,23 @@ function App() {
     const closedShopIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
 
     return allProducts.map((product) => {
-      // 1. Item's own stock always wins first
+      // 1. Item's own stock check
       const directStock = product.Stock ?? product.stock;
-      if (directStock === 0 || directStock === '0') {
-        return { ...product, isOutOfStock: true };
-      }
+      const isItemStockZero = directStock === 0 || directStock === '0';
 
-      // 2. If this item isn't linked to any shop, it's unaffected by shop toggles
+      // 2. Shop matching
       const itemShopIdStr = product.shop_id != null ? String(product.shop_id).trim() : '';
       const itemShopNameClean = product.shop_name ? String(product.shop_name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
 
-      if (!itemShopIdStr && !itemShopNameClean) {
-        return { ...product, isOutOfStock: false };
-      }
-
-      // 3. Otherwise, check ONLY this item's own assigned shop — no cross-item name matching
-      const matchingShop = shops.find((s) => {
-        const sIdStr = s.id != null ? String(s.id).trim() : '';
-        const sNameClean = s.name ? String(s.name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
-
-        if (itemShopIdStr && sIdStr && itemShopIdStr === sIdStr) return true;
-        if (itemShopNameClean && sNameClean && itemShopNameClean === sNameClean) return true;
-        return false;
-      });
+      const matchingShop = (itemShopIdStr || itemShopNameClean)
+        ? shops.find((s) => {
+            const sIdStr = s.id != null ? String(s.id).trim() : '';
+            const sNameClean = s.name ? String(s.name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
+            if (itemShopIdStr && sIdStr && itemShopIdStr === sIdStr) return true;
+            if (itemShopNameClean && sNameClean && itemShopNameClean === sNameClean) return true;
+            return false;
+          })
+        : null;
 
       let isShopClosed = false;
       if (matchingShop) {
@@ -267,9 +261,14 @@ function App() {
         isShopClosed = true;
       }
 
+      const availableTill = matchingShop?.available_till || matchingShop?.availableTill || matchingShop?.close_time || product.available_till || '11:00 p.m.';
+
       return {
         ...product,
-        isOutOfStock: isShopClosed
+        isOutOfStock: isItemStockZero || isShopClosed,
+        isShopClosed: isShopClosed,
+        isItemStockZero: isItemStockZero,
+        availableTill: availableTill
       };
     }).sort((a, b) => {
       const aOut = Boolean(a.isOutOfStock || a.Stock === 0 || a.Stock === '0' || a.stock === 0);
