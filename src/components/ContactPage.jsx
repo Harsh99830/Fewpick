@@ -73,9 +73,14 @@ export default function ContactPage() {
           </div>
           <div>
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">WhatsApp / Phone</span>
-            <a href="https://wa.me/919719214408" target="_blank" rel="noreferrer" className="font-bold text-gray-900 no-underline hover:underline">
-              +91 97192 14408
-            </a>
+            <div className="flex flex-col gap-0.5">
+              <a href="https://wa.me/919719214408" target="_blank" rel="noreferrer" className="font-bold text-gray-900 no-underline hover:underline">
+                +91 97192 14408
+              </a>
+              <a href="https://wa.me/917440561006" target="_blank" rel="noreferrer" className="font-bold text-gray-900 no-underline hover:underline">
+                +91 74405 61006
+              </a>
+            </div>
           </div>
         </div>
 
