@@ -154,6 +154,13 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
             </div>
           )}
 
+          {/* Shop Description Line (Shown only when store is OPEN) */}
+          {!activeProduct.isShopClosed && activeProduct.shopDescription && (
+            <p className="text-xs text-emerald-700 font-semibold m-0 leading-snug">
+              {activeProduct.shopDescription}
+            </p>
+          )}
+
           {/* Add to Cart Controls */}
           <div className="pt-1">
             {activeProduct.isShopClosed ? (

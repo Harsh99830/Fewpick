@@ -268,7 +268,8 @@ function App() {
         isOutOfStock: isItemStockZero || isShopClosed,
         isShopClosed: isShopClosed,
         isItemStockZero: isItemStockZero,
-        availableTill: availableTill
+        availableTill: availableTill,
+        shopDescription: matchingShop?.description || product.shop_description || ''
       };
     }).sort((a, b) => {
       const aOut = Boolean(a.isOutOfStock || a.Stock === 0 || a.Stock === '0' || a.stock === 0);

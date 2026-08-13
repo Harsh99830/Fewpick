@@ -72,6 +72,13 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
           )}
         </div>
 
+        {/* Shop Description Line (Shown only when store is OPEN) */}
+        {!product.isShopClosed && product.shopDescription && (
+          <p className="text-[0.63rem] text-emerald-700 font-semibold mb-1.5 leading-tight line-clamp-2">
+            {product.shopDescription}
+          </p>
+        )}
+
         {/* Add Button or Out of Stock / Shop Closed Badge */}
         {product.isShopClosed ? (
           <div className="w-full py-1.5 sm:py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-[0.68rem] sm:text-[0.73rem] font-extrabold text-center mt-auto cursor-not-allowed select-none flex items-center justify-center px-1">
