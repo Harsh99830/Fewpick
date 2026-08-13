@@ -261,7 +261,7 @@ function App() {
         isShopClosed = true;
       }
 
-      const availableTill = matchingShop?.available_till || matchingShop?.availableTill || matchingShop?.close_time || product.available_till || '11:00 p.m.';
+      const availableTill = matchingShop?.available_till || matchingShop?.availableTill || matchingShop?.close_time || product.available_till || '11 p.m.';
 
       return {
         ...product,

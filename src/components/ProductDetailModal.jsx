@@ -157,8 +157,8 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
           {/* Add to Cart Controls */}
           <div className="pt-1">
             {activeProduct.isShopClosed ? (
-              <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl text-center cursor-not-allowed select-none flex items-center justify-center">
-                <span>Available till {activeProduct.availableTill || '11:00 p.m.'}</span>
+              <div className="w-full py-3 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl text-center cursor-not-allowed select-none flex items-center justify-center">
+                <span>Unavailable after {activeProduct.availableTill || '11 p.m.'}</span>
               </div>
             ) : (activeProduct.isOutOfStock || activeProduct.Stock === 0 || activeProduct.Stock === '0' || activeProduct.stock === 0) ? (
               <div className="w-full py-3 bg-gray-100 border border-gray-200 text-gray-400 text-xs font-black rounded-xl text-center cursor-not-allowed select-none">

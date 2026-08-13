@@ -74,8 +74,8 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
 
         {/* Add Button or Out of Stock / Shop Closed Badge */}
         {product.isShopClosed ? (
-          <div className="w-full py-1.5 sm:py-2 border border-amber-200/80 rounded-lg bg-amber-50/90 text-amber-800 text-[0.68rem] sm:text-[0.73rem] font-bold text-center mt-auto cursor-not-allowed select-none flex items-center justify-center px-1 shadow-xs">
-            <span>Available till {product.availableTill || '11:00 p.m.'}</span>
+          <div className="w-full py-1.5 sm:py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-[0.68rem] sm:text-[0.73rem] font-extrabold text-center mt-auto cursor-not-allowed select-none flex items-center justify-center px-1">
+            <span>Unavailable after {product.availableTill || '11 p.m.'}</span>
           </div>
         ) : (product.isOutOfStock || product.Stock === 0 || product.Stock === '0' || product.stock === 0) ? (
           <div className="w-full py-1.5 sm:py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-400 text-xs font-bold text-center mt-auto cursor-not-allowed select-none">
