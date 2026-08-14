@@ -205,30 +205,7 @@ function App() {
     };
   }, []);
 
-  // Listen for local and real-time shop updates
-  useEffect(() => {
-    const syncClosedShops = () => {
-      const closedIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
-      setShops((prev) =>
-        prev.map((s) => ({
-          ...s,
-          is_open: closedIds.includes(String(s.id)) ? false : s.is_open
-        }))
-      );
-    };
-
-    window.addEventListener('shops_updated', syncClosedShops);
-    window.addEventListener('storage', syncClosedShops);
-
-    return () => {
-      window.removeEventListener('shops_updated', syncClosedShops);
-      window.removeEventListener('storage', syncClosedShops);
-    };
-  }, []);
-
   const processedProducts = useMemo(() => {
-    const closedShopIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
-
     return allProducts.map((product) => {
       // 1. Item's own stock check
       const directStock = product.Stock ?? product.stock;
@@ -251,14 +228,11 @@ function App() {
       let isShopClosed = false;
       if (matchingShop) {
         isShopClosed =
-          closedShopIds.includes(String(matchingShop.id)) ||
           matchingShop.is_open === false ||
           matchingShop.is_open === 'false' ||
           matchingShop.status === 'closed' ||
           matchingShop.status === 'PAUSED' ||
           matchingShop.status === 'OFF';
-      } else if (itemShopIdStr && closedShopIds.includes(itemShopIdStr)) {
-        isShopClosed = true;
       }
 
       const availableTill = matchingShop?.available_till || matchingShop?.availableTill || matchingShop?.close_time || product.available_till || '11 p.m.';

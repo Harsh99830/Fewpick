@@ -517,17 +517,11 @@ export default function AdminHQ() {
         .select('*')
         .order('id', { ascending: true });
 
-      const closedIds = JSON.parse(localStorage.getItem('fewpick_closed_shops') || '[]');
-
       if (error || !data) {
         console.warn('Shops fetch error:', error?.message);
         setShops([]);
       } else {
-        const syncedShops = data.map(s => ({
-          ...s,
-          is_open: closedIds.includes(String(s.id)) ? false : (s.is_open ?? true)
-        }));
-        setShops(syncedShops);
+        setShops(data);
       }
     } catch (err) {
       console.error('Fetch shops error:', err);
@@ -644,23 +638,14 @@ export default function AdminHQ() {
   const handleToggleShopStatus = async (shopId, currentIsOpen) => {
     const newIsOpen = currentIsOpen === false || currentIsOpen === 'false' ? true : false;
 
-    setShops((prevShops) => {
-      const updated = prevShops.map((s) => (s.id === shopId ? { ...s, is_open: newIsOpen, status: newIsOpen ? 'open' : 'closed' } : s));
-      
-      const closedShopIds = updated
-        .filter(s => s.is_open === false || s.is_open === 'false' || s.status === 'closed')
-        .map(s => String(s.id));
-      
-      localStorage.setItem('fewpick_closed_shops', JSON.stringify(closedShopIds));
-      window.dispatchEvent(new Event('shops_updated'));
-      
-      return updated;
-    });
+    setShops((prevShops) =>
+      prevShops.map((s) => (s.id === shopId ? { ...s, is_open: newIsOpen, status: newIsOpen ? 'open' : 'closed' } : s))
+    );
 
     try {
       const { error } = await supabase
         .from('shops')
-        .update({ is_open: newIsOpen })
+        .update({ is_open: newIsOpen, status: newIsOpen ? 'open' : 'closed' })
         .eq('id', shopId);
 
       if (error) {
