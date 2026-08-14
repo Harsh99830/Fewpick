@@ -79,7 +79,7 @@ function App() {
           supabase.from('store_settings').select('*').eq('id', 1).single(),
           supabase.from('shops').select('*')
         ]);
-        
+
         if (itemsRes.error) throw itemsRes.error;
 
         if (shopsRes) {
@@ -97,7 +97,7 @@ function App() {
         } else if (settingsRes.error) {
           console.error('Failed to load store settings:', settingsRes.error.message);
         }
-        
+
         const shuffleArray = (array) => {
           const shuffled = [...array];
           for (let i = shuffled.length - 1; i > 0; i--) {
@@ -134,7 +134,7 @@ function App() {
             display_order: item.display_order ?? item.featured_order ?? 999
           };
         });
-        
+
         setAllProducts(shuffleArray(mappedData));
 
         if (!categoryRes.error && categoryRes.data) {
@@ -217,12 +217,12 @@ function App() {
 
       const matchingShop = (itemShopIdStr || itemShopNameClean)
         ? shops.find((s) => {
-            const sIdStr = s.id != null ? String(s.id).trim() : '';
-            const sNameClean = s.name ? String(s.name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
-            if (itemShopIdStr && sIdStr && itemShopIdStr === sIdStr) return true;
-            if (itemShopNameClean && sNameClean && itemShopNameClean === sNameClean) return true;
-            return false;
-          })
+          const sIdStr = s.id != null ? String(s.id).trim() : '';
+          const sNameClean = s.name ? String(s.name).trim().toLowerCase().replace(/\s+/g, ' ') : '';
+          if (itemShopIdStr && sIdStr && itemShopIdStr === sIdStr) return true;
+          if (itemShopNameClean && sNameClean && itemShopNameClean === sNameClean) return true;
+          return false;
+        })
         : null;
 
       let isShopClosed = false;
@@ -285,9 +285,9 @@ function App() {
 
   return (
     <>
-      <Navbar 
+      <Navbar
         products={processedProducts}
-        cartCount={cartCount} 
+        cartCount={cartCount}
         onNavigate={handleNavigate}
         cartItems={cartItems}
         onUpdateQty={handleUpdateQty}
@@ -304,24 +304,24 @@ function App() {
           </div>
         ) : (
           <Routes>
-            <Route 
-              path="/" 
+            <Route
+              path="/"
               element={
                 <>
                   <HeroBanner />
                   <CategorySection categories={categories} />
-                  <ProductSection 
-                    products={processedProducts} 
-                    cartItems={cartItems} 
-                    onUpdateQty={handleUpdateQty} 
+                  <ProductSection
+                    products={processedProducts}
+                    cartItems={cartItems}
+                    onUpdateQty={handleUpdateQty}
                     orderingEnabled={orderingEnabled}
                     onSelectProduct={(p) => setSelectedProduct(p)}
                   />
                 </>
-              } 
+              }
             />
-            <Route 
-              path="/cart" 
+            <Route
+              path="/cart"
               element={
                 <CartPage
                   cartItems={cartItems}
@@ -330,10 +330,10 @@ function App() {
                   orderingEnabled={orderingEnabled}
                   closedMessage={closedMessage}
                 />
-              } 
+              }
             />
-            <Route 
-              path="/category/:categoryName" 
+            <Route
+              path="/category/:categoryName"
               element={
                 <CategoryPage
                   products={processedProducts}
@@ -343,19 +343,19 @@ function App() {
                   orderingEnabled={orderingEnabled}
                   onSelectProduct={(p) => setSelectedProduct(p)}
                 />
-              } 
+              }
             />
-            <Route 
-              path="/contact" 
+            <Route
+              path="/contact"
               element={
                 <ContactPage />
-              } 
+              }
             />
-            <Route 
-              path="/hq" 
+            <Route
+              path="/hq"
               element={
                 <AdminHQ />
-              } 
+              }
             />
           </Routes>
         )}

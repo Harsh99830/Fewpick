@@ -639,17 +639,22 @@ export default function AdminHQ() {
     const newIsOpen = currentIsOpen === false || currentIsOpen === 'false' ? true : false;
 
     setShops((prevShops) =>
-      prevShops.map((s) => (s.id === shopId ? { ...s, is_open: newIsOpen, status: newIsOpen ? 'open' : 'closed' } : s))
+      prevShops.map((s) => (s.id === shopId ? { ...s, is_open: newIsOpen } : s))
     );
 
     try {
       const { error } = await supabase
         .from('shops')
-        .update({ is_open: newIsOpen, status: newIsOpen ? 'open' : 'closed' })
+        .update({ is_open: newIsOpen })
         .eq('id', shopId);
 
       if (error) {
-        console.warn('Supabase update notice:', error.message);
+        console.error('Supabase update failed:', error.message);
+        alert('Failed to update shop status: ' + error.message);
+        // revert optimistic update on failure
+        setShops((prevShops) =>
+          prevShops.map((s) => (s.id === shopId ? { ...s, is_open: currentIsOpen } : s))
+        );
       }
     } catch (err) {
       console.error('Toggle shop status error:', err);
