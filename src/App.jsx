@@ -376,9 +376,14 @@ function App() {
       <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto">
         <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">
           Powered by{' '}
-          <span className='font-extrabold text-orange-500 hover:text-orange-600 transition-colors'>
+          <a
+            href="https://fuudr.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-extrabold text-orange-500 hover:text-orange-600 transition-colors border-b border-orange-500 pb-[1px] hover:border-orange-600"
+          >
             Fuudr
-          </span>
+          </a>
         </p>
       </footer>
     </>
