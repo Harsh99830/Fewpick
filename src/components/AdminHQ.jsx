@@ -79,6 +79,13 @@ export default function AdminHQ() {
   const [shopDescription, setShopDescription] = useState('');
   const [isSubmittingShop, setIsSubmittingShop] = useState(false);
 
+  // Edit Shop Form States
+  const [editingShop, setEditingShop] = useState(null);
+  const [editShopName, setEditShopName] = useState('');
+  const [editShopImage, setEditShopImage] = useState('');
+  const [editShopDescription, setEditShopDescription] = useState('');
+  const [isUpdatingShop, setIsUpdatingShop] = useState(false);
+
   // Drag & drop reordering for featured items
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
@@ -553,6 +560,65 @@ export default function AdminHQ() {
       alert('Failed to create shop: ' + err.message);
     } finally {
       setIsSubmittingShop(false);
+    }
+  };
+
+  const handleEditShopClick = (shop) => {
+    setEditingShop(shop);
+    setEditShopName(shop.name || '');
+    setEditShopImage(shop.image || '');
+    setEditShopDescription(shop.description || '');
+  };
+
+  const handleUpdateShopSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingShop || !editShopName.trim()) return;
+
+    setIsUpdatingShop(true);
+    try {
+      const updatedFields = {
+        name: editShopName.trim(),
+        image: editShopImage.trim() || null,
+        description: editShopDescription.trim() || null,
+      };
+
+      const { error } = await supabase
+        .from('shops')
+        .update(updatedFields)
+        .eq('id', editingShop.id);
+
+      if (error) throw error;
+
+      setShops((prev) =>
+        prev.map((s) => (s.id === editingShop.id ? { ...s, ...updatedFields } : s))
+      );
+      setEditingShop(null);
+    } catch (err) {
+      console.error('Failed to update shop:', err);
+      alert('Failed to update shop: ' + err.message);
+    } finally {
+      setIsUpdatingShop(false);
+    }
+  };
+
+  const handleUpdateShopDescription = async (shopId, newDescription) => {
+    const trimmed = newDescription.trim();
+    setShops((prevShops) =>
+      prevShops.map((s) => (s.id === shopId ? { ...s, description: trimmed } : s))
+    );
+
+    try {
+      const { error } = await supabase
+        .from('shops')
+        .update({ description: trimmed })
+        .eq('id', shopId);
+
+      if (error) {
+        console.error('Failed to update shop description in Supabase:', error.message);
+        alert('Failed to update shop description: ' + error.message);
+      }
+    } catch (err) {
+      console.error('Error updating shop description:', err);
     }
   };
 
@@ -1829,8 +1895,19 @@ export default function AdminHQ() {
                       >
                         {shop.name}
                       </td>
-                      <td className="py-4 px-6 text-xs text-gray-500 max-w-[240px] truncate">
-                        {shop.description || 'No description provided'}
+                      <td className="py-4 px-6">
+                        <textarea
+                          key={`desc-${shop.id}-${shop.description}`}
+                          defaultValue={shop.description || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== (shop.description || '')) {
+                              handleUpdateShopDescription(shop.id, e.target.value);
+                            }
+                          }}
+                          placeholder="Edit shop description..."
+                          rows={2}
+                          className="w-full min-w-[200px] max-w-[260px] px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-gray-800 resize-none"
+                        />
                       </td>
                       <td className="py-4 px-6">
                         <button
@@ -1859,6 +1936,13 @@ export default function AdminHQ() {
                         </button>
                       </td>
                       <td className="py-4 px-6 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => handleEditShopClick(shop)}
+                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer border-none mr-1"
+                          title="Edit Shop Details"
+                        >
+                          <Edit2 size={15} />
+                        </button>
                         <button
                           onClick={() => handleDeleteShop(shop.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer border-none"
@@ -2882,6 +2966,70 @@ export default function AdminHQ() {
                 className="w-full mt-2 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl border-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer disabled:bg-gray-300"
               >
                 {isSubmittingShop ? 'Creating Shop...' : 'Create Shop'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Shop Modal */}
+      {editingShop && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[440px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Edit Shop #{editingShop.id}</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Update shop details in Supabase</p>
+              </div>
+              <button
+                onClick={() => setEditingShop(null)}
+                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-950 flex items-center justify-center border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateShopSubmit} className="p-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Shop Name *</label>
+                <input
+                  type="text"
+                  value={editShopName}
+                  onChange={(e) => setEditShopName(e.target.value)}
+                  placeholder="e.g. Poornima Mart, Campus Snacks"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Shop Image URL / Emoji</label>
+                <input
+                  type="text"
+                  value={editShopImage}
+                  onChange={(e) => setEditShopImage(e.target.value)}
+                  placeholder="e.g. 🏪 or https://..."
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Description (Supabase Column)</label>
+                <textarea
+                  value={editShopDescription}
+                  onChange={(e) => setEditShopDescription(e.target.value)}
+                  placeholder="e.g. Available till 11:00 pm..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] transition-all font-semibold resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isUpdatingShop || !editShopName.trim()}
+                className="w-full mt-2 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl border-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer disabled:bg-gray-300"
+              >
+                {isUpdatingShop ? 'Saving Changes...' : 'Save Changes in Supabase'}
               </button>
             </form>
           </div>
