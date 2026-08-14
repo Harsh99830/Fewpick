@@ -296,10 +296,13 @@ export default function AdminHQ() {
     return new Date().toISOString().split('T')[0];
   });
 
-  // Check session storage on load
+  // Check local/session storage on load for persistent auth (like Amazon/Netflix)
   useEffect(() => {
-    const sessionAuth = sessionStorage.getItem('fewpick_admin_auth');
-    if (sessionAuth === 'true') {
+    const isAuth =
+      localStorage.getItem('fewpick_admin_auth') === 'true' ||
+      sessionStorage.getItem('fewpick_admin_auth') === 'true';
+
+    if (isAuth) {
       setIsAuthenticated(true);
       fetchInitialData();
     }
@@ -411,6 +414,7 @@ export default function AdminHQ() {
 
       if (data && data.value === password) {
         setIsAuthenticated(true);
+        localStorage.setItem('fewpick_admin_auth', 'true');
         sessionStorage.setItem('fewpick_admin_auth', 'true');
         fetchInitialData();
       } else {
@@ -427,6 +431,7 @@ export default function AdminHQ() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setPassword('');
+    localStorage.removeItem('fewpick_admin_auth');
     sessionStorage.removeItem('fewpick_admin_auth');
   };
 
