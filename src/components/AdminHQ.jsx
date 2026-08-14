@@ -86,6 +86,9 @@ export default function AdminHQ() {
   const [editShopDescription, setEditShopDescription] = useState('');
   const [isUpdatingShop, setIsUpdatingShop] = useState(false);
 
+  // Selected chart day state for mobile tap inspection
+  const [selectedChartDay, setSelectedChartDay] = useState(null);
+
   // Drag & drop reordering for featured items
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
@@ -1039,11 +1042,28 @@ export default function AdminHQ() {
     }
   };
 
+  // Helper Order Checks
+  const isOrderConfirmed = (o) => {
+    const confirmVal = String(o?.confirm || '').trim().toLowerCase();
+    return confirmVal === 'yes' || confirmVal === '2';
+  };
+
+  const isOrderNotCancelled = (o) => {
+    const statusVal = String(o?.status || '').trim().toLowerCase();
+    return statusVal !== 'cancelled' && statusVal !== 'canceled';
+  };
+
+  const isOrderDelivered = (o) => {
+    const statusVal = String(o?.status || '').trim().toLowerCase();
+    return ['delivered', 'completed'].includes(statusVal);
+  };
+
   // Computations
-  const deliveredOrders = orders.filter((o) => o.confirm === 'yes' && ['delivered', 'completed'].includes(o.status));
-  const totalOrders = orders.filter((o) => o.confirm === 'yes').length;
+  const validOrders = orders.filter((o) => isOrderConfirmed(o) && isOrderNotCancelled(o));
+  const deliveredOrders = validOrders.filter((o) => isOrderDelivered(o));
+  const totalOrders = validOrders.length;
   const totalSales = deliveredOrders.length * 10;
-  const pendingOrders = orders.filter((o) => o.confirm !== 'yes').length;
+  const pendingOrders = orders.filter((o) => !isOrderConfirmed(o) || !isOrderNotCancelled(o)).length;
   const averageOrderValue = deliveredOrders.length > 0 ? Math.round(totalSales / deliveredOrders.length) : 0;
 
   // Stock checks
@@ -1102,11 +1122,16 @@ export default function AdminHQ() {
     const counts = {};
     const revenues = {};
     orders.forEach(order => {
+      if (!order.created_at) return;
       const orderDate = new Date(order.created_at).toISOString().split('T')[0];
-      if (order.confirm === 'yes') {
+
+      const confirmed = isOrderConfirmed(order);
+      const notCancelled = isOrderNotCancelled(order);
+
+      if (confirmed && notCancelled) {
         counts[orderDate] = (counts[orderDate] || 0) + 1;
       }
-      const isDelivered = order.confirm === 'yes' && ['delivered', 'completed'].includes(order.status);
+      const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
       const orderRev = isDelivered ? 10 : 0;
       revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
     });
@@ -1233,17 +1258,32 @@ export default function AdminHQ() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="h-[220px] flex items-end justify-between gap-1 pt-6 px-1 border-b border-gray-100">
+              <div className="h-[220px] flex items-end justify-between gap-1 pt-8 px-1 border-b border-gray-100">
                 {chartData.map((day, idx) => {
                   const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
                   const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                  const isSelected = selectedChartDay?.date === day.date;
 
                   return (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end relative">
-                      {/* Hover Tooltip */}
-                      <div className="absolute -top-7 scale-0 group-hover:scale-100 transition-all duration-150 bg-gray-900 text-white text-[9px] font-extrabold px-2.5 py-1 rounded-md shadow-lg whitespace-nowrap z-20 flex items-center gap-2 pointer-events-none">
-                        <span>{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
-                        <span className="text-gray-400">|</span>
+                    <div
+                      key={idx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChartDay(isSelected ? null : day);
+                      }}
+                      className={`flex-1 flex flex-col items-center gap-2 group h-full justify-end relative cursor-pointer rounded-lg p-0.5 transition-all ${
+                        isSelected ? 'bg-indigo-50/50' : 'hover:bg-gray-50/50'
+                      }`}
+                    >
+                      {/* Tooltip (Hover on Desktop, Tap/Selected on Mobile) */}
+                      <div className={`absolute -top-8 transition-all duration-200 bg-gray-900 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-xl whitespace-nowrap z-30 flex items-center gap-2 pointer-events-none ${
+                        isSelected
+                          ? 'scale-100 opacity-100 -translate-y-1 ring-2 ring-indigo-400'
+                          : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'
+                      }`}>
+                        <span>{day.label}:</span>
+                        <span className="text-indigo-300">{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
+                        <span className="text-gray-500">•</span>
                         <span className="text-emerald-400">₹{day.revenue.toLocaleString()}</span>
                       </div>
 
@@ -1253,7 +1293,7 @@ export default function AdminHQ() {
                         <div
                           style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 5 : 0)}%` }}
                           className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.count > 0
-                            ? 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.15)]'
+                            ? isSelected ? 'bg-indigo-600 shadow-md ring-1 ring-indigo-400' : 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.15)]'
                             : 'bg-gray-100'
                             }`}
                         >
@@ -1268,7 +1308,7 @@ export default function AdminHQ() {
                         <div
                           style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 5 : 0)}%` }}
                           className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.revenue > 0
-                            ? 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.15)]'
+                            ? isSelected ? 'bg-emerald-600 shadow-md ring-1 ring-emerald-400' : 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.15)]'
                             : 'bg-gray-100'
                             }`}
                         >
@@ -1286,14 +1326,58 @@ export default function AdminHQ() {
 
               {/* Day Labels */}
               <div className="flex justify-between gap-1 px-1">
-                {chartData.map((day, idx) => (
-                  <div key={idx} className="flex-1 text-center">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block truncate max-w-[48px] mx-auto">
-                      {day.label}
-                    </span>
-                  </div>
-                ))}
+                {chartData.map((day, idx) => {
+                  const isSelected = selectedChartDay?.date === day.date;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChartDay(isSelected ? null : day);
+                      }}
+                      className="flex-1 text-center cursor-pointer"
+                    >
+                      <span className={`text-[9px] font-black uppercase tracking-wider block truncate max-w-[48px] mx-auto transition-colors ${
+                        isSelected ? 'text-indigo-600 underline' : 'text-gray-400 hover:text-gray-700'
+                      }`}>
+                        {day.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
+
+              {/* Selected Day Info Banner on Tap/Click */}
+              {selectedChartDay ? (
+                <div className="mt-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs animate-drop-in">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block animate-pulse"></span>
+                    <span className="font-extrabold text-gray-900 text-xs">{selectedChartDay.label} Breakdown:</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs font-black">
+                    <span className="bg-white text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-100 shadow-2xs">
+                      {selectedChartDay.count} {selectedChartDay.count === 1 ? 'order' : 'orders'}
+                    </span>
+                    <span className="bg-white text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
+                      ₹{selectedChartDay.revenue.toLocaleString()} revenue
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChartDay(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-800 border-none bg-transparent cursor-pointer font-extrabold px-1 text-xs"
+                      title="Close"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px] text-gray-400 font-bold text-center m-0 mt-1 sm:hidden">
+                  💡 Tap on any day's bar to view order count and revenue breakdown
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -1964,8 +2048,8 @@ export default function AdminHQ() {
 
   // Sub-tab: Orders List
   const renderOrdersTab = () => {
-    const expectedOrders = orders.filter(o => o.confirm !== 'yes');
-    const confirmedOrders = orders.filter(o => o.confirm === 'yes');
+    const expectedOrders = orders.filter(o => !isOrderConfirmed(o));
+    const confirmedOrders = orders.filter(o => isOrderConfirmed(o));
 
     return (
       <div className="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] overflow-hidden">
