@@ -1216,14 +1216,14 @@ export default function AdminHQ() {
 
             <div className="flex items-center gap-4 flex-wrap text-xs font-semibold text-gray-500">
               {/* Legend */}
-              <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-150 text-[11px] font-bold">
+              <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-bold">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500 inline-block"></span>
-                  <span className="text-gray-700">Orders</span>
+                  <span className="w-3 h-3 bg-[#0095ff] inline-block rounded-xs"></span>
+                  <span className="text-gray-800">Orders</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>
-                  <span className="text-gray-700">Revenue</span>
+                  <span className="w-3 h-3 bg-[#00b04f] inline-block rounded-xs"></span>
+                  <span className="text-gray-800">Revenue</span>
                 </div>
               </div>
 
@@ -1258,107 +1258,123 @@ export default function AdminHQ() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="h-[220px] flex items-end justify-between gap-1 pt-8 px-1 border-b border-gray-100">
-                {chartData.map((day, idx) => {
-                  const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-                  const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-                  const isSelected = selectedChartDay?.date === day.date;
+              {/* Double Bar Chart Layout with Y-Axis Scale & Numbers Above Bars */}
+              <div className="flex gap-2 items-stretch h-[230px] pt-8">
+                {/* Y-Axis Scale Values */}
+                <div className="flex flex-col justify-between text-[9px] font-extrabold text-gray-400 border-r border-gray-200 pr-2 select-none py-1">
+                  <span>{Math.max(maxRevenue, maxCount, 10)}</span>
+                  <span>{Math.round(Math.max(maxRevenue, maxCount, 10) * 0.75)}</span>
+                  <span>{Math.round(Math.max(maxRevenue, maxCount, 10) * 0.50)}</span>
+                  <span>{Math.round(Math.max(maxRevenue, maxCount, 10) * 0.25)}</span>
+                  <span>0</span>
+                </div>
 
-                  return (
-                    <div
-                      key={idx}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedChartDay(isSelected ? null : day);
-                      }}
-                      className={`flex-1 flex flex-col items-center gap-2 group h-full justify-end relative cursor-pointer rounded-lg p-0.5 transition-all ${
-                        isSelected ? 'bg-indigo-50/50' : 'hover:bg-gray-50/50'
-                      }`}
-                    >
-                      {/* Tooltip (Hover on Desktop, Tap/Selected on Mobile) */}
-                      <div className={`absolute -top-8 transition-all duration-200 bg-gray-900 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-xl whitespace-nowrap z-30 flex items-center gap-2 pointer-events-none ${
-                        isSelected
-                          ? 'scale-100 opacity-100 -translate-y-1 ring-2 ring-indigo-400'
-                          : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'
-                      }`}>
-                        <span>{day.label}:</span>
-                        <span className="text-indigo-300">{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
-                        <span className="text-gray-500">•</span>
-                        <span className="text-emerald-400">₹{day.revenue.toLocaleString()}</span>
-                      </div>
+                {/* Plot Area */}
+                <div className="flex-1 flex flex-col justify-end">
+                  {/* Bars Row */}
+                  <div className="flex items-end justify-between gap-1 h-full border-b-2 border-gray-400 px-1 pb-0">
+                    {chartData.map((day, idx) => {
+                      const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                      const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                      const isSelected = selectedChartDay?.date === day.date;
 
-                      {/* Dual Bars */}
-                      <div className="w-full flex items-end justify-center gap-0.5 h-full">
-                        {/* Orders Bar */}
+                      return (
                         <div
-                          style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 5 : 0)}%` }}
-                          className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.count > 0
-                            ? isSelected ? 'bg-indigo-600 shadow-md ring-1 ring-indigo-400' : 'bg-indigo-500 hover:bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.15)]'
-                            : 'bg-gray-100'
-                            }`}
+                          key={idx}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedChartDay(isSelected ? null : day);
+                          }}
+                          className={`flex-1 flex items-end justify-center h-full group relative cursor-pointer p-0.5 transition-all ${
+                            isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
+                          }`}
                         >
-                          {day.count > 0 && (
-                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-white hidden sm:block">
-                              {day.count}
-                            </span>
-                          )}
-                        </div>
+                          {/* Tooltip */}
+                          <div className={`absolute -top-10 transition-all duration-200 bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap z-30 flex items-center gap-2 pointer-events-none ${
+                            isSelected ? 'scale-100 opacity-100 -translate-y-1 ring-2 ring-sky-400' : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'
+                          }`}>
+                            <span>{day.label}:</span>
+                            <span className="text-sky-300">{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
+                            <span className="text-gray-500">•</span>
+                            <span className="text-emerald-400">₹{day.revenue.toLocaleString()}</span>
+                          </div>
 
-                        {/* Revenue Bar */}
+                          {/* Attached Double Bar Pair (Flat Rectangles, 0px gap inside pair) */}
+                          <div className="w-full flex items-end justify-center h-full max-w-[28px] sm:max-w-[36px]">
+                            {/* Left Bar: Series 1 / Orders (Sky Blue) */}
+                            <div className="w-1/2 flex flex-col items-center justify-end h-full relative">
+                              {/* Number Directly Above Bar */}
+                              <span className="text-[8px] sm:text-[9.5px] font-black text-gray-800 mb-0.5 whitespace-nowrap">
+                                {day.count}
+                              </span>
+                              <div
+                                style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 6 : 0)}%` }}
+                                className={`w-full transition-all duration-200 ${
+                                  day.count > 0
+                                    ? isSelected ? 'bg-[#0080ff]' : 'bg-[#0095ff] hover:bg-[#0080ff]'
+                                    : 'bg-gray-200/80'
+                                }`}
+                              />
+                            </div>
+
+                            {/* Right Bar: Series 2 / Revenue (Vibrant Green) - Attached */}
+                            <div className="w-1/2 flex flex-col items-center justify-end h-full relative">
+                              {/* Number Directly Above Bar */}
+                              <span className="text-[8px] sm:text-[9.5px] font-black text-gray-800 mb-0.5 whitespace-nowrap">
+                                {day.revenue > 0 ? `₹${day.revenue}` : '0'}
+                              </span>
+                              <div
+                                style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 6 : 0)}%` }}
+                                className={`w-full transition-all duration-200 ${
+                                  day.revenue > 0
+                                    ? isSelected ? 'bg-[#009643]' : 'bg-[#00b04f] hover:bg-[#009643]'
+                                    : 'bg-gray-200/80'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* X-Axis Labels */}
+                  <div className="flex justify-between gap-1 px-1 pt-2">
+                    {chartData.map((day, idx) => {
+                      const isSelected = selectedChartDay?.date === day.date;
+                      return (
                         <div
-                          style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 5 : 0)}%` }}
-                          className={`w-1/2 max-w-[14px] rounded-t-sm transition-all duration-300 relative ${day.revenue > 0
-                            ? isSelected ? 'bg-emerald-600 shadow-md ring-1 ring-emerald-400' : 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.15)]'
-                            : 'bg-gray-100'
-                            }`}
+                          key={idx}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedChartDay(isSelected ? null : day);
+                          }}
+                          className="flex-1 text-center cursor-pointer"
                         >
-                          {day.revenue > 0 && (
-                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-white hidden sm:block truncate max-w-full px-0.5">
-                              ₹{day.revenue > 999 ? `${Math.round(day.revenue / 1000)}k` : day.revenue}
-                            </span>
-                          )}
+                          <span className={`text-[9px] font-black tracking-wider block truncate max-w-[48px] mx-auto transition-colors ${
+                            isSelected ? 'text-[#0095ff] font-black underline' : 'text-gray-500 hover:text-gray-900'
+                          }`}>
+                            {day.label}
+                          </span>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Day Labels */}
-              <div className="flex justify-between gap-1 px-1">
-                {chartData.map((day, idx) => {
-                  const isSelected = selectedChartDay?.date === day.date;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedChartDay(isSelected ? null : day);
-                      }}
-                      className="flex-1 text-center cursor-pointer"
-                    >
-                      <span className={`text-[9px] font-black uppercase tracking-wider block truncate max-w-[48px] mx-auto transition-colors ${
-                        isSelected ? 'text-indigo-600 underline' : 'text-gray-400 hover:text-gray-700'
-                      }`}>
-                        {day.label}
-                      </span>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Selected Day Info Banner on Tap/Click */}
               {selectedChartDay ? (
-                <div className="mt-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs animate-drop-in">
+                <div className="mt-2 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs animate-drop-in">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block animate-pulse"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0095ff] inline-block animate-pulse"></span>
                     <span className="font-extrabold text-gray-900 text-xs">{selectedChartDay.label} Breakdown:</span>
                   </div>
                   <div className="flex items-center gap-2.5 text-xs font-black">
-                    <span className="bg-white text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-100 shadow-2xs">
+                    <span className="bg-white text-[#0095ff] px-2.5 py-1 rounded-lg border border-sky-100 shadow-2xs">
                       {selectedChartDay.count} {selectedChartDay.count === 1 ? 'order' : 'orders'}
                     </span>
-                    <span className="bg-white text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
+                    <span className="bg-white text-[#00b04f] px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
                       ₹{selectedChartDay.revenue.toLocaleString()} revenue
                     </span>
                     <button
