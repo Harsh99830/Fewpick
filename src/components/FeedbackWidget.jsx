@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, CheckCircle2, Star } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +34,20 @@ export default function FeedbackWidget() {
     setIsSubmitting(true);
 
     try {
+      // 1. Save feedback into Supabase table
+      const { error: dbError } = await supabase.from('feedback').insert([
+        {
+          rating: rating || null,
+          message: message,
+          email: email || null
+        }
+      ]);
+
+      if (dbError) {
+        console.error('Error saving feedback to Supabase:', dbError.message);
+      }
+
+      // 2. Send email notification to solvers.real@gmail.com
       await fetch('https://formsubmit.co/ajax/solvers.real@gmail.com', {
         method: 'POST',
         headers: {
