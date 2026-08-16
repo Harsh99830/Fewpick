@@ -12,7 +12,7 @@ export default function FeedbackWidget() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const modalRef = useRef(null);
 
-  // Close when clicking outside modal
+  // Lock background scroll & handle click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -20,9 +20,13 @@ export default function FeedbackWidget() {
       }
     };
     if (isOpen) {
+      document.body.style.overflow = 'hidden';
       document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.body.style.overflow = '';
     }
     return () => {
+      document.body.style.overflow = '';
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
