@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone, FileText, Clock, ChevronDown, Info } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -52,39 +52,21 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   const handleCheckout = async () => {
     if (!orderingEnabled) return;
     
-    let hasErr = false;
     if (!customerName || !customerName.trim()) {
       setNameError(true);
-      hasErr = true;
+      return;
     }
-
-    const cleanPhone = customerPhone.replace(/\D/g, '').trim();
-    if (!cleanPhone) {
-      setPhoneError('Mobile number is required');
-      hasErr = true;
-    } else if (cleanPhone.length !== 10) {
-      setPhoneError('Please enter a 10-digit mobile number');
-      hasErr = true;
-    } else if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      setPhoneError('Please enter a valid 10-digit mobile number');
-      hasErr = true;
-    } else {
-      setPhoneError('');
-    }
-
-    if (hasErr) return;
 
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
     const cleanName = customerName.trim();
     
-    // Formulate a clean WhatsApp order message with customer name & phone
+    // Formulate a clean WhatsApp order message with customer name
     let message = `*New Order from ${cleanName} (${orderId})*\n\n`;
     cartItems.forEach((item) => {
       message += `• ${item.product.name} (${item.product.weight}) - ${item.quantity} x ₹${item.product.price} = ₹${item.product.price * item.quantity}\n`;
     });
     message += `\n*Customer Name:* ${cleanName}`;
-    message += `\n*Phone:* ${cleanPhone}`;
     message += `\n*Item Total:* ₹${subtotal}`;
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
     message += `\n*Grand Total:* ₹${grandTotal}`;
@@ -104,7 +86,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
       const { error } = await supabase.from('expected_orders').insert({
         id: orderId,
         name: cleanName,
-        phone: cleanPhone,
+        phone: '',
         items: orderItems,
         subtotal: subtotal,
         rider_effort: deliveryCharge,
@@ -143,158 +125,130 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   }
 
   return (
-    <div className="animate-drop-in">
+    <div className="w-full max-w-[620px] mx-auto py-2 sm:py-4 px-3 sm:px-4 animate-drop-in">
       {/* Back button */}
       <button
         onClick={onNavigateHome}
-        className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors mb-6 cursor-pointer bg-none border-none p-0 group"
+        className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors mb-4 cursor-pointer bg-none border-none p-0 group"
       >
-        <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
-        Back to Shopping
+        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 transition-transform group-hover:-translate-x-0.5">
+          <ArrowLeft size={16} />
+        </div>
+        <span>Back to Shopping</span>
       </button>
 
-      <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-8 tracking-[-0.03em]">
-        Your Shopping Cart ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
-      </h1>
+      {/* Main Title & Subtitle */}
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 m-0 tracking-tight">
+          Your Cart ({cartItems.reduce((s, i) => s + i.quantity, 0)} {cartItems.reduce((s, i) => s + i.quantity, 0) === 1 ? 'item' : 'items'})
+        </h1>
+        <p className="text-xs sm:text-sm text-gray-500 font-medium m-0 mt-1">
+          Review your items and confirm your order.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Cart Items List */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          {cartItems.map((item) => {
-            return (
-              <div
-                key={item.product.id}
-                className="flex items-center gap-2.5 sm:gap-4 bg-white p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-[#e8eaf0] shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-all hover:border-[#e0e2f0]"
-              >
-                {/* Image */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-50 rounded-lg sm:rounded-xl flex-shrink-0 flex items-center justify-center p-1.5 border border-gray-100 overflow-hidden">
-                  <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain" />
-                </div>
+      <div className="flex flex-col gap-5 sm:gap-6">
+        {/* Cart Items Cards */}
+        <div className="flex flex-col gap-3">
+          {cartItems.map((item) => (
+            <div
+              key={item.product.id}
+              className="bg-white rounded-2xl border border-gray-200/80 p-2.5 sm:p-3 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center gap-3"
+            >
+              {/* Image Box */}
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-50 rounded-xl flex-shrink-0 flex items-center justify-center p-1 border border-gray-100 overflow-hidden">
+                <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain" />
+              </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                  {item.product.weight && (
-                    <span className="text-[0.6rem] font-extrabold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase tracking-wider self-start">
-                      {item.product.weight}
-                    </span>
+              {/* Product Details */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xs sm:text-sm font-bold text-gray-900 m-0 leading-tight truncate mb-0.5">
+                  {item.product.name}
+                </h3>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-sm sm:text-base font-extrabold text-gray-900">₹{item.product.price}</span>
+                  {item.product.mrp && item.product.mrp > item.product.price && (
+                    <span className="text-[10px] sm:text-xs text-gray-400 line-through">₹{item.product.mrp}</span>
                   )}
-                  <h3 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight truncate">{item.product.name}</h3>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs sm:text-sm font-black text-gray-900">₹{item.product.price}</span>
-                    {item.product.mrp && item.product.mrp > item.product.price && (
-                      <span className="text-[10px] text-gray-400 line-through">₹{item.product.mrp}</span>
-                    )}
-                  </div>
                 </div>
+              </div>
 
-                {/* Quantity + Actions */}
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                  <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                    <button
-                      onClick={() => onUpdateQty(item.product.id, item.quantity - 1)}
-                      className="p-1 sm:p-1.5 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer border-none flex items-center justify-center"
-                    >
-                      <Minus size={13} />
-                    </button>
-                    <span className="w-6 sm:w-7 text-center text-xs font-extrabold text-gray-800">{item.quantity}</span>
-                    <button
-                      onClick={() => onUpdateQty(item.product.id, item.quantity + 1)}
-                      className="p-1 sm:p-1.5 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer border-none flex items-center justify-center"
-                    >
-                      <Plus size={13} />
-                    </button>
-                  </div>
-
+              {/* Stepper */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="flex items-center border border-green-600/30 rounded-xl bg-green-50/50 overflow-hidden">
                   <button
-                    onClick={() => onUpdateQty(item.product.id, 0)}
-                    className="p-1.5 text-gray-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-all cursor-pointer border-none flex items-center justify-center"
-                    title="Remove item"
+                    onClick={() => onUpdateQty(item.product.id, item.quantity - 1)}
+                    className="w-7 h-7 flex items-center justify-center text-green-700 hover:bg-green-600 hover:text-white transition-colors cursor-pointer border-none bg-transparent"
                   >
-                    <Trash2 size={15} />
+                    <Minus size={12} />
+                  </button>
+                  <span className="w-6 text-center text-xs font-black text-gray-900">{item.quantity}</span>
+                  <button
+                    onClick={() => onUpdateQty(item.product.id, item.quantity + 1)}
+                    className="w-7 h-7 flex items-center justify-center text-green-700 hover:bg-green-600 hover:text-white transition-colors cursor-pointer border-none bg-transparent"
+                  >
+                    <Plus size={12} />
                   </button>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
-        {/* Cart Summary */}
-        <div className="bg-white rounded-2xl border border-[#e8eaf0] shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 flex flex-col gap-6 lg:sticky lg:top-24">
-          <div className="border-b border-gray-100 pb-4 flex flex-col gap-2">
-            <h2 className="text-lg font-black text-gray-900 m-0">Bill Details</h2>
+        {/* Divider Line */}
+        <div className="border-b border-dashed border-gray-200 my-1" />
+
+        {/* Section 2: Customer Name Input */}
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-5 flex flex-col gap-2">
+          <label className="text-xs font-bold text-gray-800 flex items-center justify-between">
+            <span>Your Name</span>
+            {nameError && <span className="text-[10px] font-bold text-rose-500">Required</span>}
+          </label>
+          <div className="relative flex items-center">
+            <User size={15} className="absolute left-3 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={customerName}
+              onChange={handleNameChange}
+              placeholder="Enter your name"
+              className={`w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-semibold outline-none transition-all ${
+                nameError
+                  ? 'border-rose-500 bg-rose-50/50 text-rose-900'
+                  : 'border-gray-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Section 3: Order Summary Card */}
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-5 flex flex-col gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <FileText size={18} />
+            </div>
+            <h3 className="text-base font-bold text-gray-900 m-0">Order Summary</h3>
           </div>
 
-          {/* Customer Name & Phone Input Fields */}
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <User size={14} className="text-indigo-600" />
-                  Your Name <span className="text-rose-500 font-black">*</span>
-                </span>
-                {nameError && (
-                  <span className="text-[11px] font-extrabold text-rose-500">Name is required</span>
-                )}
-              </label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={handleNameChange}
-                placeholder="Enter your name"
-                className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
-                  nameError
-                    ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
-                    : 'border-gray-200 bg-gray-50/70 text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20'
-                }`}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Phone size={14} className="text-indigo-600" />
-                  Mobile Number <span className="text-rose-500 font-black">*</span>
-                </span>
-                {phoneError && (
-                  <span className="text-[11px] font-extrabold text-rose-500">{phoneError}</span>
-                )}
-              </label>
-              <input
-                type="tel"
-                value={customerPhone}
-                onChange={handlePhoneChange}
-                maxLength={10}
-                placeholder="Enter 10-digit mobile number"
-                className={`w-full px-3.5 py-3 rounded-xl border text-xs font-bold transition-all outline-none ${
-                  phoneError
-                    ? 'border-rose-500 bg-rose-50/50 text-rose-950 focus:ring-2 focus:ring-rose-500/20'
-                    : 'border-gray-200 bg-gray-50/70 text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20'
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Bill Breakdowns */}
-          <div className="flex flex-col gap-3 text-sm pt-1">
-            <div className="flex justify-between text-gray-500">
+          <div className="flex flex-col gap-2.5 text-xs sm:text-sm">
+            <div className="flex justify-between text-gray-600 font-medium">
               <span>Item Total</span>
-              <span>₹{subtotal}</span>
+              <span className="font-bold text-gray-900">₹{subtotal}</span>
             </div>
-            <div className="flex justify-between text-gray-500 border-b border-dashed border-gray-100 pb-3">
+            <div className="flex justify-between text-gray-600 font-medium border-b border-dashed border-gray-200 pb-3">
               <span>Rider's Effort</span>
-              <span>₹{deliveryCharge}</span>
+              <span className="font-bold text-gray-900">₹{deliveryCharge}</span>
             </div>
-            <div className="flex justify-between text-base font-black text-gray-900 pt-1">
+            <div className="flex justify-between text-base font-extrabold text-gray-900 pt-1">
               <span>Grand Total</span>
-              <span className="text-lg">₹{grandTotal}</span>
+              <span className="text-xl font-black text-emerald-600">₹{grandTotal}</span>
             </div>
           </div>
 
-          {/* Checkout Button */}
+          {/* Place Order WhatsApp Button */}
           {!orderingEnabled ? (
             <button
               disabled
-              className="w-full py-4 bg-[#f3f4f6] text-gray-400 font-extrabold rounded-xl border border-gray-200 cursor-not-allowed text-sm flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gray-100 text-gray-400 font-bold rounded-xl border border-gray-200 cursor-not-allowed text-sm flex items-center justify-center gap-2"
             >
               <span>Store is closed</span>
             </button>
@@ -302,7 +256,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
             <button
               onClick={handleCheckout}
               disabled={isCheckingOut}
-              className="w-full py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold rounded-xl shadow-[0_4px_20px_rgba(37,211,102,0.25)] transition-all transform hover:-translate-y-px active:translate-y-0 text-sm flex items-center justify-center gap-2 cursor-pointer disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed border-none"
+              className="w-full py-3.5 bg-[#00A859] hover:bg-[#00964f] text-white font-extrabold rounded-xl shadow-[0_4px_16px_rgba(0,168,89,0.3)] transition-all active:scale-[0.99] text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer disabled:bg-gray-300 border-none"
             >
               {isCheckingOut ? (
                 <span className="flex items-center gap-2">
@@ -311,7 +265,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                 </span>
               ) : (
                 <>
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" className="flex-shrink-0">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                   </svg>
                   <span>Place order via WhatsApp</span>
@@ -320,9 +274,14 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
             </button>
           )}
 
-          <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-center">
-            <p className="text-[11.5px] text-amber-950 font-medium leading-relaxed m-0">
-              Orders are processed in <strong>20-25 minute slots</strong>. For <strong>Quick Delivery</strong>, message us after placing order. <strong>₹10 extra applies</strong>.
+          {/* Delivery Note Box */}
+          <div className="bg-amber-50/90 border border-amber-200/80 rounded-xl p-3 flex items-start gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Clock size={15} />
+            </div>
+            <p className="text-xs text-amber-950 font-medium leading-relaxed m-0">
+              Orders are processed in <strong>20–25 minute slots</strong>.<br />
+              For <strong>Quick Delivery</strong>, message us after placing order. <strong>₹10 extra applies</strong>.
             </p>
           </div>
         </div>
