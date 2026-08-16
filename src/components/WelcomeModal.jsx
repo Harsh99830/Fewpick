@@ -57,15 +57,15 @@ export default function WelcomeModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      {/* Backdrop click */}
-      <div
-        className="fixed inset-0"
-        onClick={() => handleClose('close')}
-      />
-
+    <div
+      onClick={() => handleClose('backdrop_click')}
+      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in cursor-pointer"
+    >
       {/* Simple Minimal Card */}
-      <div className="relative bg-white w-full max-w-[380px] rounded-3xl shadow-2xl p-6 sm:p-7 z-10 animate-drop-in border border-gray-100 flex flex-col gap-5 text-center">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative bg-white w-full max-w-[380px] rounded-3xl shadow-2xl p-6 sm:p-7 z-10 animate-drop-in border border-gray-100 flex flex-col gap-5 text-center cursor-default"
+      >
         {/* Close Button */}
         <button
           onClick={() => handleClose('close')}
