@@ -137,15 +137,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         <span>Back to Shopping</span>
       </button>
 
-      {/* Main Title & Subtitle */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 m-0 tracking-tight">
-          Your Cart ({cartItems.reduce((s, i) => s + i.quantity, 0)} {cartItems.reduce((s, i) => s + i.quantity, 0) === 1 ? 'item' : 'items'})
-        </h1>
-        <p className="text-xs sm:text-sm text-gray-500 font-medium m-0 mt-1">
-          Review your items and confirm your order.
-        </p>
-      </div>
+
 
       <div className="flex flex-col gap-5 sm:gap-6">
         {/* Cart Items Cards */}
