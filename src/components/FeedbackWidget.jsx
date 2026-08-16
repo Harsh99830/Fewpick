@@ -83,14 +83,14 @@ export default function FeedbackWidget({ hasCart = false }) {
 
   return (
     <>
-      {/* Floating Trigger Button - dynamic bottom position when cart bar is visible */}
-      <div className={`fixed right-4 sm:right-5 z-[990] transition-all duration-300 ${hasCart ? 'bottom-20' : 'bottom-4 sm:bottom-5'}`}>
+      {/* Floating Trigger Button - fixed at right-4 */}
+      <div className="fixed bottom-4 right-4 z-[990]">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-gray-900/90 hover:bg-black text-white rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer border border-white/10 active:scale-95 text-xs font-semibold"
+          className="flex items-center gap-1.5 px-3 py-2 bg-gray-900/90 hover:bg-black text-white rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer border border-white/10 active:scale-95 text-xs font-semibold"
           aria-label="Feedback"
         >
-          <MessageSquare size={15} />
+          <MessageSquare size={14} />
           <span>Feedback</span>
         </button>
       </div>

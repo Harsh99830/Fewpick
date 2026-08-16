@@ -14,34 +14,53 @@ export default function FloatingCartBar({ cartItems = [] }) {
     return null;
   }
 
+  // Get unique products with images currently in cart (max 3 stacked preview images)
+  const cartPreviewProducts = cartItems.filter(item => item.quantity > 0 && item.product?.image).slice(0, 3);
+
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-24 sm:max-w-[360px] z-[980] animate-drop-in">
+    <div className="fixed bottom-4 left-4 z-[980] animate-drop-in">
+      {/* View Cart Pill */}
       <button
         onClick={() => navigate('/cart')}
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-2xl shadow-[0_8px_25px_rgba(16,185,129,0.35)] flex items-center justify-between cursor-pointer border-none transition-all active:scale-[0.98] group"
+        className="bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 px-3 sm:px-3.5 rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] flex items-center gap-2.5 cursor-pointer border-none transition-all active:scale-[0.97] group"
       >
-        {/* Left Side: Items & Total Price */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/80 flex items-center justify-center text-white relative">
-            <ShoppingBag size={19} />
-            <span className="absolute -top-1 -right-1 bg-white text-emerald-800 text-[0.62rem] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+        <div className="flex items-center gap-1.5">
+          {/* Overlapping Product Thumbnails Container */}
+          <div className="flex items-center -space-x-2 relative pr-1.5">
+            {cartPreviewProducts.length > 0 ? (
+              cartPreviewProducts.map((item, idx) => (
+                <div
+                  key={item.product.id}
+                  className="w-7 h-7 rounded-full bg-white border border-emerald-500 overflow-hidden flex items-center justify-center shadow-xs flex-shrink-0"
+                  style={{ zIndex: 10 - idx }}
+                >
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    className="w-full h-full object-contain p-0.5"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+                <ShoppingBag size={13} />
+              </div>
+            )}
+            <span className="absolute -top-1 -right-0.5 bg-white text-emerald-800 text-[0.55rem] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border border-emerald-200 z-30">
               {totalCount}
             </span>
           </div>
-          <div className="flex flex-col text-left">
-            <span className="text-[0.68rem] text-emerald-100 font-bold uppercase tracking-wider leading-none mb-0.5">
-              {totalCount} {totalCount === 1 ? 'item' : 'items'} added
-            </span>
-            <span className="text-sm font-black leading-tight text-white">
-              ₹{totalPrice}
-            </span>
-          </div>
+
+          <span className="text-xs font-black text-white ml-0.5">
+            ₹{totalPrice}
+          </span>
         </div>
 
-        {/* Right Side: View Cart Action */}
-        <div className="flex items-center gap-1 text-xs font-black tracking-wide bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-xl transition-colors">
+        <div className="w-px h-3.5 bg-emerald-400/40" />
+
+        <div className="flex items-center gap-1 text-[0.72rem] font-extrabold text-white">
           <span>View Cart</span>
-          <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+          <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
         </div>
       </button>
     </div>
