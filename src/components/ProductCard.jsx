@@ -77,12 +77,12 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
 
           {/* Shop Description Line (placed between price and ADD button) */}
           {!product.isShopClosed && product.shopDescription && (
-            <p className="text-[0.54rem] sm:text-[0.58rem] text-emerald-700 font-semibold leading-tight line-clamp-1 m-0 opacity-90">
+            <p className="text-[0.54rem] sm:text-[0.58rem] text-amber-700 font-semibold leading-tight line-clamp-1 m-0 opacity-90">
               {product.shopDescription}
             </p>
           )}
 
-          {/* Full-width ADD Button with fixed height */}
+          {/* Action Button Section */}
           <div>
             {product.isShopClosed ? (
               <div className="w-full h-[30px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 text-[0.62rem] font-bold text-center cursor-not-allowed flex items-center justify-center">
@@ -94,19 +94,19 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
               </div>
             ) : qty === 0 ? (
               <button
-                className="w-full h-[30px] border border-green-600 rounded-lg bg-green-50/50 hover:bg-green-600 text-green-700 hover:text-white text-[0.72rem] sm:text-xs font-black cursor-pointer flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
+                className="w-full h-[30px] border border-amber-500 rounded-lg bg-amber-50/50 hover:bg-amber-500 text-amber-700 hover:text-white text-[0.72rem] sm:text-xs font-black cursor-pointer flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
                 onClick={handleAdd}
               >
                 <Plus size={13} />
                 <span>ADD</span>
               </button>
             ) : (
-              <div className="w-full h-[30px] flex items-center border border-green-600 rounded-lg overflow-hidden bg-white">
-                <button className="flex-1 h-full bg-green-600 text-white border-none cursor-pointer flex items-center justify-center hover:bg-green-700 transition-colors" onClick={handleDec}>
+              <div className="w-full h-[30px] flex items-center border border-amber-500 rounded-lg overflow-hidden bg-white">
+                <button className="flex-1 h-full bg-amber-500 text-white border-none cursor-pointer flex items-center justify-center hover:bg-amber-600 transition-colors" onClick={handleDec}>
                   <Minus size={13} />
                 </button>
-                <span className="flex-1 text-center text-[0.75rem] font-extrabold text-green-700 select-none">{qty}</span>
-                <button className="flex-1 h-full bg-green-600 text-white border-none cursor-pointer flex items-center justify-center hover:bg-green-700 transition-colors" onClick={handleInc}>
+                <span className="flex-1 text-center text-[0.75rem] font-extrabold text-amber-700 select-none">{qty}</span>
+                <button className="flex-1 h-full bg-amber-500 text-white border-none cursor-pointer flex items-center justify-center hover:bg-amber-600 transition-colors" onClick={handleInc}>
                   <Plus size={13} />
                 </button>
               </div>

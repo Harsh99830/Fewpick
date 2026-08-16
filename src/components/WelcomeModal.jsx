@@ -88,11 +88,11 @@ export default function WelcomeModal() {
         {/* 2 Simple Highlight Lines */}
         <div className="flex flex-col gap-2.5 text-left bg-gray-50/80 p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2.5 text-xs text-gray-800 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span>Orders delivered in <strong>20-25 minute time slots</strong></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+            <span>Orders delivered in <strong>20-25 minute slots</strong></span>
           </div>
           <div className="flex items-center gap-2.5 text-xs text-gray-800 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
             <span><strong>No minimum order</strong>, order even a single item</span>
           </div>
         </div>

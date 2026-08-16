@@ -224,7 +224,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                   className={`w-full pl-8 pr-2.5 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold outline-none transition-all ${
                     nameError
                       ? 'border-rose-500 bg-rose-50/50 text-rose-900'
-                      : 'border-gray-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
+                      : 'border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10'
                   }`}
                 />
               </div>
@@ -251,7 +251,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                   className={`w-full pl-8 pr-2.5 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold outline-none transition-all ${
                     phoneError
                       ? 'border-rose-500 bg-rose-50/50 text-rose-900'
-                      : 'border-gray-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
+                      : 'border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10'
                   }`}
                 />
               </div>
@@ -262,7 +262,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         {/* Section 3: Order Summary Card */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-5 flex flex-col gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
               <FileText size={18} />
             </div>
             <h3 className="text-base font-bold text-gray-900 m-0">Order Summary</h3>
@@ -279,7 +279,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
             </div>
             <div className="flex justify-between text-base font-extrabold text-gray-900 pt-1">
               <span>Grand Total</span>
-              <span className="text-xl font-black text-emerald-600">₹{grandTotal}</span>
+              <span className="text-xl font-black text-amber-600">₹{grandTotal}</span>
             </div>
           </div>
 

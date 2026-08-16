@@ -70,7 +70,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
   const searchWrapperClass = `flex-1 max-w-[620px] h-11 flex items-center bg-gray-50/90 border border-gray-200/90 rounded-full px-4 transition-all duration-200 shadow-2xs hover:bg-white hover:border-gray-300 ${
     searchFocused || searchQuery
-      ? '!bg-white !border-emerald-600 shadow-[0_4px_20px_rgba(16,185,129,0.15)] ring-2 ring-emerald-500/20'
+      ? '!bg-white !border-amber-500 shadow-[0_4px_20px_rgba(245,158,11,0.15)] ring-2 ring-amber-500/20'
       : ''
   }`;
 
@@ -135,46 +135,59 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px] pointer-events-none">Pick</span>
             </button>
 
+            {/* Delivery Location Badge */}
+            <div className="flex items-center gap-1.5 pl-2 sm:pl-3 border-l border-gray-200/80 my-auto py-0.5">
+              <div className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                <MapPin size={13} className="fill-amber-500/20" />
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Delivering To</span>
+                <span className="text-[11px] sm:text-xs font-bold text-gray-800 tracking-tight whitespace-nowrap">Vidhani, Sitapura</span>
+              </div>
+            </div>
 
 
-            {/* Search — Desktop */}
+
+            {/* Search — Centered Desktop */}
             {!isSearchHidden && (
-              <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-[620px] relative z-10">
-                <div className={searchWrapperClass}>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${searchFocused || searchQuery ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400'}`}>
-                    <Search size={16} />
+              <div ref={searchContainerRef} className="hidden md:flex justify-center flex-1 mx-4 lg:mx-8 relative z-10">
+                <div className="w-full max-w-[420px] lg:max-w-[480px]">
+                  <div className={searchWrapperClass}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${searchFocused || searchQuery ? 'bg-amber-50 text-amber-600' : 'text-gray-400'}`}>
+                      <Search size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 bg-transparent border-none outline-none px-3 text-xs sm:text-sm font-semibold text-gray-900 h-full placeholder:text-gray-400 placeholder:font-medium"
+                      placeholder="Search essentials, groceries & more..."
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                    />
+                    {searchQuery ? (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center cursor-pointer border-none transition-colors flex-shrink-0"
+                      >
+                        <X size={13} />
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-400 bg-gray-100/80 px-2 py-0.5 rounded-full uppercase tracking-wider hidden lg:inline-block pointer-events-none">
+                        Search
+                      </span>
+                    )}
                   </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none px-3 text-xs sm:text-sm font-semibold text-gray-900 h-full placeholder:text-gray-400 placeholder:font-medium"
-                    placeholder="Search essentials, snacks, drinks & more..."
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  />
-                  {searchQuery ? (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center cursor-pointer border-none transition-colors flex-shrink-0"
-                    >
-                      <X size={13} />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100/80 px-2 py-0.5 rounded-full uppercase tracking-wider hidden lg:inline-block pointer-events-none">
-                      Search
-                    </span>
-                  )}
+                  {renderSearchResults()}
                 </div>
-                {renderSearchResults()}
               </div>
             )}
 
-            {/* Right section — hidden on mobile */}
+            {/* Right section — Desktop */}
             <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0 relative z-10">
               <button
                 onClick={() => handleNavigate('contact')}
-                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600"
+                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600 whitespace-nowrap"
               >
                 Contact Us
               </button>
@@ -233,7 +246,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
           {!isSearchHidden && (
             <div className="block md:hidden px-4 pt-2.5 pb-2.5 relative">
               <div className={searchWrapperClass}>
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${searchFocused || searchQuery ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400'}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${searchFocused || searchQuery ? 'bg-amber-50 text-amber-600' : 'text-gray-400'}`}>
                   <Search size={16} />
                 </div>
                 <input

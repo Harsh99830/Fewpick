@@ -1037,6 +1037,37 @@ export default function AdminHQ() {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm(`Are you sure you want to permanently delete order ${orderId}?`)) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('expected_orders')
+        .delete()
+        .eq('id', orderId)
+        .select();
+
+      if (error) {
+        console.error('Supabase delete error:', error);
+        alert('Failed to delete order from database: ' + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn('No rows deleted in Supabase. Check RLS policies for expected_orders table.');
+        alert('Could not delete from database. Please check Supabase RLS policy for expected_orders table (DELETE permission required).');
+        return;
+      }
+
+      setOrders((prevOrders) => prevOrders.filter((o) => o.id !== orderId));
+    } catch (err) {
+      console.error('Delete order exception:', err);
+      alert('Failed to delete order: ' + err.message);
+    }
+  };
+
   // Helper Order Checks
   const isOrderConfirmed = (o) => {
     const confirmVal = String(o?.confirm || '').trim().toLowerCase();
@@ -2184,6 +2215,13 @@ export default function AdminHQ() {
                               >
                                 Cancel
                               </button>
+                              <button
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer border-none flex items-center justify-center"
+                                title="Delete Order"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2243,7 +2281,7 @@ export default function AdminHQ() {
                             ₹{order.grand_total}
                           </td>
                           <td className="py-4 px-6 text-center">
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center gap-2">
                               <select
                                 value={order.status}
                                 onChange={(e) => handleStatusChange(order.id, e.target.value)}
@@ -2254,6 +2292,13 @@ export default function AdminHQ() {
                                 <option value="delivered">Delivered</option>
                                 <option value="cancelled">Cancelled</option>
                               </select>
+                              <button
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer border-none flex items-center justify-center"
+                                title="Delete Order"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </td>
                         </tr>
