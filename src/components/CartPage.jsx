@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone, FileText, Clock, ChevronDown, Info } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone, FileText, Clock, ChevronDown, Info, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -267,14 +267,26 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
           )}
 
           {/* Delivery Note Box */}
-          <div className="bg-amber-50/90 border border-amber-200/80 rounded-xl p-3 flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Clock size={15} />
+          <div className="bg-amber-50/90 border border-amber-200/80 rounded-xl p-3 flex flex-col gap-2.5">
+            {/* Line 1: Slot info */}
+            <div className="flex items-center gap-2.5 text-xs text-amber-950 font-medium">
+              <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                <Clock size={15} />
+              </div>
+              <p className="m-0 leading-snug">
+                Orders are processed in <strong>20–25 minute slots</strong>.
+              </p>
             </div>
-            <p className="text-xs text-amber-950 font-medium leading-relaxed m-0">
-              Orders are processed in <strong>20–25 minute slots</strong>.<br />
-              For <strong>Quick Delivery</strong>, message us after placing order. <strong>₹10 extra applies</strong>.
-            </p>
+
+            {/* Line 2: Quick Delivery info */}
+            <div className="flex items-center gap-2.5 text-xs text-amber-950 font-medium">
+              <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                <Zap size={15} className="fill-amber-500" />
+              </div>
+              <p className="m-0 leading-snug">
+                For <strong>Quick Delivery</strong>, message us after placing order. <strong>₹10 extra applies</strong>.
+              </p>
+            </div>
           </div>
         </div>
       </div>
