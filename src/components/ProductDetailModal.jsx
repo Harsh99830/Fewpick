@@ -106,10 +106,10 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
           {/* Active Price */}
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-black text-gray-900">₹{activeProduct.price}</span>
-            {activeProduct.mrp && activeProduct.mrp > activeProduct.price && (
+            {activeProduct.mrp > activeProduct.price && (
               <>
                 <span className="text-xs text-gray-300 line-through">₹{activeProduct.mrp}</span>
-                <span className="text-[0.65rem] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded">
+                <span className="text-[0.65rem] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded">
                   Save ₹{activeProduct.mrp - activeProduct.price}
                 </span>
               </>
@@ -156,7 +156,7 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
 
           {/* Shop Description Line (Shown only when store is OPEN) */}
           {!activeProduct.isShopClosed && activeProduct.shopDescription && (
-            <p className="text-xs text-emerald-700 font-semibold m-0 leading-snug">
+            <p className="text-xs text-amber-700 font-semibold m-0 leading-snug">
               {activeProduct.shopDescription}
             </p>
           )}
@@ -174,25 +174,25 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
             ) : qty === 0 ? (
               <button
                 onClick={handleAdd}
-                className="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-[0_4px_14px_rgba(22,163,74,0.25)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold rounded-xl transition-all shadow-[0_4px_14px_rgba(245,158,11,0.25)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none flex items-center justify-center gap-1.5"
               >
                 <Plus size={16} />
                 Add to Cart
               </button>
             ) : (
-              <div className="flex items-center border-2 border-green-600 rounded-xl overflow-hidden">
+              <div className="flex items-center border-2 border-amber-500 rounded-xl overflow-hidden">
                 <button
                   onClick={handleDec}
-                  className="flex-1 py-3 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700"
+                  className="flex-1 py-3 bg-amber-500 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-amber-600"
                 >
                   <Minus size={16} />
                 </button>
-                <span className="flex-1 text-center text-sm font-black text-green-600">
+                <span className="flex-1 text-center text-sm font-black text-amber-600">
                   {qty}
                 </span>
                 <button
                   onClick={handleInc}
-                  className="flex-1 py-3 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700"
+                  className="flex-1 py-3 bg-amber-500 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-amber-600"
                 >
                   <Plus size={16} />
                 </button>
