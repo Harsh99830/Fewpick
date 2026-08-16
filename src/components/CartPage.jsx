@@ -52,21 +52,36 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   const handleCheckout = async () => {
     if (!orderingEnabled) return;
     
+    let hasErr = false;
     if (!customerName || !customerName.trim()) {
       setNameError(true);
-      return;
+      hasErr = true;
     }
+
+    const cleanPhone = customerPhone.replace(/\D/g, '').trim();
+    if (!cleanPhone) {
+      setPhoneError('Required');
+      hasErr = true;
+    } else if (cleanPhone.length !== 10) {
+      setPhoneError('Invalid 10-digit number');
+      hasErr = true;
+    } else {
+      setPhoneError('');
+    }
+
+    if (hasErr) return;
 
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
     const cleanName = customerName.trim();
     
-    // Formulate a clean WhatsApp order message with customer name
+    // Formulate a clean WhatsApp order message with customer name & phone
     let message = `*New Order from ${cleanName} (${orderId})*\n\n`;
     cartItems.forEach((item) => {
       message += `• ${item.product.name} (${item.product.weight}) - ${item.quantity} x ₹${item.product.price} = ₹${item.product.price * item.quantity}\n`;
     });
     message += `\n*Customer Name:* ${cleanName}`;
+    message += `\n*Phone:* ${cleanPhone}`;
     message += `\n*Item Total:* ₹${subtotal}`;
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
     message += `\n*Grand Total:* ₹${grandTotal}`;
@@ -86,7 +101,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
       const { error } = await supabase.from('expected_orders').insert({
         id: orderId,
         name: cleanName,
-        phone: '',
+        phone: cleanPhone,
         items: orderItems,
         subtotal: subtotal,
         rider_effort: deliveryCharge,
@@ -190,25 +205,57 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         {/* Divider Line */}
         <div className="border-b border-dashed border-gray-200 my-1" />
 
-        {/* Section 2: Customer Name Input */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-5 flex flex-col gap-2">
-          <label className="text-xs font-bold text-gray-800 flex items-center justify-between">
-            <span>Your Name</span>
-            {nameError && <span className="text-[10px] font-bold text-rose-500">Required</span>}
-          </label>
-          <div className="relative flex items-center">
-            <User size={15} className="absolute left-3 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              value={customerName}
-              onChange={handleNameChange}
-              placeholder="Enter your name"
-              className={`w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-semibold outline-none transition-all ${
-                nameError
-                  ? 'border-rose-500 bg-rose-50/50 text-rose-900'
-                  : 'border-gray-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
-              }`}
-            />
+        {/* Section 2: Customer Contact Info Card */}
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 sm:p-4 flex flex-col gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-3">
+            {/* Name Box */}
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <label className="text-[11px] sm:text-xs font-bold text-gray-800 truncate">Your Name</label>
+                {nameError && <span className="text-[10px] font-extrabold text-rose-500 flex-shrink-0">Required</span>}
+              </div>
+              <div className="relative flex items-center">
+                <User size={14} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={handleNameChange}
+                  placeholder="Enter name"
+                  className={`w-full pl-8 pr-2.5 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold outline-none transition-all ${
+                    nameError
+                      ? 'border-rose-500 bg-rose-50/50 text-rose-900'
+                      : 'border-gray-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Mobile Box */}
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <label className="text-[11px] sm:text-xs font-bold text-gray-800 truncate">Mobile Number</label>
+                {phoneError && (
+                  <span className="text-[10px] font-extrabold text-rose-500 flex-shrink-0 truncate" title={phoneError}>
+                    {phoneError}
+                  </span>
+                )}
+              </div>
+              <div className="relative flex items-center">
+                <Phone size={14} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                <input
+                  type="tel"
+                  value={customerPhone}
+                  onChange={handlePhoneChange}
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
+                  className={`w-full pl-8 pr-2.5 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold outline-none transition-all ${
+                    phoneError
+                      ? 'border-rose-500 bg-rose-50/50 text-rose-900'
+                      : 'border-gray-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
