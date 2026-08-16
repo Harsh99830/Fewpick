@@ -68,8 +68,10 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
   );
   const filteredProducts = getUniqueProductsByName(rawFilteredProducts).slice(0, 7);
 
-  const searchWrapperClass = `flex-1 max-w-[580px] h-11 flex items-center bg-[#f3f4f6] border-2 border-transparent rounded-xl px-3.5 transition-all overflow-hidden hover:bg-[#eff0f5] ${
-    searchFocused || searchQuery ? '!bg-white !border-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]' : ''
+  const searchWrapperClass = `flex-1 max-w-[620px] h-11 flex items-center bg-gray-50/90 border border-gray-200/90 rounded-full px-4 transition-all duration-200 shadow-2xs hover:bg-white hover:border-gray-300 ${
+    searchFocused || searchQuery
+      ? '!bg-white !border-emerald-600 shadow-[0_4px_20px_rgba(16,185,129,0.15)] ring-2 ring-emerald-500/20'
+      : ''
   }`;
 
   const renderSearchResults = () => {
@@ -137,25 +139,31 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
             {/* Search — Desktop */}
             {!isSearchHidden && (
-              <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-[580px] relative z-10">
+              <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-[620px] relative z-10">
                 <div className={searchWrapperClass}>
-                  <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${searchFocused || searchQuery ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400'}`}>
+                    <Search size={16} />
+                  </div>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none px-3 text-sm font-inherit text-[#1f2937] h-full placeholder:text-[#9ca3af]"
-                    placeholder="Search essentials, groceries and more..."
+                    className="flex-1 bg-transparent border-none outline-none px-3 text-xs sm:text-sm font-semibold text-gray-900 h-full placeholder:text-gray-400 placeholder:font-medium"
+                    placeholder="Search essentials, snacks, drinks & more..."
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                   />
-                  {searchQuery && (
+                  {searchQuery ? (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
+                      className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center cursor-pointer border-none transition-colors flex-shrink-0"
                     >
-                      <X size={14} />
+                      <X size={13} />
                     </button>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100/80 px-2 py-0.5 rounded-full uppercase tracking-wider hidden lg:inline-block pointer-events-none">
+                      Search
+                    </span>
                   )}
                 </div>
                 {renderSearchResults()}
@@ -225,22 +233,24 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
           {!isSearchHidden && (
             <div className="block md:hidden px-4 pt-2.5 pb-2.5 relative">
               <div className={searchWrapperClass}>
-                <Search size={18} className="text-[#9ca3af] flex-shrink-0" />
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${searchFocused || searchQuery ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400'}`}>
+                  <Search size={16} />
+                </div>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none px-3 text-sm text-[#1f2937] h-full placeholder:text-[#9ca3af]"
-                  placeholder="Search essentials, groceries and more..."
+                  className="flex-1 bg-transparent border-none outline-none px-2.5 text-xs font-semibold text-gray-900 h-full placeholder:text-gray-400 placeholder:font-medium"
+                  placeholder="Search snacks, drinks, essentials..."
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer border-none bg-transparent"
+                    className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center cursor-pointer border-none transition-colors flex-shrink-0"
                   >
-                    <X size={14} />
+                    <X size={13} />
                   </button>
                 )}
               </div>
