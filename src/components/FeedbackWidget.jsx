@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, CheckCircle2, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function FeedbackWidget() {
+export default function FeedbackWidget({ hasCart = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -83,14 +83,14 @@ export default function FeedbackWidget() {
 
   return (
     <>
-      {/* Floating Trigger Button */}
-      <div className="fixed bottom-5 right-5 z-[990]">
+      {/* Floating Trigger Button - dynamic bottom position when cart bar is visible */}
+      <div className={`fixed right-4 sm:right-5 z-[990] transition-all duration-300 ${hasCart ? 'bottom-20' : 'bottom-4 sm:bottom-5'}`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3.5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-full shadow-md transition-all cursor-pointer border-none active:scale-95 text-xs font-semibold"
+          className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-gray-900/90 hover:bg-black text-white rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer border border-white/10 active:scale-95 text-xs font-semibold"
           aria-label="Feedback"
         >
-          <MessageSquare size={16} />
+          <MessageSquare size={15} />
           <span>Feedback</span>
         </button>
       </div>

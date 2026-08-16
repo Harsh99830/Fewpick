@@ -11,6 +11,7 @@ import AdminHQ from './components/AdminHQ';
 import ProductDetailModal from './components/ProductDetailModal';
 import WelcomeModal from './components/WelcomeModal';
 import FeedbackWidget from './components/FeedbackWidget';
+import FloatingCartBar from './components/FloatingCartBar';
 import { snackProducts, groceryProducts } from './data/products';
 import { categories as fallbackCategories } from './data/categories';
 import { supabase } from './lib/supabase';
@@ -373,7 +374,8 @@ function App() {
       )}
 
       <WelcomeModal />
-      <FeedbackWidget />
+      <FeedbackWidget hasCart={cartItems.some(i => i.quantity > 0)} />
+      <FloatingCartBar cartItems={cartItems} />
 
       <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto">
         <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">
