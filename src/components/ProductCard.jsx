@@ -31,82 +31,88 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
   return (
     <article
       onClick={() => onSelectProduct && onSelectProduct(product)}
-      className="bg-white rounded-xl sm:rounded-2xl border border-[#e8eaf0] overflow-hidden transition-all duration-200 cursor-pointer flex flex-col hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:border-gray-300 hover:-translate-y-0.5 group"
+      className="bg-white rounded-xl sm:rounded-2xl border border-[#e8eaf0] overflow-hidden transition-all duration-200 cursor-pointer flex flex-col hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:border-gray-300 hover:-translate-y-0.5 group h-full"
     >
-      {/* Zoomed Product Image Container */}
-      <div className="relative bg-[#f8f9ff] h-[135px] sm:h-[155px] w-full flex items-center justify-center overflow-hidden p-1.5 sm:p-2">
+      {/* Product Image Container */}
+      <div className="relative bg-[#f8f9ff] h-[100px] min-[380px]:h-[115px] sm:h-[145px] w-full flex items-center justify-center overflow-hidden p-1.5 sm:p-2 flex-shrink-0">
         {product.discount > 0 && (
-          <span className={`absolute top-2 left-2 text-[0.62rem] font-black py-0.5 px-1.5 rounded tracking-tight text-white z-10 ${discountColor}`}>
+          <span className={`absolute top-1.5 left-1.5 text-[0.55rem] sm:text-[0.62rem] font-black py-0.5 px-1 sm:px-1.5 rounded tracking-tight text-white z-10 ${discountColor}`}>
             {product.discount}% OFF
           </span>
         )}
+
         {product.badge && (
-          <span className={`absolute bottom-2 left-2 text-[0.58rem] font-bold py-0.5 px-1.5 rounded-full tracking-tight z-10 ${badgeColorMap[product.badgeColor] || ''}`}>
+          <span className={`absolute top-1.5 right-1.5 text-[0.52rem] sm:text-[0.58rem] font-bold py-0.5 px-1 sm:px-1.5 rounded-full tracking-tight z-10 ${badgeColorMap[product.badgeColor] || ''}`}>
             {product.badge}
           </span>
         )}
+
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-contain scale-105 transition-transform duration-300 group-hover:scale-115"
+          className="w-full h-full object-contain scale-105 transition-transform duration-300 group-hover:scale-110"
           loading="lazy"
         />
       </div>
 
       {/* Info Content */}
-      <div className="p-2.5 sm:p-3 flex flex-col flex-1">
-        <h3 className="text-[0.76rem] sm:text-[0.82rem] font-bold text-gray-900 mb-0.5 leading-snug line-clamp-2">
-          {product.name}
-        </h3>
-        <p className="text-[0.68rem] text-gray-400 font-medium mb-1.5">{product.weight}</p>
-
-        <div className="flex items-baseline gap-1 flex-wrap mb-2">
-          <span className="text-[0.9rem] sm:text-[1rem] font-black text-gray-900">₹{product.price}</span>
-          {product.mrp > product.price && (
-            <>
-              <span className="text-[0.65rem] text-gray-300 line-through">₹{product.mrp}</span>
-              <span className="text-[0.6rem] text-green-600 font-bold bg-green-50 px-1 py-0.5 rounded">
-                Save ₹{product.mrp - product.price}
-              </span>
-            </>
-          )}
+      <div className="p-2 sm:p-2.5 flex flex-col flex-1 justify-between gap-1.5">
+        <div>
+          <h3 className="text-[0.74rem] sm:text-[0.82rem] font-bold text-gray-900 mb-0.5 leading-snug line-clamp-2 min-h-[2.2em]">
+            {product.name}
+          </h3>
         </div>
 
-        {/* Shop Description Line (Shown only when store is OPEN) */}
-        {!product.isShopClosed && product.shopDescription && (
-          <p className="text-[0.63rem] text-emerald-700 font-semibold mb-1.5 leading-tight line-clamp-2">
-            {product.shopDescription}
-          </p>
-        )}
+        {/* Price, Store Description & ADD Button section */}
+        <div className="mt-auto flex flex-col gap-1.5">
+          <div className="flex items-baseline justify-between gap-1">
+            <div className="flex items-baseline gap-1">
+              <span className="text-[0.9rem] sm:text-[1rem] font-black text-gray-900">₹{product.price}</span>
+              {product.mrp > product.price && (
+                <span className="text-[0.62rem] text-gray-400 line-through">₹{product.mrp}</span>
+              )}
+            </div>
+            <span className="text-[0.63rem] sm:text-[0.68rem] text-gray-400 font-semibold">{product.weight}</span>
+          </div>
 
-        {/* Add Button or Out of Stock / Shop Closed Badge */}
-        {product.isShopClosed ? (
-          <div className="w-full py-1.5 sm:py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-[0.68rem] sm:text-[0.73rem] font-extrabold text-center mt-auto cursor-not-allowed select-none flex items-center justify-center px-1">
-            <span>Unavailable after {product.availableTill || '11 p.m.'}</span>
+          {/* Shop Description Line (placed between price and ADD button) */}
+          {!product.isShopClosed && product.shopDescription && (
+            <p className="text-[0.54rem] sm:text-[0.58rem] text-emerald-700 font-semibold leading-tight line-clamp-1 m-0 opacity-90">
+              {product.shopDescription}
+            </p>
+          )}
+
+          {/* Full-width ADD Button with fixed height */}
+          <div>
+            {product.isShopClosed ? (
+              <div className="w-full h-[30px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 text-[0.62rem] font-bold text-center cursor-not-allowed flex items-center justify-center">
+                Closed
+              </div>
+            ) : (product.isOutOfStock || product.Stock === 0 || product.Stock === '0' || product.stock === 0) ? (
+              <div className="w-full h-[30px] border border-gray-200 rounded-lg bg-gray-100 text-gray-400 text-[0.62rem] font-bold text-center cursor-not-allowed flex items-center justify-center">
+                Out of stock
+              </div>
+            ) : qty === 0 ? (
+              <button
+                className="w-full h-[30px] border border-green-600 rounded-lg bg-green-50/50 hover:bg-green-600 text-green-700 hover:text-white text-[0.72rem] sm:text-xs font-black cursor-pointer flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
+                onClick={handleAdd}
+              >
+                <Plus size={13} />
+                <span>ADD</span>
+              </button>
+            ) : (
+              <div className="w-full h-[30px] flex items-center border border-green-600 rounded-lg overflow-hidden bg-white">
+                <button className="flex-1 h-full bg-green-600 text-white border-none cursor-pointer flex items-center justify-center hover:bg-green-700 transition-colors" onClick={handleDec}>
+                  <Minus size={13} />
+                </button>
+                <span className="flex-1 text-center text-[0.75rem] font-extrabold text-green-700 select-none">{qty}</span>
+                <button className="flex-1 h-full bg-green-600 text-white border-none cursor-pointer flex items-center justify-center hover:bg-green-700 transition-colors" onClick={handleInc}>
+                  <Plus size={13} />
+                </button>
+              </div>
+            )}
           </div>
-        ) : (product.isOutOfStock || product.Stock === 0 || product.Stock === '0' || product.stock === 0) ? (
-          <div className="w-full py-1.5 sm:py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-400 text-xs font-bold text-center mt-auto cursor-not-allowed select-none">
-            Out of Stock
-          </div>
-        ) : qty === 0 ? (
-          <button
-            className="w-full py-1.5 sm:py-2 border border-green-600 rounded-lg bg-transparent text-green-600 text-xs font-extrabold cursor-pointer flex items-center justify-center gap-1 transition-all hover:bg-green-600 hover:text-white mt-auto"
-            onClick={handleAdd}
-          >
-            <Plus size={14} />
-            Add
-          </button>
-        ) : (
-          <div className="flex items-center border border-green-600 rounded-lg overflow-hidden mt-auto">
-            <button className="flex-1 py-1.5 sm:py-2 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700" onClick={handleDec}>
-              <Minus size={13} />
-            </button>
-            <span className="flex-1 text-center text-xs font-extrabold text-green-600">{qty}</span>
-            <button className="flex-1 py-1.5 sm:py-2 bg-green-600 text-white border-none cursor-pointer flex items-center justify-center transition-colors hover:bg-green-700" onClick={handleInc}>
-              <Plus size={13} />
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </article>
   );

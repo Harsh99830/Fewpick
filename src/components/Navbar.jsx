@@ -133,14 +133,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               <span className="text-[1.6rem] font-extrabold text-[#f59e0b] tracking-[-1px] pointer-events-none">Pick</span>
             </button>
 
-            {/* Location Indicator */}
-            <div className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 sm:py-1.5 border border-[#e5e7eb] rounded-[10px] bg-[#f9fafb] flex-shrink-0 relative z-10">
-              <MapPin size={13} className="text-[#6366f1] flex-shrink-0 pointer-events-none" />
-              <div className="flex flex-col items-start pointer-events-none leading-none">
-                <span className="text-[0.5rem] sm:text-[0.625rem] font-bold text-[#9ca3af] uppercase tracking-[0.05em] mb-0.5">Deliver to</span>
-                <span className="text-[0.58rem] min-[350px]:text-[0.65rem] min-[390px]:text-[0.72rem] sm:text-xs font-bold text-[#1f2937] whitespace-nowrap">Poornima University</span>
-              </div>
-            </div>
+
 
             {/* Search — Desktop */}
             {!isSearchHidden && (
