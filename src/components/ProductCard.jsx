@@ -48,10 +48,14 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
         )}
 
         <img
-          src={product.image}
+          src={product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60'}
           alt={product.name}
           className="w-full h-full object-contain scale-105 transition-transform duration-300 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60';
+          }}
         />
       </div>
 
@@ -85,8 +89,8 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
           {/* Action Button Section */}
           <div>
             {product.isShopClosed ? (
-              <div className="w-full h-[30px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 text-[0.62rem] font-bold text-center cursor-not-allowed flex items-center justify-center">
-                Closed
+              <div className="w-full min-h-[30px] py-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-600 text-[0.52rem] sm:text-[0.58rem] font-bold text-center cursor-not-allowed flex items-center justify-center px-1 leading-none tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                Unavailable after {product.availableTill || '11 PM'}
               </div>
             ) : (product.isOutOfStock || product.Stock === 0 || product.Stock === '0' || product.stock === 0) ? (
               <div className="w-full h-[30px] border border-gray-200 rounded-lg bg-gray-100 text-gray-400 text-[0.62rem] font-bold text-center cursor-not-allowed flex items-center justify-center">

@@ -81,6 +81,10 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
               src={activeProduct.image}
               alt={activeProduct.name}
               className="w-full h-full object-contain scale-105 transition-all duration-300"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60';
+              }}
             />
           ) : (
             <div className="text-6xl">📦</div>
