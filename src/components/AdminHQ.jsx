@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search, Store
+  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search, Store, MapPin
 } from 'lucide-react';
 
 export default function AdminHQ() {
