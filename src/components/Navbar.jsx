@@ -4,10 +4,31 @@ import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles } from 
 import ProductDetailModal from './ProductDetailModal';
 import { getUniqueProductsByName } from '../utils/productUtils';
 
+function InstagramIcon({ size = 16, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
 export default function Navbar({ products = [], cartCount, onNavigate, cartItems = [], onUpdateQty, orderingEnabled = true, closedMessage, openMessage }) {
   const navigate = useNavigate();
   const location = useLocation();
   const searchContainerRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,6 +39,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
       if (e.key === 'Escape') {
         setSearchFocused(false);
         setSearchQuery('');
+        setMenuOpen(false);
       }
     };
 
@@ -25,13 +47,18 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
         setSearchFocused(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, []);
 
@@ -184,7 +211,18 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             )}
 
             {/* Right section — Desktop */}
-            <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0 relative z-10">
+            <div className="hidden md:flex items-center gap-5 ml-auto flex-shrink-0 relative z-10">
+              <a
+                href="https://www.instagram.com/fewpick?igsh=MWQ0bTFidWF0Mm8yZg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-pink-600 bg-gray-50 hover:bg-pink-50/80 px-3 py-1.5 rounded-full border border-gray-200 hover:border-pink-200 transition-all no-underline"
+                title="Follow us on Instagram"
+              >
+                <InstagramIcon size={15} className="text-pink-600" />
+                <span>Follow</span>
+              </a>
+
               <button
                 onClick={() => handleNavigate('contact')}
                 className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600 whitespace-nowrap"
@@ -207,7 +245,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
             </div>
 
             {/* Mobile: cart + hamburger */}
-            <div className="flex md:hidden items-center gap-3 ml-auto relative z-10">
+            <div ref={mobileMenuRef} className="flex md:hidden items-center gap-3 ml-auto relative z-10">
               <button 
                 onClick={() => handleNavigate('cart')}
                 className="relative flex items-center justify-center w-10 h-10 bg-transparent border-none rounded-lg cursor-pointer text-[#374151] transition-colors hover:text-[#111827] outline-none"
@@ -222,6 +260,28 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               <button className="flex items-center justify-center w-[38px] h-[38px] bg-transparent border-none cursor-pointer text-[#374151] rounded-lg transition-colors hover:bg-[#f3f4f6]" onClick={() => setMenuOpen(!menuOpen)}>
                 {menuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
+
+              {/* Mobile menu drawer — absolute overlay directly below top bar */}
+              {menuOpen && (
+                <div className="absolute top-[50px] right-0 w-[240px] z-[250] bg-white flex flex-col gap-1 px-3 py-2.5 rounded-2xl shadow-2xl border border-gray-150 animate-slide-down">
+                  <a
+                    href="https://www.instagram.com/fewpick?igsh=MWQ0bTFidWF0Mm8yZg=="
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full text-left bg-transparent text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-pink-50 hover:text-pink-600 flex items-center gap-2.5 no-underline"
+                  >
+                    <InstagramIcon size={17} className="text-pink-600" />
+                    <span>Follow on Instagram</span>
+                  </a>
+                  <button
+                    onClick={() => handleNavigate('contact')}
+                    className="w-full text-left bg-transparent border-none text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-indigo-600"
+                  >
+                    Contact Us
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -268,18 +328,6 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                 )}
               </div>
               {renderSearchResults()}
-            </div>
-          )}
-
-          {/* Mobile menu drawer */}
-          {menuOpen && (
-            <div className="absolute top-full left-0 right-0 z-[200] bg-white flex flex-col gap-1 px-4 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.13)] border-t border-[#f1f3f9] animate-slide-down">
-              <button
-                onClick={() => handleNavigate('contact')}
-                className="w-full text-left bg-transparent border-none text-[0.95rem] font-semibold text-[#374151] py-3 px-3.5 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-indigo-600"
-              >
-                Contact Us
-              </button>
             </div>
           )}
         </nav>
