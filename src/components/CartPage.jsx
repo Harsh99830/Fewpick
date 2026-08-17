@@ -282,7 +282,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
           {/* Delivery Address Box */}
           <div className="flex flex-col gap-1.5 min-w-0">
             <div className="flex items-center justify-between gap-1">
-              <label className="text-[11px] sm:text-xs font-bold text-gray-800 truncate">Delivery Address / Room No.</label>
+              <label className="text-[11px] sm:text-xs font-bold text-gray-800 truncate">Delivery Address</label>
               {addressError && <span className="text-[10px] font-extrabold text-rose-500 flex-shrink-0">Required</span>}
             </div>
             <div className="relative flex items-center">

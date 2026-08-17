@@ -2956,9 +2956,15 @@ export default function AdminHQ() {
                   Placed on {formatOrderDate(viewingOrder.created_at)}
                 </p>
                 {viewingOrder.phone && (
-                  <p className="text-xs font-bold text-indigo-700 mt-1 flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-indigo-700 mt-1 flex items-center gap-1.5 m-0">
                     <Phone size={13} />
                     <span>{viewingOrder.phone}</span>
+                  </p>
+                )}
+                {viewingOrder.address && (
+                  <p className="text-xs font-bold text-gray-700 mt-1 flex items-center gap-1.5 m-0">
+                    <MapPin size={13} className="text-emerald-600 flex-shrink-0" />
+                    <span>{viewingOrder.address}</span>
                   </p>
                 )}
               </div>
