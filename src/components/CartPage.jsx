@@ -10,8 +10,12 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   const [customerPhone, setCustomerPhone] = useState(() => {
     return localStorage.getItem('fewpick_customer_phone') || '';
   });
+  const [customerAddress, setCustomerAddress] = useState(() => {
+    return localStorage.getItem('fewpick_customer_address') || '';
+  });
   const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState('');
+  const [addressError, setAddressError] = useState(false);
 
   // Computations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -49,6 +53,15 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
     }
   };
 
+  const handleAddressChange = (e) => {
+    const val = e.target.value;
+    setCustomerAddress(val);
+    localStorage.setItem('fewpick_customer_address', val);
+    if (val.trim()) {
+      setAddressError(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!orderingEnabled) return;
     
@@ -69,19 +82,26 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
       setPhoneError('');
     }
 
+    if (!customerAddress || !customerAddress.trim()) {
+      setAddressError(true);
+      hasErr = true;
+    }
+
     if (hasErr) return;
 
     setIsCheckingOut(true);
     const orderId = generateShortId(8);
     const cleanName = customerName.trim();
+    const cleanAddress = customerAddress.trim();
     
-    // Formulate a clean WhatsApp order message with customer name & phone
+    // Formulate a clean WhatsApp order message with customer name, phone & delivery address
     let message = `*New Order from ${cleanName} (${orderId})*\n\n`;
     cartItems.forEach((item) => {
       message += `• ${item.product.name} (${item.product.weight}) - ${item.quantity} x ₹${item.product.price} = ₹${item.product.price * item.quantity}\n`;
     });
     message += `\n*Customer Name:* ${cleanName}`;
     message += `\n*Phone:* ${cleanPhone}`;
+    message += `\n*Delivery Address:* ${cleanAddress}`;
     message += `\n*Item Total:* ₹${subtotal}`;
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
     message += `\n*Grand Total:* ₹${grandTotal}`;
@@ -102,6 +122,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         id: orderId,
         name: cleanName,
         phone: cleanPhone,
+        address: cleanAddress,
         items: orderItems,
         subtotal: subtotal,
         rider_effort: deliveryCharge,
@@ -206,7 +227,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         <div className="border-b border-dashed border-gray-200 my-1" />
 
         {/* Section 2: Customer Contact Info Card */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 sm:p-4 flex flex-col gap-2">
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 sm:p-4 flex flex-col gap-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-3">
             {/* Name Box */}
             <div className="flex flex-col gap-1.5 min-w-0">
@@ -255,6 +276,28 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                   }`}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Delivery Address Box */}
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <div className="flex items-center justify-between gap-1">
+              <label className="text-[11px] sm:text-xs font-bold text-gray-800 truncate">Delivery Address / Room No.</label>
+              {addressError && <span className="text-[10px] font-extrabold text-rose-500 flex-shrink-0">Required</span>}
+            </div>
+            <div className="relative flex items-center">
+              <MapPin size={14} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={customerAddress}
+                onChange={handleAddressChange}
+                placeholder="Hostel name, room no, or campus location"
+                className={`w-full pl-8 pr-2.5 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold outline-none transition-all ${
+                  addressError
+                    ? 'border-rose-500 bg-rose-50/50 text-rose-900'
+                    : 'border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10'
+                }`}
+              />
             </div>
           </div>
         </div>

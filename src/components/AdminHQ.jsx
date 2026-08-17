@@ -2182,6 +2182,9 @@ export default function AdminHQ() {
                               {order.phone && (
                                 <span className="text-[11px] font-mono text-gray-500 font-semibold mt-0.5">{order.phone}</span>
                               )}
+                              {order.address && (
+                                <span className="text-[10px] text-gray-500 font-medium max-w-[160px] truncate mt-0.5" title={order.address}>📍 {order.address}</span>
+                              )}
                             </div>
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
@@ -2260,6 +2263,9 @@ export default function AdminHQ() {
                               <span className="font-extrabold text-gray-900">{order.name || order.customer_name || 'Guest'}</span>
                               {order.phone && (
                                 <span className="text-[11px] font-mono text-gray-500 font-semibold mt-0.5">{order.phone}</span>
+                              )}
+                              {order.address && (
+                                <span className="text-[10px] text-gray-500 font-medium max-w-[160px] truncate mt-0.5" title={order.address}>📍 {order.address}</span>
                               )}
                             </div>
                           </td>
