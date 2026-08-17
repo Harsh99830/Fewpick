@@ -140,7 +140,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               <div className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                 <MapPin size={13} className="fill-amber-500/20" />
               </div>
-              <div className="flex flex-col leading-none">
+              <div className="flex flex-col gap-0.5 leading-tight justify-center">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Delivering To</span>
                 <span className="text-[11px] sm:text-xs font-bold text-gray-800 tracking-tight whitespace-nowrap">Vidhani, Sitapura</span>
               </div>
