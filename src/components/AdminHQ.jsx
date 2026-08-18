@@ -1389,35 +1389,143 @@ export default function AdminHQ() {
                 </div>
               </div>
 
-              {/* Selected Day Info Banner on Tap/Click */}
+              {/* Selected Day Info Banner & Delivered Orders Breakdown on Tap/Click */}
               {selectedChartDay ? (
-                <div className="mt-2 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs animate-drop-in">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#0095ff] inline-block animate-pulse"></span>
-                    <span className="font-extrabold text-gray-900 text-xs">{selectedChartDay.label} Breakdown:</span>
+                <div className="mt-3 flex flex-col gap-3 animate-drop-in">
+                  <div className="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#0095ff] inline-block animate-pulse"></span>
+                      <span className="font-extrabold text-gray-900 text-xs">{selectedChartDay.label} Orders Breakdown:</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs font-black">
+                      <span className="bg-white text-[#0095ff] px-2.5 py-1 rounded-lg border border-sky-100 shadow-2xs">
+                        {selectedChartDay.count} {selectedChartDay.count === 1 ? 'order' : 'orders'}
+                      </span>
+                      <span className="bg-white text-[#00b04f] px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
+                        ₹{selectedChartDay.revenue.toLocaleString()} revenue
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedChartDay(null);
+                        }}
+                        className="text-gray-400 hover:text-gray-800 border-none bg-transparent cursor-pointer font-extrabold px-1 text-xs"
+                        title="Close Breakdown"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs font-black">
-                    <span className="bg-white text-[#0095ff] px-2.5 py-1 rounded-lg border border-sky-100 shadow-2xs">
-                      {selectedChartDay.count} {selectedChartDay.count === 1 ? 'order' : 'orders'}
-                    </span>
-                    <span className="bg-white text-[#00b04f] px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
-                      ₹{selectedChartDay.revenue.toLocaleString()} revenue
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedChartDay(null);
-                      }}
-                      className="text-gray-400 hover:text-gray-800 border-none bg-transparent cursor-pointer font-extrabold px-1 text-xs"
-                      title="Close"
-                    >
-                      ✕
-                    </button>
+
+                  {/* Delivered Orders List for Selected Date */}
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+                    <div className="px-4 py-3 bg-gray-50/80 border-b border-gray-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag size={15} className="text-[#00b04f]" />
+                        <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider m-0">
+                          Delivered Orders — {selectedChartDay.label}
+                        </h4>
+                      </div>
+                      <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        {orders.filter((o) => {
+                          if (!o.created_at) return false;
+                          const oDate = new Date(o.created_at).toISOString().split('T')[0];
+                          return oDate === selectedChartDay.date && isOrderConfirmed(o) && isOrderNotCancelled(o) && isOrderDelivered(o);
+                        }).length} Delivered
+                      </span>
+                    </div>
+
+                    {(() => {
+                      const dayDeliveredOrders = orders.filter((o) => {
+                        if (!o.created_at) return false;
+                        const oDate = new Date(o.created_at).toISOString().split('T')[0];
+                        return oDate === selectedChartDay.date && isOrderConfirmed(o) && isOrderNotCancelled(o) && isOrderDelivered(o);
+                      });
+
+                      if (dayDeliveredOrders.length === 0) {
+                        return (
+                          <div className="py-8 text-center text-xs font-semibold text-gray-400">
+                            No delivered orders recorded on {selectedChartDay.label}.
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-gray-50 border-b border-gray-150 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                                <th className="py-3 px-4">Order ID</th>
+                                <th className="py-3 px-4">Customer</th>
+                                <th className="py-3 px-4">Time</th>
+                                <th className="py-3 px-4">Items Summary</th>
+                                <th className="py-3 px-4 text-right">Amount</th>
+                                <th className="py-3 px-4 text-center">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 font-medium text-gray-800">
+                              {dayDeliveredOrders.map((order) => {
+                                const itemsList = Array.isArray(order.items) ? order.items : [];
+                                const formattedDate = formatOrderDate(order.created_at);
+
+                                return (
+                                  <tr key={`day-delivered-${order.id}`} className="hover:bg-blue-50/30 transition-colors">
+                                    <td 
+                                      onClick={() => setViewingOrder(order)}
+                                      className="py-3 px-4 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
+                                    >
+                                      {order.id}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <div className="flex flex-col">
+                                        <span className="font-extrabold text-gray-900">{order.name || order.customer_name || 'Guest'}</span>
+                                        {order.phone && (
+                                          <span className="text-[10px] font-mono text-gray-500 font-semibold">{order.phone}</span>
+                                        )}
+                                        {order.address && (
+                                          <span className="text-[10px] text-gray-500 font-medium truncate max-w-[150px]" title={order.address}>📍 {order.address}</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 text-gray-500 text-[11px] whitespace-nowrap">{formattedDate}</td>
+                                    <td 
+                                      onClick={() => setViewingOrder(order)}
+                                      className="py-3 px-4 cursor-pointer"
+                                    >
+                                      <div className="flex flex-col gap-0.5 max-w-[260px]">
+                                        {itemsList.slice(0, 2).map((item, i) => (
+                                          <span key={i} className="truncate text-[11px]">
+                                            <span className="font-bold text-gray-900">{item.quantity}x</span> {item.name || item.product?.name}
+                                          </span>
+                                        ))}
+                                        {itemsList.length > 2 && (
+                                          <span className="text-[10px] font-bold text-indigo-600">
+                                            +{itemsList.length - 2} more items...
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-black text-emerald-600 whitespace-nowrap">
+                                      ₹{order.grand_total || order.subtotal || 10}
+                                    </td>
+                                    <td className="py-3 px-4 text-center">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                                        Delivered
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
                 <p className="text-[10px] text-gray-400 font-bold text-center m-0 mt-1 sm:hidden">
-                  💡 Tap on any day's bar to view order count and revenue breakdown
+                  💡 Tap on any day's bar to view delivered orders breakdown
                 </p>
               )}
             </div>
