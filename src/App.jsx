@@ -3,6 +3,8 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroBanner from './components/HeroBanner';
 import ProductSection from './components/ProductSection';
+import TenRupeeStore from './components/TenRupeeStore';
+import TenRupeeStorePage from './components/TenRupeeStorePage';
 import CategorySection from './components/CategorySection';
 import CartPage from './components/CartPage';
 import CategoryPage from './components/CategoryPage';
@@ -312,6 +314,13 @@ function App() {
                 <>
                   <HeroBanner />
                   <CategorySection categories={categories} />
+                  <TenRupeeStore
+                    products={processedProducts}
+                    cartItems={cartItems}
+                    onUpdateQty={handleUpdateQty}
+                    orderingEnabled={orderingEnabled}
+                    onSelectProduct={(p) => setSelectedProduct(p)}
+                  />
                   <ProductSection
                     products={processedProducts}
                     cartItems={cartItems}
@@ -340,6 +349,18 @@ function App() {
                 <CategoryPage
                   products={processedProducts}
                   categories={categories}
+                  cartItems={cartItems}
+                  onUpdateQty={handleUpdateQty}
+                  orderingEnabled={orderingEnabled}
+                  onSelectProduct={(p) => setSelectedProduct(p)}
+                />
+              }
+            />
+            <Route
+              path="/ten-rupee-store"
+              element={
+                <TenRupeeStorePage
+                  products={processedProducts}
                   cartItems={cartItems}
                   onUpdateQty={handleUpdateQty}
                   orderingEnabled={orderingEnabled}
