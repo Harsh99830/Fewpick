@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus } from 'lucide-react';
+import { X, Plus, Minus, Package } from 'lucide-react';
 
 export default function ProductDetailModal({ product, onClose, cartItems = [], onUpdateQty, products = [] }) {
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -76,18 +77,17 @@ export default function ProductDetailModal({ product, onClose, cartItems = [], o
               {activeProduct.discount}% OFF
             </span>
           )}
-          {activeProduct.image ? (
+          {activeProduct.image && !imgError ? (
             <img
               src={activeProduct.image}
               alt={activeProduct.name}
               className="w-full h-full object-contain scale-105 transition-all duration-300"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60';
-              }}
+              onError={() => setImgError(true)}
             />
           ) : (
-            <div className="text-6xl">📦</div>
+            <div className="flex flex-col items-center justify-center text-gray-300 gap-1">
+              <Package size={54} strokeWidth={1.5} />
+            </div>
           )}
         </div>
 

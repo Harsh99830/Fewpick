@@ -1,4 +1,5 @@
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Package } from 'lucide-react';
+import { useState } from 'react';
 
 const badgeColorMap = {
   orange: 'bg-orange-50 text-orange-700 border border-orange-200',
@@ -10,6 +11,7 @@ const badgeColorMap = {
 };
 
 export default function ProductCard({ product, cartItems = [], onUpdateQty, onSelectProduct }) {
+  const [imgError, setImgError] = useState(false);
   const cartItem = cartItems.find((item) => item.product.id === product.id);
   const qty = cartItem ? cartItem.quantity : 0;
 
@@ -47,16 +49,19 @@ export default function ProductCard({ product, cartItems = [], onUpdateQty, onSe
           </span>
         )}
 
-        <img
-          src={product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60'}
-          alt={product.name}
-          className="w-full h-full object-contain scale-105 transition-transform duration-300 group-hover:scale-110"
-          loading="lazy"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60';
-          }}
-        />
+        {product.image && !imgError ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-contain scale-105 transition-transform duration-300 group-hover:scale-110"
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-gray-300 gap-1">
+            <Package size={34} strokeWidth={1.5} />
+          </div>
+        )}
       </div>
 
       {/* Info Content */}
