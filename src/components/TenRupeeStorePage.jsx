@@ -5,10 +5,12 @@ import ProductCard from './ProductCard';
 export default function TenRupeeStorePage({ products = [], cartItems = [], onUpdateQty, orderingEnabled = true, onSelectProduct }) {
   const navigate = useNavigate();
 
-  // Filter all products priced at exactly ₹10
-  const tenRupeeItems = products.filter(
-    (p) => Number(p.price) === 10
-  );
+  // Filter available products priced at exactly ₹10 (exclude out of stock & closed shop items)
+  const tenRupeeItems = products.filter((p) => {
+    const isPriceTen = Number(p.price) === 10;
+    const isOut = Boolean(p.isOutOfStock || p.isShopClosed || p.isItemStockZero || p.Stock === 0 || p.Stock === '0' || p.stock === 0);
+    return isPriceTen && !isOut;
+  });
 
   return (
     <div className="w-full flex flex-col gap-6 animate-drop-in pb-12">

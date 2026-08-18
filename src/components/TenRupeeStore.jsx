@@ -9,10 +9,12 @@ export default function TenRupeeStore({ products = [], cartItems = [], onUpdateQ
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Filter products priced at exactly ₹10
-  const tenRupeeItems = products.filter(
-    (p) => Number(p.price) === 10
-  );
+  // Filter available products priced at exactly ₹10 (exclude out of stock & closed shop items)
+  const tenRupeeItems = products.filter((p) => {
+    const isPriceTen = Number(p.price) === 10;
+    const isOut = Boolean(p.isOutOfStock || p.isShopClosed || p.isItemStockZero || p.Stock === 0 || p.Stock === '0' || p.stock === 0);
+    return isPriceTen && !isOut;
+  });
 
   // Show only first 10 items in home section
   const displayItems = tenRupeeItems.slice(0, 10);
