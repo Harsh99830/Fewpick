@@ -31,7 +31,7 @@ export default function CategorySection({ categories = [] }) {
   };
 
   return (
-    <section className="py-2 relative group/section">
+    <section className="pt-1 pb-0 relative group/section">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <h2 className="text-[1.35rem] font-extrabold text-gray-900 m-0 tracking-[-0.02em]">
           Shop From Top Categories

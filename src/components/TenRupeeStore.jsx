@@ -42,7 +42,7 @@ export default function TenRupeeStore({ products = [], cartItems = [], onUpdateQ
   if (tenRupeeItems.length === 0) return null;
 
   return (
-    <section className="py-2.5 sm:py-3.5 my-1">
+    <section className="pt-0 pb-1.5 sm:pb-2.5">
       {/* Orange Container Banner */}
       <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 text-white shadow-[0_8px_30px_rgba(245,158,11,0.25)] relative overflow-hidden">
         
@@ -101,17 +101,6 @@ export default function TenRupeeStore({ products = [], cartItems = [], onUpdateQ
               </button>
             </div>
           </div>
-
-          {/* Right Floating Scroll Prompt Badge (Shows when user can scroll right) */}
-          {canScrollRight && (
-            <button
-              onClick={() => handleScroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 text-amber-700 shadow-[0_4px_14px_rgba(0,0,0,0.18)] border border-amber-200 flex items-center justify-center cursor-pointer hover:bg-white hover:scale-110 active:scale-95 transition-all backdrop-blur-sm"
-              title="Scroll for more ₹10 items"
-            >
-              <ChevronRight size={18} strokeWidth={2.5} className="animate-pulse" />
-            </button>
-          )}
         </div>
       </div>
     </section>
