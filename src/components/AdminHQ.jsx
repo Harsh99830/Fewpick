@@ -262,20 +262,29 @@ export default function AdminHQ() {
 
   // Order Details Modal & Item Modification States
   const [viewingOrder, setViewingOrder] = useState(null);
+  const [hasOrderChanges, setHasOrderChanges] = useState(false);
   const [showCatalogSelector, setShowCatalogSelector] = useState(false);
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [isUpdatingOrderItems, setIsUpdatingOrderItems] = useState(false);
 
-  // Helper to persist order item changes to Supabase database
-  const saveOrderItems = async (orderId, newItems) => {
+  // Open order modal with fresh copy
+  const handleOpenOrderModal = (order) => {
+    setViewingOrder(JSON.parse(JSON.stringify(order)));
+    setHasOrderChanges(false);
+  };
+
+  // Persist local order modifications to Supabase on Save button click
+  const handleSaveOrderChanges = async () => {
+    if (!viewingOrder) return;
     setIsUpdatingOrderItems(true);
     try {
-      const newSubtotal = newItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
-      const riderEffort = Number(viewingOrder?.rider_effort || 10);
+      const currentItems = Array.isArray(viewingOrder.items) ? viewingOrder.items : [];
+      const newSubtotal = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+      const riderEffort = Number(viewingOrder.rider_effort || 10);
       const newGrandTotal = newSubtotal + riderEffort;
 
       const updatedPayload = {
-        items: newItems,
+        items: currentItems,
         subtotal: newSubtotal,
         grand_total: newGrandTotal
       };
@@ -283,17 +292,18 @@ export default function AdminHQ() {
       const { error } = await supabase
         .from('expected_orders')
         .update(updatedPayload)
-        .eq('id', orderId);
+        .eq('id', viewingOrder.id);
 
       if (error) {
-        console.error('Error updating order items:', error);
+        console.error('Error updating order in database:', error);
       } else {
-        // Update local state
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updatedPayload } : o));
-        setViewingOrder(prev => prev ? { ...prev, ...updatedPayload } : null);
+        // Update global orders state
+        setOrders(prev => prev.map(o => o.id === viewingOrder.id ? { ...o, ...updatedPayload } : o));
+        setViewingOrder(null);
+        setHasOrderChanges(false);
       }
     } catch (err) {
-      console.error('Failed to update order items:', err);
+      console.error('Failed to save order changes:', err);
     } finally {
       setIsUpdatingOrderItems(false);
     }
@@ -322,14 +332,33 @@ export default function AdminHQ() {
       });
     }
 
-    saveOrderItems(viewingOrder.id, currentItems);
+    const newSub = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+    const rider = Number(viewingOrder.rider_effort || 10);
+
+    setViewingOrder(prev => ({
+      ...prev,
+      items: currentItems,
+      subtotal: newSub,
+      grand_total: newSub + rider
+    }));
+    setHasOrderChanges(true);
   };
 
   const handleRemoveItemFromOrder = (indexToRemove) => {
     if (!viewingOrder) return;
     const currentItems = Array.isArray(viewingOrder.items) ? [...viewingOrder.items] : [];
     currentItems.splice(indexToRemove, 1);
-    saveOrderItems(viewingOrder.id, currentItems);
+
+    const newSub = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+    const rider = Number(viewingOrder.rider_effort || 10);
+
+    setViewingOrder(prev => ({
+      ...prev,
+      items: currentItems,
+      subtotal: newSub,
+      grand_total: newSub + rider
+    }));
+    setHasOrderChanges(true);
   };
 
   const handleUpdateOrderItemQty = (indexToUpdate, newQty) => {
@@ -340,7 +369,17 @@ export default function AdminHQ() {
     } else {
       currentItems[indexToUpdate].quantity = newQty;
     }
-    saveOrderItems(viewingOrder.id, currentItems);
+
+    const newSub = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+    const rider = Number(viewingOrder.rider_effort || 10);
+
+    setViewingOrder(prev => ({
+      ...prev,
+      items: currentItems,
+      subtotal: newSub,
+      grand_total: newSub + rider
+    }));
+    setHasOrderChanges(true);
   };
 
   // Modals visibility states
@@ -1551,7 +1590,7 @@ export default function AdminHQ() {
                                 return (
                                   <tr key={`day-delivered-${order.id}`} className="hover:bg-blue-50/30 transition-colors">
                                     <td 
-                                      onClick={() => setViewingOrder(order)}
+                                      onClick={() => handleOpenOrderModal(order)}
                                       className="py-3 px-4 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
                                     >
                                       {order.id}
@@ -1569,7 +1608,7 @@ export default function AdminHQ() {
                                     </td>
                                     <td className="py-3 px-4 text-gray-500 text-[11px] whitespace-nowrap">{formattedDate}</td>
                                     <td 
-                                      onClick={() => setViewingOrder(order)}
+                                      onClick={() => handleOpenOrderModal(order)}
                                       className="py-3 px-4 cursor-pointer"
                                     >
                                       <div className="flex flex-col gap-0.5 max-w-[260px]">
@@ -2359,7 +2398,7 @@ export default function AdminHQ() {
                       return (
                         <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                           <td 
-                            onClick={() => setViewingOrder(order)}
+                            onClick={() => handleOpenOrderModal(order)}
                             className="py-4 px-6 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
                           >
                             {order.id}
@@ -2377,7 +2416,7 @@ export default function AdminHQ() {
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
                           <td 
-                            onClick={() => setViewingOrder(order)}
+                            onClick={() => handleOpenOrderModal(order)}
                             className="py-4 px-6 cursor-pointer group"
                           >
                             <div className="flex flex-col gap-1 max-w-[320px]">
@@ -2441,7 +2480,7 @@ export default function AdminHQ() {
                       return (
                         <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                           <td 
-                            onClick={() => setViewingOrder(order)}
+                            onClick={() => handleOpenOrderModal(order)}
                             className="py-4 px-6 font-extrabold text-indigo-600 hover:text-indigo-800 cursor-pointer underline decoration-dotted underline-offset-4"
                           >
                             {order.id}
@@ -2459,7 +2498,7 @@ export default function AdminHQ() {
                           </td>
                           <td className="py-4 px-6 text-xs text-gray-550 whitespace-nowrap">{formattedDate}</td>
                           <td 
-                            onClick={() => setViewingOrder(order)}
+                            onClick={() => handleOpenOrderModal(order)}
                             className="py-4 px-6 cursor-pointer group"
                           >
                             <div className="flex flex-col gap-1 max-w-[320px]">
@@ -3156,12 +3195,6 @@ export default function AdminHQ() {
                   </p>
                 )}
               </div>
-              <button
-                onClick={() => setViewingOrder(null)}
-                className="w-8 h-8 rounded-lg bg-white text-gray-400 hover:text-gray-950 flex items-center justify-center border border-gray-200 cursor-pointer transition-all"
-              >
-                <X size={16} />
-              </button>
             </div>
 
             <div className="p-6 overflow-y-auto flex flex-col gap-5">
@@ -3269,12 +3302,6 @@ export default function AdminHQ() {
                   <span>Rider's Effort / Delivery</span>
                   <span className="font-mono font-bold text-gray-800">₹{viewingOrder.rider_effort || 10}</span>
                 </div>
-                {viewingOrder.status === 'delivered' && (
-                  <div className="flex justify-between text-[11px] text-emerald-600 font-bold">
-                    <span>Delivered Order Bonus</span>
-                    <span className="font-mono">+₹10</span>
-                  </div>
-                )}
                 <div className="h-px bg-gray-200 my-1" />
                 <div className="flex justify-between text-sm font-black text-gray-900">
                   <span>Grand Total</span>
@@ -3283,12 +3310,27 @@ export default function AdminHQ() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+            <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
               <button
-                onClick={() => setViewingOrder(null)}
-                className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+                onClick={() => {
+                  setViewingOrder(null);
+                  setHasOrderChanges(false);
+                }}
+                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer border-none"
               >
-                Close
+                {hasOrderChanges ? 'Cancel' : 'Close'}
+              </button>
+
+              <button
+                onClick={handleSaveOrderChanges}
+                disabled={isUpdatingOrderItems || (!hasOrderChanges && viewingOrder)}
+                className={`px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer border-none shadow-sm flex items-center gap-1.5 ${
+                  hasOrderChanges
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 animate-pulse'
+                    : 'bg-gray-900 text-white hover:bg-black'
+                }`}
+              >
+                {isUpdatingOrderItems ? 'Saving Changes...' : 'Save Changes'}
               </button>
             </div>
           </div>
