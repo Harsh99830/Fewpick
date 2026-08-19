@@ -260,8 +260,88 @@ export default function AdminHQ() {
   const [editCatImage, setEditCatImage] = useState('');
   const [isSubmittingEditCat, setIsSubmittingEditCat] = useState(false);
 
-  // Order Details Modal State
+  // Order Details Modal & Item Modification States
   const [viewingOrder, setViewingOrder] = useState(null);
+  const [showCatalogSelector, setShowCatalogSelector] = useState(false);
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
+  const [isUpdatingOrderItems, setIsUpdatingOrderItems] = useState(false);
+
+  // Helper to persist order item changes to Supabase database
+  const saveOrderItems = async (orderId, newItems) => {
+    setIsUpdatingOrderItems(true);
+    try {
+      const newSubtotal = newItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+      const riderEffort = Number(viewingOrder?.rider_effort || 10);
+      const newGrandTotal = newSubtotal + riderEffort;
+
+      const updatedPayload = {
+        items: newItems,
+        subtotal: newSubtotal,
+        grand_total: newGrandTotal
+      };
+
+      const { error } = await supabase
+        .from('expected_orders')
+        .update(updatedPayload)
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('Error updating order items:', error);
+      } else {
+        // Update local state
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updatedPayload } : o));
+        setViewingOrder(prev => prev ? { ...prev, ...updatedPayload } : null);
+      }
+    } catch (err) {
+      console.error('Failed to update order items:', err);
+    } finally {
+      setIsUpdatingOrderItems(false);
+    }
+  };
+
+  const handleAddItemToOrder = (product) => {
+    if (!viewingOrder) return;
+    const currentItems = Array.isArray(viewingOrder.items) ? [...viewingOrder.items] : [];
+    
+    const existingIndex = currentItems.findIndex(i => 
+      String(i.product_id || i.id) === String(product.id) || i.name === product.name
+    );
+
+    if (existingIndex > -1) {
+      currentItems[existingIndex].quantity = (currentItems[existingIndex].quantity || 1) + 1;
+    } else {
+      currentItems.push({
+        product_id: product.id,
+        id: product.id,
+        name: product.name,
+        weight: product.weight || product.Weight || '',
+        price: Number(product.price || product.Price || 0),
+        mrp: Number(product.mrp || product.MRP || product.price || 0),
+        image: product.image || product.Image || '',
+        quantity: 1
+      });
+    }
+
+    saveOrderItems(viewingOrder.id, currentItems);
+  };
+
+  const handleRemoveItemFromOrder = (indexToRemove) => {
+    if (!viewingOrder) return;
+    const currentItems = Array.isArray(viewingOrder.items) ? [...viewingOrder.items] : [];
+    currentItems.splice(indexToRemove, 1);
+    saveOrderItems(viewingOrder.id, currentItems);
+  };
+
+  const handleUpdateOrderItemQty = (indexToUpdate, newQty) => {
+    if (!viewingOrder) return;
+    const currentItems = Array.isArray(viewingOrder.items) ? [...viewingOrder.items] : [];
+    if (newQty <= 0) {
+      currentItems.splice(indexToUpdate, 1);
+    } else {
+      currentItems[indexToUpdate].quantity = newQty;
+    }
+    saveOrderItems(viewingOrder.id, currentItems);
+  };
 
   // Modals visibility states
   const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -3095,38 +3175,85 @@ export default function AdminHQ() {
 
               {/* Items List in Sequence */}
               <div>
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">
-                  Ordered Items ({(viewingOrder.items || []).length})
-                </h4>
-                <div className="divide-y divide-gray-100 border border-gray-150 rounded-xl overflow-hidden bg-white">
-                  {(viewingOrder.items || []).map((item, idx) => {
-                    const catalogItem = items.find(i => String(i.id) === String(item.product_id) || i.name === item.name);
-                    const itemImg = item.image || catalogItem?.image;
-                    const itemPrice = item.price || catalogItem?.price || 0;
-                    const itemTotal = itemPrice * (item.quantity || 1);
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider m-0">
+                    Ordered Items ({(viewingOrder.items || []).length})
+                  </h4>
+                  <button
+                    onClick={() => setShowCatalogSelector(true)}
+                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer border border-indigo-200/80 flex items-center gap-1.5"
+                  >
+                    <Plus size={14} />
+                    <span>Add Item</span>
+                  </button>
+                </div>
 
-                    return (
-                      <div key={idx} className="p-3.5 flex items-center gap-3.5 hover:bg-gray-50/50 transition-colors">
-                        <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {itemImg ? (
-                            <img src={itemImg} alt={item.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <Package size={20} className="text-gray-300" />
-                          )}
+                <div className="divide-y divide-gray-100 border border-gray-150 rounded-xl overflow-hidden bg-white">
+                  {(viewingOrder.items || []).length === 0 ? (
+                    <div className="p-6 text-center text-xs font-semibold text-gray-400">
+                      No items in this order. Click "+ Add Item" above to add products.
+                    </div>
+                  ) : (
+                    (viewingOrder.items || []).map((item, idx) => {
+                      const catalogItem = items.find(i => String(i.id) === String(item.product_id || item.id) || i.name === item.name);
+                      const itemImg = item.image || catalogItem?.image;
+                      const itemPrice = Number(item.price || catalogItem?.price || 0);
+                      const itemQty = Number(item.quantity || 1);
+                      const itemTotal = itemPrice * itemQty;
+
+                      return (
+                        <div key={idx} className="p-3.5 flex items-center gap-3 hover:bg-gray-50/50 transition-colors">
+                          <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {itemImg ? (
+                              <img src={itemImg} alt={item.name} className="w-full h-full object-contain p-1" />
+                            ) : (
+                              <Package size={20} className="text-gray-300" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="text-xs font-extrabold text-gray-900 truncate m-0">{item.name}</h5>
+                            <span className="text-[10px] text-gray-400 font-semibold">{item.weight || catalogItem?.weight || 'N/A'}</span>
+                          </div>
+
+                          {/* Quantity & Delete Controls */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                <button
+                                  onClick={() => handleUpdateOrderItemQty(idx, itemQty - 1)}
+                                  disabled={isUpdatingOrderItems}
+                                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 border-none bg-transparent cursor-pointer disabled:opacity-30"
+                                >
+                                  -
+                                </button>
+                                <span className="w-7 text-center text-xs font-extrabold font-mono text-gray-900">
+                                  {itemQty}
+                                </span>
+                                <button
+                                  onClick={() => handleUpdateOrderItemQty(idx, itemQty + 1)}
+                                  disabled={isUpdatingOrderItems}
+                                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 border-none bg-transparent cursor-pointer disabled:opacity-30"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <div className="text-right min-w-[50px]">
+                                <span className="text-xs font-mono font-black text-gray-900 block">₹{itemTotal}</span>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveItemFromOrder(idx)}
+                                disabled={isUpdatingOrderItems}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg border-none bg-transparent cursor-pointer transition-colors disabled:opacity-30"
+                                title="Remove item from order"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h5 className="text-xs font-extrabold text-gray-900 truncate m-0">{item.name}</h5>
-                          <span className="text-[10px] text-gray-400 font-semibold">{item.weight || 'N/A'}</span>
-                        </div>
-                        <div className="text-right flex flex-col items-end flex-shrink-0">
-                          <span className="text-xs font-mono font-black text-gray-900">₹{itemTotal}</span>
-                          <span className="text-[10px] text-gray-400 font-bold">
-                            ₹{itemPrice} × {item.quantity}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -3162,6 +3289,120 @@ export default function AdminHQ() {
                 className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Catalog Selector Modal (For adding items to order) */}
+      {showCatalogSelector && (
+        <div className="fixed inset-0 bg-black/60 z-[250] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[560px] rounded-2xl border border-gray-150 shadow-2xl overflow-hidden animate-drop-in max-h-[85vh] flex flex-col">
+            <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div>
+                <h3 className="text-sm font-black text-gray-950 uppercase tracking-wider">Select Product to Add</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Browse website inventory and add to order</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCatalogSelector(false);
+                  setCatalogSearchQuery('');
+                }}
+                className="w-8 h-8 rounded-lg bg-white text-gray-400 hover:text-gray-950 flex items-center justify-center border border-gray-200 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Search Input Bar */}
+            <div className="p-3.5 border-b border-gray-100 bg-white">
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={catalogSearchQuery}
+                  onChange={(e) => setCatalogSearchQuery(e.target.value)}
+                  placeholder="Search products by name or category..."
+                  className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+                  autoFocus
+                />
+                {catalogSearchQuery && (
+                  <button
+                    onClick={() => setCatalogSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-0.5 bg-transparent border-none cursor-pointer"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Products List Grid */}
+            <div className="p-4 overflow-y-auto flex-1 divide-y divide-gray-100">
+              {items.filter((product) => {
+                const q = catalogSearchQuery.toLowerCase();
+                return (product.name || '').toLowerCase().includes(q) || (product.category || '').toLowerCase().includes(q);
+              }).length === 0 ? (
+                <div className="py-12 text-center text-xs font-bold text-gray-400">
+                  No products found matching "{catalogSearchQuery}"
+                </div>
+              ) : (
+                items.filter((product) => {
+                  const q = catalogSearchQuery.toLowerCase();
+                  return (product.name || '').toLowerCase().includes(q) || (product.category || '').toLowerCase().includes(q);
+                }).map((product) => {
+                  const inOrder = (viewingOrder?.items || []).find(i => 
+                    String(i.product_id || i.id) === String(product.id) || i.name === product.name
+                  );
+
+                  return (
+                    <div key={product.id} className="py-3 flex items-center justify-between gap-3 hover:bg-gray-50/50 px-2 rounded-xl transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {product.image ? (
+                            <img src={product.image} alt={product.name} className="w-full h-full object-contain p-1" />
+                          ) : (
+                            <Package size={20} className="text-gray-300" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <h5 className="text-xs font-extrabold text-gray-900 truncate m-0">{product.name}</h5>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-bold text-gray-400">{product.weight || product.Weight || 'N/A'}</span>
+                            <span className="text-[9px] font-extrabold bg-gray-100 text-gray-600 px-1.5 py-0.2 rounded uppercase">
+                              {product.category || 'General'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-xs font-mono font-black text-gray-900">₹{product.price || 0}</span>
+                        <button
+                          onClick={() => handleAddItemToOrder(product)}
+                          disabled={isUpdatingOrderItems}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-black transition-all cursor-pointer border-none shadow-sm flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                        >
+                          <Plus size={13} />
+                          <span>{inOrder ? `Add (${inOrder.quantity})` : 'Add'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="p-3.5 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowCatalogSelector(false);
+                  setCatalogSearchQuery('');
+                }}
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+              >
+                Done
               </button>
             </div>
           </div>
