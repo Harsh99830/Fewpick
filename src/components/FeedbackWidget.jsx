@@ -58,8 +58,8 @@ export default function FeedbackWidget({ hasCart = false }) {
         console.error('Error saving feedback to Supabase:', dbError.message);
       }
 
-      // 2. Send email notification to solvers.real@gmail.com
-      await fetch('https://formsubmit.co/ajax/solvers.real@gmail.com', {
+      // 2. Send email notification to dhruv.bairagi27@gmail.com
+      await fetch('https://formsubmit.co/ajax/dhruv.bairagi27@gmail.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

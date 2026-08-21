@@ -20,8 +20,8 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      // Send email directly to solvers.real@gmail.com via FormSubmit AJAX endpoint
-      await fetch('https://formsubmit.co/ajax/solvers.real@gmail.com', {
+      // Send email directly to dhruv.bairagi27@gmail.com via FormSubmit AJAX endpoint
+      await fetch('https://formsubmit.co/ajax/dhruv.bairagi27@gmail.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,8 +67,8 @@ export default function ContactPage() {
         <div className="flex flex-col sm:flex-row justify-between gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100 text-xs">
           <div>
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Email</span>
-            <a href="mailto:solvers.real@gmail.com" className="font-bold text-gray-900 no-underline hover:underline">
-              solvers.real@gmail.com
+            <a href="mailto:dhruv.bairagi27@gmail.com" className="font-bold text-gray-900 no-underline hover:underline">
+              dhruv.bairagi27@gmail.com
             </a>
           </div>
           <div>
@@ -90,7 +90,7 @@ export default function ContactPage() {
             <CheckCircle2 size={40} className="text-green-600 mb-2.5" />
             <h3 className="text-base font-black text-gray-900 m-0 mb-1">Message Sent!</h3>
             <p className="text-xs text-gray-500 max-w-[280px] mb-6 leading-relaxed">
-              Your message has been sent to <span className="font-semibold text-gray-800">solvers.real@gmail.com</span>. We will reply as soon as possible.
+              Your message has been sent to <span className="font-semibold text-gray-800">dhruv.bairagi27@gmail.com</span>. We will reply as soon as possible.
             </p>
             <button
               onClick={() => setIsSubmitted(false)}
