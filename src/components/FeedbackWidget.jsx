@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MessageSquare, X, Send, CheckCircle2, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function FeedbackWidget({ hasCart = false }) {
+  const location = useLocation();
+
+  // Hide feedback widget on Admin HQ page (/hq or /admin)
+  if (location.pathname === '/hq' || location.pathname.startsWith('/admin')) {
+    return null;
+  }
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
