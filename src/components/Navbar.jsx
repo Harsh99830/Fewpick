@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles, PhoneCall } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import { getUniqueProductsByName } from '../utils/productUtils';
 
@@ -225,9 +225,10 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
 
               <button
                 onClick={() => handleNavigate('contact')}
-                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600 whitespace-nowrap"
+                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600 whitespace-nowrap flex items-center gap-1.5"
               >
-                Contact Us
+                <PhoneCall size={15} className="text-indigo-600" />
+                <span>Contact Us</span>
               </button>
 
               {/* Cart */}
@@ -276,9 +277,10 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                   </a>
                   <button
                     onClick={() => handleNavigate('contact')}
-                    className="w-full text-left bg-transparent border-none text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-[#f3f4f6] hover:text-indigo-600"
+                    className="w-full text-left bg-transparent border-none text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2.5"
                   >
-                    Contact Us
+                    <PhoneCall size={17} className="text-indigo-600" />
+                    <span>Contact Us</span>
                   </button>
                 </div>
               )}
