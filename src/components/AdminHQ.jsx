@@ -262,6 +262,7 @@ export default function AdminHQ() {
 
   // Order Details Modal & Item Modification States
   const [viewingOrder, setViewingOrder] = useState(null);
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [hasOrderChanges, setHasOrderChanges] = useState(false);
   const [showCatalogSelector, setShowCatalogSelector] = useState(false);
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
@@ -270,6 +271,7 @@ export default function AdminHQ() {
   // Open order modal with fresh copy
   const handleOpenOrderModal = (order) => {
     setViewingOrder(JSON.parse(JSON.stringify(order)));
+    setEditingItemIndex(null);
     setHasOrderChanges(false);
   };
 
@@ -3273,40 +3275,64 @@ export default function AdminHQ() {
                             <span className="text-[10px] text-gray-400 font-semibold">{item.weight || catalogItem?.weight || 'N/A'}</span>
                           </div>
 
-                          {/* Quantity & Delete Controls */}
+                          {/* Item Price & Edit Controls */}
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                            {editingItemIndex === idx ? (
+                              <div className="flex items-center gap-2 animate-fade-in">
+                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                  <button
+                                    onClick={() => handleUpdateOrderItemQty(idx, itemQty - 1)}
+                                    disabled={isUpdatingOrderItems}
+                                    className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 border-none bg-transparent cursor-pointer disabled:opacity-30"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="w-7 text-center text-xs font-extrabold font-mono text-gray-900">
+                                    {itemQty}
+                                  </span>
+                                  <button
+                                    onClick={() => handleUpdateOrderItemQty(idx, itemQty + 1)}
+                                    disabled={isUpdatingOrderItems}
+                                    className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 border-none bg-transparent cursor-pointer disabled:opacity-30"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
                                 <button
-                                  onClick={() => handleUpdateOrderItemQty(idx, itemQty - 1)}
+                                  onClick={() => handleRemoveItemFromOrder(idx)}
                                   disabled={isUpdatingOrderItems}
-                                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 border-none bg-transparent cursor-pointer disabled:opacity-30"
+                                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg border border-red-100 bg-transparent cursor-pointer transition-colors disabled:opacity-30"
+                                  title="Remove item from order"
                                 >
-                                  -
+                                  <Trash2 size={15} />
                                 </button>
-                                <span className="w-7 text-center text-xs font-extrabold font-mono text-gray-900">
-                                  {itemQty}
-                                </span>
+
                                 <button
-                                  onClick={() => handleUpdateOrderItemQty(idx, itemQty + 1)}
-                                  disabled={isUpdatingOrderItems}
-                                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 border-none bg-transparent cursor-pointer disabled:opacity-30"
+                                  onClick={() => setEditingItemIndex(null)}
+                                  className="p-1 text-gray-400 hover:text-gray-700 rounded-lg border-none bg-transparent cursor-pointer"
+                                  title="Done editing item"
                                 >
-                                  +
+                                  <X size={15} />
                                 </button>
                               </div>
-                              <div className="text-right min-w-[50px]">
-                                <span className="text-xs font-mono font-black text-gray-900 block">₹{itemTotal}</span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                  <span className="text-xs font-mono font-black text-gray-900 block">₹{itemTotal}</span>
+                                  <span className="text-[10px] text-gray-400 font-bold block">
+                                    ₹{itemPrice} × {itemQty}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => setEditingItemIndex(idx)}
+                                  className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-gray-200 bg-white cursor-pointer transition-all shadow-2xs"
+                                  title="Edit item quantity / remove"
+                                >
+                                  <Edit2 size={13} />
+                                </button>
                               </div>
-                              <button
-                                onClick={() => handleRemoveItemFromOrder(idx)}
-                                disabled={isUpdatingOrderItems}
-                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg border-none bg-transparent cursor-pointer transition-colors disabled:opacity-30"
-                                title="Remove item from order"
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
+                            )}
                           </div>
                         </div>
                       );
