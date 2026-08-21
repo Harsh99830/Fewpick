@@ -409,6 +409,7 @@ export default function AdminHQ() {
 
   // Date Filters for Daily Orders Bar Chart
   const [chartTimeframe, setChartTimeframe] = useState('1W'); // '1D', '1W', '1M'
+  const [selectedDayForHourlyView, setSelectedDayForHourlyView] = useState(null); // String YYYY-MM-DD when drilling down from daily chart to 1D hourly view
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 6); // Default: Last 7 Days (1W)
@@ -1265,15 +1266,15 @@ export default function AdminHQ() {
     const counts = {};
     const revenues = {};
 
-    if (chartTimeframe === '1D') {
-      // 1D: Hourly Breakdown for Today (24 Hours: 00:00 to 23:00)
-      const todayStr = new Date().toISOString().split('T')[0];
+    if (chartTimeframe === '1D' || selectedDayForHourlyView) {
+      // 1D: Hourly Breakdown for selected day or Today (24 Hours: 00:00 to 23:00)
+      const targetDay = selectedDayForHourlyView || new Date().toISOString().split('T')[0];
 
       orders.forEach(order => {
         if (!order.created_at) return;
         const d = new Date(order.created_at);
         const orderDate = d.toISOString().split('T')[0];
-        if (orderDate !== todayStr) return;
+        if (orderDate !== targetDay) return;
 
         const hour = d.getHours();
         const confirmed = isOrderConfirmed(order);
@@ -1288,20 +1289,26 @@ export default function AdminHQ() {
       });
 
       const data = [];
-      for (let hour = 0; hour < 24; hour++) {
+      // Hourly sequence starting from 12pm (noon) to 11pm, then 12am to 11am
+      const hourSequence = [
+        12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, // 12pm to 11pm
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11            // 12am to 11am
+      ];
+
+      hourSequence.forEach(hour => {
         const count = counts[hour] || 0;
         const revenue = revenues[hour] || 0;
         const label = `${hour === 0 ? '12' : hour > 12 ? hour - 12 : hour}${hour >= 12 ? 'pm' : 'am'}`;
 
         data.push({
-          date: todayStr,
+          date: targetDay,
           hour: hour,
           label: label,
           count: count,
           revenue: revenue,
           isHourly: true
         });
-      }
+      });
       return data;
     } else if (chartTimeframe === 'custom') {
       // Custom Date Range Breakdown
@@ -1468,15 +1475,25 @@ export default function AdminHQ() {
 
               {/* Timeframe Toggle Buttons (1D, 1 Week, 1 Month & Calendar Icon for Custom Period) */}
               <div className="flex items-center gap-2">
+                {selectedDayForHourlyView && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDayForHourlyView(null)}
+                    className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    ← Back to All Days
+                  </button>
+                )}
                 <div className="flex bg-gray-100 p-1 rounded-xl">
                   <button
                     type="button"
                     onClick={() => {
                       setChartTimeframe('1D');
+                      setSelectedDayForHourlyView(null);
                       setSelectedChartDay(null);
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer ${
-                      chartTimeframe === '1D'
+                      chartTimeframe === '1D' && !selectedDayForHourlyView
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'bg-transparent text-gray-500 hover:text-gray-900'
                     }`}
@@ -1487,10 +1504,11 @@ export default function AdminHQ() {
                     type="button"
                     onClick={() => {
                       setChartTimeframe('1W');
+                      setSelectedDayForHourlyView(null);
                       setSelectedChartDay(null);
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer ${
-                      chartTimeframe === '1W'
+                      chartTimeframe === '1W' && !selectedDayForHourlyView
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'bg-transparent text-gray-500 hover:text-gray-900'
                     }`}
@@ -1501,10 +1519,11 @@ export default function AdminHQ() {
                     type="button"
                     onClick={() => {
                       setChartTimeframe('1M');
+                      setSelectedDayForHourlyView(null);
                       setSelectedChartDay(null);
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer ${
-                      chartTimeframe === '1M'
+                      chartTimeframe === '1M' && !selectedDayForHourlyView
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'bg-transparent text-gray-500 hover:text-gray-900'
                     }`}
@@ -1515,10 +1534,11 @@ export default function AdminHQ() {
                     type="button"
                     onClick={() => {
                       setChartTimeframe(chartTimeframe === 'custom' ? '1W' : 'custom');
+                      setSelectedDayForHourlyView(null);
                       setSelectedChartDay(null);
                     }}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer flex items-center justify-center ${
-                      chartTimeframe === 'custom'
+                      chartTimeframe === 'custom' && !selectedDayForHourlyView
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'bg-transparent text-gray-500 hover:text-gray-900'
                     }`}
@@ -1601,6 +1621,10 @@ export default function AdminHQ() {
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedChartDay(isSelected ? null : day);
+                            if (!day.isHourly) {
+                              // Switch chart to 1D hourly view for this date
+                              setSelectedDayForHourlyView(day.date);
+                            }
                           }}
                           className={`flex-1 flex items-end justify-center h-full group relative cursor-pointer p-0.5 transition-all ${
                             isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
