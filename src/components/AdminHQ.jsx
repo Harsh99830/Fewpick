@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Lock, LogOut, RefreshCw, Clock, Package,
   LayoutDashboard, ClipboardList, ShoppingBag, TrendingUp, AlertTriangle, Plus, X, MoreVertical,
-  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search, Store, MapPin
+  FolderKanban, Edit2, Trash2, CheckSquare, Star, GripVertical, Phone, Search, Store, MapPin, Calendar
 } from 'lucide-react';
 
 export default function AdminHQ() {
@@ -408,9 +408,10 @@ export default function AdminHQ() {
   const [activeMenuId, setActiveMenuId] = useState(null);
 
   // Date Filters for Daily Orders Bar Chart
+  const [chartTimeframe, setChartTimeframe] = useState('1W'); // '1D', '1W', '1M'
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
-    d.setDate(d.getDate() - 6); // Default: Last 7 Days
+    d.setDate(d.getDate() - 6); // Default: Last 7 Days (1W)
     return d.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => {
@@ -1261,54 +1262,145 @@ export default function AdminHQ() {
   }
 
   const getChartData = () => {
-    if (!startDate || !endDate) return [];
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
     const counts = {};
     const revenues = {};
-    orders.forEach(order => {
-      if (!order.created_at) return;
-      const orderDate = new Date(order.created_at).toISOString().split('T')[0];
 
-      const confirmed = isOrderConfirmed(order);
-      const notCancelled = isOrderNotCancelled(order);
+    if (chartTimeframe === '1D') {
+      // 1D: Hourly Breakdown for Today (24 Hours: 00:00 to 23:00)
+      const todayStr = new Date().toISOString().split('T')[0];
 
-      if (confirmed && notCancelled) {
-        counts[orderDate] = (counts[orderDate] || 0) + 1;
+      orders.forEach(order => {
+        if (!order.created_at) return;
+        const d = new Date(order.created_at);
+        const orderDate = d.toISOString().split('T')[0];
+        if (orderDate !== todayStr) return;
+
+        const hour = d.getHours();
+        const confirmed = isOrderConfirmed(order);
+        const notCancelled = isOrderNotCancelled(order);
+
+        if (confirmed && notCancelled) {
+          counts[hour] = (counts[hour] || 0) + 1;
+        }
+        const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
+        const orderRev = isDelivered ? 10 : 0;
+        revenues[hour] = (revenues[hour] || 0) + orderRev;
+      });
+
+      const data = [];
+      for (let hour = 0; hour < 24; hour++) {
+        const count = counts[hour] || 0;
+        const revenue = revenues[hour] || 0;
+        const label = `${hour === 0 ? '12' : hour > 12 ? hour - 12 : hour}${hour >= 12 ? 'pm' : 'am'}`;
+
+        data.push({
+          date: todayStr,
+          hour: hour,
+          label: label,
+          count: count,
+          revenue: revenue,
+          isHourly: true
+        });
       }
-      const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-      const orderRev = isDelivered ? 10 : 0;
-      revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
-    });
+      return data;
+    } else if (chartTimeframe === 'custom') {
+      // Custom Date Range Breakdown
+      if (!startDate || !endDate) return [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
 
-    const data = [];
-    let current = new Date(start);
+      orders.forEach(order => {
+        if (!order.created_at) return;
+        const orderDate = new Date(order.created_at).toISOString().split('T')[0];
 
-    let loopLimit = 0;
-    while (current <= end && loopLimit < 31) {
-      const dateStr = current.toISOString().split('T')[0];
-      const count = counts[dateStr] || 0;
-      const revenue = revenues[dateStr] || 0;
+        const confirmed = isOrderConfirmed(order);
+        const notCancelled = isOrderNotCancelled(order);
 
-      const formattedLabel = current.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
+        if (confirmed && notCancelled) {
+          counts[orderDate] = (counts[orderDate] || 0) + 1;
+        }
+        const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
+        const orderRev = isDelivered ? 10 : 0;
+        revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
       });
 
-      data.push({
-        date: dateStr,
-        label: formattedLabel,
-        count: count,
-        revenue: revenue
+      const data = [];
+      let current = new Date(start);
+
+      let loopLimit = 0;
+      while (current <= end && loopLimit < 90) {
+        const dateStr = current.toISOString().split('T')[0];
+        const count = counts[dateStr] || 0;
+        const revenue = revenues[dateStr] || 0;
+
+        const formattedLabel = current.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        });
+
+        data.push({
+          date: dateStr,
+          label: formattedLabel,
+          count: count,
+          revenue: revenue,
+          isHourly: false
+        });
+
+        current.setDate(current.getDate() + 1);
+        loopLimit++;
+      }
+
+      return data;
+    } else {
+      // 1W or 1M: Daily Breakdown
+      const daysCount = chartTimeframe === '1M' ? 30 : 7;
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - (daysCount - 1));
+
+      orders.forEach(order => {
+        if (!order.created_at) return;
+        const orderDate = new Date(order.created_at).toISOString().split('T')[0];
+
+        const confirmed = isOrderConfirmed(order);
+        const notCancelled = isOrderNotCancelled(order);
+
+        if (confirmed && notCancelled) {
+          counts[orderDate] = (counts[orderDate] || 0) + 1;
+        }
+        const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
+        const orderRev = isDelivered ? 10 : 0;
+        revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
       });
 
-      current.setDate(current.getDate() + 1);
-      loopLimit++;
+      const data = [];
+      let current = new Date(start);
+
+      let loopLimit = 0;
+      while (current <= end && loopLimit < 35) {
+        const dateStr = current.toISOString().split('T')[0];
+        const count = counts[dateStr] || 0;
+        const revenue = revenues[dateStr] || 0;
+
+        const formattedLabel = current.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        });
+
+        data.push({
+          date: dateStr,
+          label: formattedLabel,
+          count: count,
+          revenue: revenue,
+          isHourly: false
+        });
+
+        current.setDate(current.getDate() + 1);
+        loopLimit++;
+      }
+
+      return data;
     }
-
-    return data;
   };
 
   // Sub-tab: Dashboard Summary
@@ -1374,26 +1466,104 @@ export default function AdminHQ() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <span>From:</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] text-xs font-bold text-gray-700 cursor-pointer"
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span>To:</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#6366f1] text-xs font-bold text-gray-700 cursor-pointer"
-                />
+              {/* Timeframe Toggle Buttons (1D, 1 Week, 1 Month & Calendar Icon for Custom Period) */}
+              <div className="flex items-center gap-2">
+                <div className="flex bg-gray-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChartTimeframe('1D');
+                      setSelectedChartDay(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer ${
+                      chartTimeframe === '1D'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'bg-transparent text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    1D
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChartTimeframe('1W');
+                      setSelectedChartDay(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer ${
+                      chartTimeframe === '1W'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'bg-transparent text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    1 Week
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChartTimeframe('1M');
+                      setSelectedChartDay(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer ${
+                      chartTimeframe === '1M'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'bg-transparent text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    1 Month
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChartTimeframe(chartTimeframe === 'custom' ? '1W' : 'custom');
+                      setSelectedChartDay(null);
+                    }}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-all border-none cursor-pointer flex items-center justify-center ${
+                      chartTimeframe === 'custom'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-transparent text-gray-500 hover:text-gray-900'
+                    }`}
+                    title="Select specific date period"
+                  >
+                    <Calendar size={14} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Custom Date Range Picker Bar (Shown when Calendar Icon is active) */}
+          {chartTimeframe === 'custom' && (
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex flex-wrap items-center gap-3 text-xs animate-drop-in">
+              <span className="font-extrabold text-indigo-900 flex items-center gap-1.5">
+                <Calendar size={14} className="text-indigo-600" />
+                Custom Date Range:
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-gray-500">From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setSelectedChartDay(null);
+                  }}
+                  className="px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-xs font-bold text-gray-800 cursor-pointer shadow-2xs"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-gray-500">To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setSelectedChartDay(null);
+                  }}
+                  className="px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-xs font-bold text-gray-800 cursor-pointer shadow-2xs"
+                />
+              </div>
+            </div>
+          )}
 
           {chartData.length === 0 ? (
             <div className="flex items-center justify-center h-[200px] text-xs text-gray-400 font-bold">
@@ -1514,11 +1684,13 @@ export default function AdminHQ() {
               {selectedChartDay ? (
                 <div className="mt-3 flex flex-col gap-3 animate-drop-in">
                   {(() => {
-                    // Calculate totals for all valid/confirmed orders on this date
+                    // Calculate totals for all valid/confirmed orders on this date/hour
                     const dayOrders = orders.filter((o) => {
                       if (!o.created_at) return false;
-                      const oDate = new Date(o.created_at).toISOString().split('T')[0];
-                      return oDate === selectedChartDay.date && isOrderConfirmed(o) && isOrderNotCancelled(o);
+                      const d = new Date(o.created_at);
+                      const oDate = d.toISOString().split('T')[0];
+                      const hourMatch = selectedChartDay.isHourly ? d.getHours() === selectedChartDay.hour : true;
+                      return oDate === selectedChartDay.date && hourMatch && isOrderConfirmed(o) && isOrderNotCancelled(o);
                     });
 
                     const totalItemsSold = dayOrders.reduce((acc, order) => {
@@ -1575,8 +1747,10 @@ export default function AdminHQ() {
                       <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                         {orders.filter((o) => {
                           if (!o.created_at) return false;
-                          const oDate = new Date(o.created_at).toISOString().split('T')[0];
-                          return oDate === selectedChartDay.date && isOrderConfirmed(o) && isOrderNotCancelled(o) && isOrderDelivered(o);
+                          const d = new Date(o.created_at);
+                          const oDate = d.toISOString().split('T')[0];
+                          const hourMatch = selectedChartDay.isHourly ? d.getHours() === selectedChartDay.hour : true;
+                          return oDate === selectedChartDay.date && hourMatch && isOrderConfirmed(o) && isOrderNotCancelled(o) && isOrderDelivered(o);
                         }).length} Delivered
                       </span>
                     </div>
@@ -1584,8 +1758,10 @@ export default function AdminHQ() {
                     {(() => {
                       const dayDeliveredOrders = orders.filter((o) => {
                         if (!o.created_at) return false;
-                        const oDate = new Date(o.created_at).toISOString().split('T')[0];
-                        return oDate === selectedChartDay.date && isOrderConfirmed(o) && isOrderNotCancelled(o) && isOrderDelivered(o);
+                        const d = new Date(o.created_at);
+                        const oDate = d.toISOString().split('T')[0];
+                        const hourMatch = selectedChartDay.isHourly ? d.getHours() === selectedChartDay.hour : true;
+                        return oDate === selectedChartDay.date && hourMatch && isOrderConfirmed(o) && isOrderNotCancelled(o) && isOrderDelivered(o);
                       });
 
                       if (dayDeliveredOrders.length === 0) {
