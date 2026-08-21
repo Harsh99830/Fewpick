@@ -1360,10 +1360,18 @@ export default function AdminHQ() {
       return data;
     } else {
       // 1W or 1M: Daily Breakdown
-      const daysCount = chartTimeframe === '1M' ? 30 : 7;
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - (daysCount - 1));
+      let start = new Date();
+      let end = new Date();
+
+      if (chartTimeframe === '1M') {
+        // 1M: Full Calendar Month (e.g. Aug 1 to Aug 31)
+        const now = new Date();
+        start = new Date(now.getFullYear(), now.getMonth(), 1); // 1st of month
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of month
+      } else {
+        // 1W: Last 7 Days
+        start.setDate(end.getDate() - 6);
+      }
 
       orders.forEach(order => {
         if (!order.created_at) return;
@@ -1606,100 +1614,107 @@ export default function AdminHQ() {
                   <span>0</span>
                 </div>
 
-                {/* Plot Area */}
-                <div className="flex-1 flex flex-col justify-end">
-                  {/* Bars Row */}
-                  <div className="flex items-end justify-between gap-1 h-full border-b-2 border-gray-400 px-1 pb-0">
-                    {chartData.map((day, idx) => {
-                      const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-                      const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-                      const isSelected = selectedChartDay?.date === day.date;
+                {/* Chart Plot Area Container (Scrolls cleanly on mobile when many bars) */}
+                <div className="flex-1 overflow-x-auto scrollbar-thin pb-2">
+                  <div
+                    className="flex flex-col justify-end h-full"
+                    style={{
+                      minWidth: chartData.length > 15 ? `${chartData.length * (chartData[0]?.isHourly ? 36 : 40)}px` : '100%'
+                    }}
+                  >
+                    {/* Bars Row */}
+                    <div className="flex items-end justify-between gap-1 h-full border-b-2 border-gray-400 px-1 pb-0">
+                      {chartData.map((day, idx) => {
+                        const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                        const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                        const isSelected = selectedChartDay?.date === day.date;
 
-                      return (
-                        <div
-                          key={idx}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedChartDay(isSelected ? null : day);
-                            if (!day.isHourly) {
-                              // Switch chart to 1D hourly view for this date
-                              setSelectedDayForHourlyView(day.date);
-                            }
-                          }}
-                          className={`flex-1 flex items-end justify-center h-full group relative cursor-pointer p-0.5 transition-all ${
-                            isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
-                          }`}
-                        >
-                          {/* Tooltip */}
-                          <div className={`absolute -top-10 transition-all duration-200 bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap z-30 flex items-center gap-2 pointer-events-none ${
-                            isSelected ? 'scale-100 opacity-100 -translate-y-1 ring-2 ring-sky-400' : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'
-                          }`}>
-                            <span>{day.label}:</span>
-                            <span className="text-sky-300">{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
-                            <span className="text-gray-500">•</span>
-                            <span className="text-emerald-400">₹{day.revenue.toLocaleString()}</span>
-                          </div>
-
-                          {/* Attached Double Bar Pair (Flat Rectangles, 0px gap inside pair) */}
-                          <div className="w-full flex items-end justify-center h-full max-w-[28px] sm:max-w-[36px]">
-                            {/* Left Bar: Series 1 / Orders (Sky Blue) */}
-                            <div className="w-1/2 flex flex-col items-center justify-end h-full relative">
-                              {/* Number Directly Above Bar */}
-                              <span className="text-[8px] sm:text-[9.5px] font-black text-gray-800 mb-0.5 whitespace-nowrap">
-                                {day.count}
-                              </span>
-                              <div
-                                style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 6 : 0)}%` }}
-                                className={`w-full transition-all duration-200 ${
-                                  day.count > 0
-                                    ? isSelected ? 'bg-[#0080ff]' : 'bg-[#0095ff] hover:bg-[#0080ff]'
-                                    : 'bg-gray-200/80'
-                                }`}
-                              />
+                        return (
+                          <div
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedChartDay(isSelected ? null : day);
+                              if (!day.isHourly) {
+                                // Switch chart to 1D hourly view for this date
+                                setSelectedDayForHourlyView(day.date);
+                              }
+                            }}
+                            className={`flex-1 flex items-end justify-center h-full group relative cursor-pointer p-0.5 transition-all ${
+                              isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
+                            }`}
+                          >
+                            {/* Tooltip */}
+                            <div className={`absolute -top-10 transition-all duration-200 bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap z-30 flex items-center gap-2 pointer-events-none ${
+                              isSelected ? 'scale-100 opacity-100 -translate-y-1 ring-2 ring-sky-400' : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'
+                            }`}>
+                              <span>{day.label}:</span>
+                              <span className="text-sky-300">{day.count} {day.count === 1 ? 'order' : 'orders'}</span>
+                              <span className="text-gray-500">•</span>
+                              <span className="text-emerald-400">₹{day.revenue.toLocaleString()}</span>
                             </div>
 
-                            {/* Right Bar: Series 2 / Revenue (Vibrant Green) - Attached */}
-                            <div className="w-1/2 flex flex-col items-center justify-end h-full relative">
-                              {/* Number Directly Above Bar */}
-                              <span className="text-[8px] sm:text-[9.5px] font-black text-gray-800 mb-0.5 whitespace-nowrap">
-                                {day.revenue > 0 ? `₹${day.revenue}` : '0'}
-                              </span>
-                              <div
-                                style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 6 : 0)}%` }}
-                                className={`w-full transition-all duration-200 ${
-                                  day.revenue > 0
-                                    ? isSelected ? 'bg-[#009643]' : 'bg-[#00b04f] hover:bg-[#009643]'
-                                    : 'bg-gray-200/80'
-                                }`}
-                              />
+                            {/* Attached Double Bar Pair (Flat Rectangles, 0px gap inside pair) */}
+                            <div className="w-full flex items-end justify-center h-full max-w-[28px] sm:max-w-[36px]">
+                              {/* Left Bar: Series 1 / Orders (Sky Blue) */}
+                              <div className="w-1/2 flex flex-col items-center justify-end h-full relative">
+                                {/* Number Directly Above Bar */}
+                                <span className="text-[8px] sm:text-[9.5px] font-black text-gray-800 mb-0.5 whitespace-nowrap">
+                                  {day.count}
+                                </span>
+                                <div
+                                  style={{ height: `${Math.max(barHeightOrders, day.count > 0 ? 6 : 0)}%` }}
+                                  className={`w-full transition-all duration-200 ${
+                                    day.count > 0
+                                      ? isSelected ? 'bg-[#0080ff]' : 'bg-[#0095ff] hover:bg-[#0080ff]'
+                                      : 'bg-gray-200/80'
+                                  }`}
+                                />
+                              </div>
+
+                              {/* Right Bar: Series 2 / Revenue (Vibrant Green) - Attached */}
+                              <div className="w-1/2 flex flex-col items-center justify-end h-full relative">
+                                {/* Number Directly Above Bar */}
+                                <span className="text-[8px] sm:text-[9.5px] font-black text-gray-800 mb-0.5 whitespace-nowrap">
+                                  {day.revenue > 0 ? `₹${day.revenue}` : '0'}
+                                </span>
+                                <div
+                                  style={{ height: `${Math.max(barHeightRevenue, day.revenue > 0 ? 6 : 0)}%` }}
+                                  className={`w-full transition-all duration-200 ${
+                                    day.revenue > 0
+                                      ? isSelected ? 'bg-[#009643]' : 'bg-[#00b04f] hover:bg-[#009643]'
+                                      : 'bg-gray-200/80'
+                                  }`}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
 
-                  {/* X-Axis Labels */}
-                  <div className="flex justify-between gap-1 px-1 pt-2">
-                    {chartData.map((day, idx) => {
-                      const isSelected = selectedChartDay?.date === day.date;
-                      return (
-                        <div
-                          key={idx}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedChartDay(isSelected ? null : day);
-                          }}
-                          className="flex-1 text-center cursor-pointer"
-                        >
-                          <span className={`text-[9px] font-black tracking-wider block truncate max-w-[48px] mx-auto transition-colors ${
-                            isSelected ? 'text-[#0095ff] font-black underline' : 'text-gray-500 hover:text-gray-900'
-                          }`}>
-                            {day.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+                    {/* X-Axis Labels */}
+                    <div className="flex justify-between gap-1 px-1 pt-2">
+                      {chartData.map((day, idx) => {
+                        const isSelected = selectedChartDay?.date === day.date;
+                        return (
+                          <div
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedChartDay(isSelected ? null : day);
+                            }}
+                            className="flex-1 text-center cursor-pointer"
+                          >
+                            <span className={`text-[7.5px] sm:text-[9px] font-bold block truncate transition-colors ${
+                              isSelected ? 'text-blue-600 font-extrabold' : 'text-gray-500 hover:text-gray-900'
+                            }`}>
+                              {chartData.length > 20 ? day.label.split(' ')[1] || day.label : day.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
