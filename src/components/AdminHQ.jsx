@@ -2584,60 +2584,65 @@ export default function AdminHQ() {
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Control Panel</p>
         </div>
 
-        <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-none">
+        <nav className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-col gap-2">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'dashboard'
+            className={`flex items-center justify-center md:justify-start gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${activeTab === 'dashboard'
               ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              : 'bg-gray-50 md:bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
           >
-            <LayoutDashboard size={16} />
-            Dashboard
-          </button>
-
-          <button
-            onClick={() => setActiveTab('items')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'items'
-              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-          >
-            <ShoppingBag size={16} />
-            Items Catalog
-          </button>
-
-          <button
-            onClick={() => setActiveTab('categories')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'categories'
-              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-          >
-            <FolderKanban size={16} />
-            Categories
-          </button>
-
-          <button
-            onClick={() => setActiveTab('shops')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'shops'
-              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-          >
-            <Store size={16} />
-            Store Shops
+            <LayoutDashboard size={15} />
+            <span>Dashboard</span>
           </button>
 
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none w-full text-left whitespace-nowrap ${activeTab === 'orders'
+            className={`flex items-center justify-center md:justify-start gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${activeTab === 'orders'
               ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              : 'bg-gray-50 md:bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
           >
-            <ClipboardList size={16} />
-            Expected Orders
+            <ClipboardList size={15} />
+            <span>Orders Queue</span>
+            {orders.filter(o => !isOrderConfirmed(o)).length > 0 && (
+              <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500 text-white">
+                {orders.filter(o => !isOrderConfirmed(o)).length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('items')}
+            className={`flex items-center justify-center md:justify-start gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${activeTab === 'items'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-gray-50 md:bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+          >
+            <ShoppingBag size={15} />
+            <span>Items Catalog</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`flex items-center justify-center md:justify-start gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${activeTab === 'categories'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-gray-50 md:bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+          >
+            <FolderKanban size={15} />
+            <span>Categories</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('shops')}
+            className={`flex items-center justify-center md:justify-start gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none col-span-2 sm:col-span-1 ${activeTab === 'shops'
+              ? 'bg-gray-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+              : 'bg-gray-50 md:bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+          >
+            <Store size={15} />
+            <span>Store Shops</span>
           </button>
         </nav>
 
