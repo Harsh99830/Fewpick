@@ -1511,30 +1511,55 @@ export default function AdminHQ() {
               {/* Selected Day Info Banner & Delivered Orders Breakdown on Tap/Click */}
               {selectedChartDay ? (
                 <div className="mt-3 flex flex-col gap-3 animate-drop-in">
-                  <div className="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#0095ff] inline-block animate-pulse"></span>
-                      <span className="font-extrabold text-gray-900 text-xs">{selectedChartDay.label} Orders Breakdown:</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 text-xs font-black">
-                      <span className="bg-white text-[#0095ff] px-2.5 py-1 rounded-lg border border-sky-100 shadow-2xs">
-                        {selectedChartDay.count} {selectedChartDay.count === 1 ? 'order' : 'orders'}
-                      </span>
-                      <span className="bg-white text-[#00b04f] px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
-                        ₹{selectedChartDay.revenue.toLocaleString()} revenue
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedChartDay(null);
-                        }}
-                        className="text-gray-400 hover:text-gray-800 border-none bg-transparent cursor-pointer font-extrabold px-1 text-xs"
-                        title="Close Breakdown"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
+                  {(() => {
+                    // Calculate totals for all valid/confirmed orders on this date
+                    const dayOrders = orders.filter((o) => {
+                      if (!o.created_at) return false;
+                      const oDate = new Date(o.created_at).toISOString().split('T')[0];
+                      return oDate === selectedChartDay.date && isOrderConfirmed(o) && isOrderNotCancelled(o);
+                    });
+
+                    const totalItemsSold = dayOrders.reduce((acc, order) => {
+                      const itemsList = Array.isArray(order.items) ? order.items : [];
+                      return acc + itemsList.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+                    }, 0);
+
+                    const totalRevenueCalc = dayOrders.reduce((acc, order) => {
+                      return acc + Number(order.grand_total || order.subtotal || 0);
+                    }, 0);
+
+                    return (
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-900">{selectedChartDay.label} Summary</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-500 font-medium">Orders:</span>
+                            <span className="font-extrabold text-gray-900">{selectedChartDay.count}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-500 font-medium">Total Items Sold:</span>
+                            <span className="font-extrabold text-gray-900">{totalItemsSold}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-500 font-medium">Sales:</span>
+                            <span className="font-extrabold text-emerald-700 font-mono">₹{(totalRevenueCalc || selectedChartDay.revenue).toLocaleString()}</span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedChartDay(null);
+                            }}
+                            className="text-gray-400 hover:text-gray-700 border-none bg-transparent cursor-pointer font-bold px-1.5 py-0.5 text-xs transition-colors ml-1"
+                            title="Close Breakdown"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Delivered Orders List for Selected Date */}
                   <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
