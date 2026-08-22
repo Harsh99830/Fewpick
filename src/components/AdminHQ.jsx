@@ -282,7 +282,7 @@ export default function AdminHQ() {
     try {
       const currentItems = Array.isArray(viewingOrder.items) ? viewingOrder.items : [];
       const newSubtotal = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
-      const riderEffort = Number(viewingOrder.rider_effort || 10);
+      const riderEffort = Number(viewingOrder.rider_effort ?? 0);
       const newGrandTotal = newSubtotal + riderEffort;
 
       const updatedPayload = {
@@ -335,7 +335,7 @@ export default function AdminHQ() {
     }
 
     const newSub = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
-    const rider = Number(viewingOrder.rider_effort || 10);
+    const rider = Number(viewingOrder.rider_effort ?? 0);
 
     setViewingOrder(prev => ({
       ...prev,
@@ -352,7 +352,7 @@ export default function AdminHQ() {
     currentItems.splice(indexToRemove, 1);
 
     const newSub = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
-    const rider = Number(viewingOrder.rider_effort || 10);
+    const rider = Number(viewingOrder.rider_effort ?? 0);
 
     setViewingOrder(prev => ({
       ...prev,
@@ -373,7 +373,7 @@ export default function AdminHQ() {
     }
 
     const newSub = currentItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
-    const rider = Number(viewingOrder.rider_effort || 10);
+    const rider = Number(viewingOrder.rider_effort ?? 0);
 
     setViewingOrder(prev => ({
       ...prev,
@@ -1211,7 +1211,7 @@ export default function AdminHQ() {
   const validOrders = orders.filter((o) => isOrderConfirmed(o) && isOrderNotCancelled(o));
   const deliveredOrders = validOrders.filter((o) => isOrderDelivered(o));
   const totalOrders = validOrders.length;
-  const totalSales = deliveredOrders.length * 10;
+  const totalSales = deliveredOrders.reduce((acc, o) => acc + Number(o.rider_effort ?? 10), 0);
   const pendingOrders = orders.filter((o) => !isOrderConfirmed(o) || !isOrderNotCancelled(o)).length;
   const averageOrderValue = deliveredOrders.length > 0 ? Math.round(totalSales / deliveredOrders.length) : 0;
 
@@ -1284,7 +1284,7 @@ export default function AdminHQ() {
           counts[hour] = (counts[hour] || 0) + 1;
         }
         const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-        const orderRev = isDelivered ? 10 : 0;
+        const orderRev = isDelivered ? Number(order.rider_effort ?? 10) : 0;
         revenues[hour] = (revenues[hour] || 0) + orderRev;
       });
 
@@ -1327,7 +1327,7 @@ export default function AdminHQ() {
           counts[orderDate] = (counts[orderDate] || 0) + 1;
         }
         const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-        const orderRev = isDelivered ? 10 : 0;
+        const orderRev = isDelivered ? Number(order.rider_effort ?? 10) : 0;
         revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
       });
 
@@ -1384,7 +1384,7 @@ export default function AdminHQ() {
           counts[orderDate] = (counts[orderDate] || 0) + 1;
         }
         const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-        const orderRev = isDelivered ? 10 : 0;
+        const orderRev = isDelivered ? Number(order.rider_effort ?? 10) : 0;
         revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
       });
 
@@ -3571,7 +3571,7 @@ export default function AdminHQ() {
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 font-medium">
                   <span>Rider's Effort / Delivery</span>
-                  <span className="font-mono font-bold text-gray-800">₹{viewingOrder.rider_effort || 10}</span>
+                  <span className="font-mono font-bold text-gray-800">₹{viewingOrder.rider_effort ?? 0}</span>
                 </div>
                 <div className="h-px bg-gray-200 my-1" />
                 <div className="flex justify-between text-sm font-black text-gray-900">
