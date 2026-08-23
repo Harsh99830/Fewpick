@@ -530,7 +530,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                 <Zap size={15} className="fill-amber-500" />
               </div>
               <p className="m-0 leading-snug">
-                For <strong>Quick Delivery</strong>, message us after placing order. <strong>₹10 extra applies</strong>.
+                For <strong>Quick Delivery</strong>, mark the <strong>Quick Delivery checkbox</strong> above.
               </p>
             </div>
           </div>
