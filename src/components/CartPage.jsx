@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone, FileText, Clock, ChevronDown, Info, Zap } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, MapPin, User, Phone, FileText, Clock, ChevronDown, Info, Zap, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -159,16 +159,28 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
 
   if (cartItems.length === 0) {
     return (
-      <div className="max-w-[480px] py-20 px-4 mx-auto text-center flex flex-col items-center animate-drop-in">
-        <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-[-0.02em]">Your cart is empty</h2>
-        <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-          There are no items in your cart. Choose from our top categories and add some items to get started.
+      <div className="w-full max-w-[440px] py-12 sm:py-16 px-6 mx-auto text-center flex flex-col items-center justify-center animate-drop-in my-auto">
+        {/* Soft rounded icon container */}
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-amber-50 border border-amber-100/80 text-amber-600 flex items-center justify-center mb-6 shadow-xs relative">
+          <ShoppingBag size={40} strokeWidth={1.75} className="sm:w-12 sm:h-12 text-amber-600" />
+          <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border border-gray-100 flex items-center justify-center text-xs shadow-xs">
+            ✨
+          </span>
+        </div>
+
+        <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-2 tracking-[-0.02em]">
+          Your cart is empty
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-500 mb-7 leading-relaxed max-w-[320px]">
+          Looks like you haven't added anything yet. Explore our fresh essentials & snacks to get started!
         </p>
+
         <button
           onClick={onNavigateHome}
-          className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-px active:translate-y-0 cursor-pointer border-none"
+          className="w-full sm:w-auto px-8 py-3.5 bg-gray-100 hover:bg-gray-200/80 text-gray-900 text-xs sm:text-sm font-extrabold rounded-xl transition-all border border-gray-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center justify-center gap-2"
         >
-          Start Shopping
+          <span>Start Shopping</span>
+          <ArrowLeft size={16} className="rotate-180 text-gray-800" />
         </button>
       </div>
     );
