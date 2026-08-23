@@ -207,8 +207,15 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                 <h3 className="text-xs sm:text-sm font-bold text-gray-900 m-0 leading-tight truncate mb-0.5">
                   {item.product.name}
                 </h3>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm sm:text-base font-extrabold text-gray-900">₹{item.product.price}</span>
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="text-sm sm:text-base font-extrabold text-gray-900">
+                    ₹{item.product.price}
+                    {item.quantity > 1 && (
+                      <span className="text-xs font-normal text-gray-500 ml-1">
+                        × {item.quantity} = <span className="text-gray-600 font-normal">₹{item.product.price * item.quantity}</span>
+                      </span>
+                    )}
+                  </span>
                   {item.product.mrp && item.product.mrp > item.product.price && (
                     <span className="text-[10px] sm:text-xs text-gray-400 line-through">₹{item.product.mrp}</span>
                   )}
