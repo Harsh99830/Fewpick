@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import ProductCard from './ProductCard';
@@ -6,9 +7,25 @@ import { categories as fallbackCategories } from '../data/categories';
 export default function CategoryPage({ products = [], categories = [], cartItems = [], onUpdateQty, orderingEnabled = true, onSelectProduct }) {
   const { categoryName } = useParams();
   const navigate = useNavigate();
+  const activeCategoryRef = useRef(null);
+  const containerRef = useRef(null);
 
   const decodedName = categoryName ? decodeURIComponent(categoryName) : '';
   const displayCategories = categories.length > 0 ? categories : fallbackCategories;
+
+  // Immediately center active category pill on mount/category change without horizontal scroll animation
+  useEffect(() => {
+    if (activeCategoryRef.current && containerRef.current) {
+      const container = containerRef.current;
+      const element = activeCategoryRef.current;
+      const elementOffset = element.offsetLeft;
+      const elementWidth = element.offsetWidth;
+      const containerWidth = container.offsetWidth;
+
+      // Calculate scroll position so active category is centered
+      container.scrollLeft = elementOffset - (containerWidth / 2) + (elementWidth / 2);
+    }
+  }, [decodedName, displayCategories]);
 
   // Filter products by category (case-insensitive)
   const categoryProducts = products.filter(
@@ -33,7 +50,7 @@ export default function CategoryPage({ products = [], categories = [], cartItems
             </h2>
           </div>
         </div>
-        <div className="flex flex-nowrap overflow-x-auto gap-2.5 sm:gap-4 pt-2 pb-3 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth w-full">
+        <div ref={containerRef} className="flex flex-nowrap overflow-x-auto gap-2.5 sm:gap-4 pt-2 pb-3 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
           {displayCategories.map((cat) => {
             const isSelected = cat.name.toLowerCase() === decodedName.toLowerCase();
             const displayImage = cat.image || cat.emoji;
@@ -42,6 +59,7 @@ export default function CategoryPage({ products = [], categories = [], cartItems
             return (
               <button
                 key={cat.id}
+                ref={isSelected ? activeCategoryRef : null}
                 onClick={() => navigate(`/category/${encodeURIComponent(cat.name)}`, { replace: true })}
                 className="flex flex-col items-center gap-1.5 bg-none border-none cursor-pointer p-0.5 transition-transform hover:-translate-y-0.5 flex-shrink-0 w-[68px] sm:w-[84px] group"
               >
