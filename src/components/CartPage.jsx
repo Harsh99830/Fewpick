@@ -305,7 +305,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                 type="text"
                 value={customerAddress}
                 onChange={handleAddressChange}
-                placeholder="Hostel name or campus location"
+                placeholder="Hostel / PG / Building"
                 className={`w-full pl-8 pr-2.5 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold outline-none transition-all ${
                   addressError
                     ? 'border-rose-500 bg-rose-50/50 text-rose-900'
