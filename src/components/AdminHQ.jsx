@@ -1211,7 +1211,11 @@ export default function AdminHQ() {
   const validOrders = orders.filter((o) => isOrderConfirmed(o) && isOrderNotCancelled(o));
   const deliveredOrders = validOrders.filter((o) => isOrderDelivered(o));
   const totalOrders = validOrders.length;
-  const totalSales = deliveredOrders.reduce((acc, o) => acc + Number(o.rider_effort ?? 10), 0);
+  const totalSales = deliveredOrders.reduce((acc, o) => {
+    const riderEffort = Number(o.rider_effort ?? 10);
+    const quickDelivery = Number(o.quick_delivery || 0) || (Number(o.grand_total || 0) > (Number(o.subtotal || 0) + Number(o.rider_effort || 0)) ? (Number(o.grand_total || 0) - Number(o.subtotal || 0) - Number(o.rider_effort || 0)) : 0);
+    return acc + riderEffort + quickDelivery;
+  }, 0);
   const pendingOrders = orders.filter((o) => !isOrderConfirmed(o) || !isOrderNotCancelled(o)).length;
   const averageOrderValue = deliveredOrders.length > 0 ? Math.round(totalSales / deliveredOrders.length) : 0;
 
@@ -1284,7 +1288,9 @@ export default function AdminHQ() {
           counts[hour] = (counts[hour] || 0) + 1;
         }
         const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-        const orderRev = isDelivered ? Number(order.rider_effort ?? 10) : 0;
+        const riderEffort = Number(order.rider_effort ?? 10);
+        const quickDelivery = Number(order.quick_delivery || 0) || (Number(order.grand_total || 0) > (Number(order.subtotal || 0) + Number(order.rider_effort || 0)) ? (Number(order.grand_total || 0) - Number(order.subtotal || 0) - Number(order.rider_effort || 0)) : 0);
+        const orderRev = isDelivered ? (riderEffort + quickDelivery) : 0;
         revenues[hour] = (revenues[hour] || 0) + orderRev;
       });
 
@@ -1327,7 +1333,9 @@ export default function AdminHQ() {
           counts[orderDate] = (counts[orderDate] || 0) + 1;
         }
         const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-        const orderRev = isDelivered ? Number(order.rider_effort ?? 10) : 0;
+        const riderEffort = Number(order.rider_effort ?? 10);
+        const quickDelivery = Number(order.quick_delivery || 0) || (Number(order.grand_total || 0) > (Number(order.subtotal || 0) + Number(order.rider_effort || 0)) ? (Number(order.grand_total || 0) - Number(order.subtotal || 0) - Number(order.rider_effort || 0)) : 0);
+        const orderRev = isDelivered ? (riderEffort + quickDelivery) : 0;
         revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
       });
 
@@ -1384,7 +1392,9 @@ export default function AdminHQ() {
           counts[orderDate] = (counts[orderDate] || 0) + 1;
         }
         const isDelivered = confirmed && notCancelled && isOrderDelivered(order);
-        const orderRev = isDelivered ? Number(order.rider_effort ?? 10) : 0;
+        const riderEffort = Number(order.rider_effort ?? 10);
+        const quickDelivery = Number(order.quick_delivery || 0) || (Number(order.grand_total || 0) > (Number(order.subtotal || 0) + Number(order.rider_effort || 0)) ? (Number(order.grand_total || 0) - Number(order.subtotal || 0) - Number(order.rider_effort || 0)) : 0);
+        const orderRev = isDelivered ? (riderEffort + quickDelivery) : 0;
         revenues[orderDate] = (revenues[orderDate] || 0) + orderRev;
       });
 
@@ -3573,6 +3583,12 @@ export default function AdminHQ() {
                   <span>Rider's Effort / Delivery</span>
                   <span className="font-mono font-bold text-gray-800">₹{viewingOrder.rider_effort ?? 0}</span>
                 </div>
+                {Boolean(Number(viewingOrder.quick_delivery || 0) > 0 || (Number(viewingOrder.grand_total || 0) > (Number(viewingOrder.subtotal || 0) + Number(viewingOrder.rider_effort || 0)))) && (
+                  <div className="flex justify-between text-xs text-amber-700 font-semibold">
+                    <span>⚡ Quick Delivery</span>
+                    <span className="font-mono font-bold">₹{Number(viewingOrder.quick_delivery || 0) || (Number(viewingOrder.grand_total || 0) - Number(viewingOrder.subtotal || 0) - Number(viewingOrder.rider_effort || 0))}</span>
+                  </div>
+                )}
                 <div className="h-px bg-gray-200 my-1" />
                 <div className="flex justify-between text-sm font-black text-gray-900">
                   <span>Grand Total</span>

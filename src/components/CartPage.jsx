@@ -22,6 +22,9 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   const [customTip, setCustomTip] = useState('');
   const [isCustomTip, setIsCustomTip] = useState(false);
 
+  // State for Quick Delivery checkbox (+₹10)
+  const [isQuickDelivery, setIsQuickDelivery] = useState(false);
+
   // Custom tip validation (must be between ₹10 and ₹50)
   const parsedCustomTip = parseInt(customTip, 10);
   const isValidCustomTip = !isNaN(parsedCustomTip) && parsedCustomTip >= 10 && parsedCustomTip <= 50;
@@ -36,8 +39,9 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
   const deliveryCharge = subtotal > 0
     ? (isCustomTip ? (isValidCustomTip ? parsedCustomTip : 10) : (riderTip !== null ? riderTip : 10))
     : 0;
-  
-  const grandTotal = subtotal + deliveryCharge;
+
+  const quickDeliveryFee = isQuickDelivery ? 10 : 0;
+  const grandTotal = subtotal + deliveryCharge + quickDeliveryFee;
 
   const generateShortId = (length = 8) => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -118,6 +122,9 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
     message += `\n*Delivery Address:* ${cleanAddress}`;
     message += `\n*Item Total:* ₹${subtotal}`;
     message += `\n*Rider's Effort:* ₹${deliveryCharge}`;
+    if (isQuickDelivery) {
+      message += `\n*Quick Delivery:* ₹10`;
+    }
     message += `\n*Grand Total:* ₹${grandTotal}`;
     const waUrl = `https://wa.me/919719214408?text=${encodeURIComponent(message)}`;
 
@@ -131,8 +138,8 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
     }));
 
     try {
-      // Save order to Supabase expected_orders table
-      const { error } = await supabase.from('expected_orders').insert({
+      // Base order payload matching expected_orders Supabase table columns
+      const insertPayload = {
         id: orderId,
         name: cleanName,
         phone: cleanPhone,
@@ -143,8 +150,23 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
         grand_total: grandTotal,
         status: 'pending',
         confirm: 'No'
-      });
+      };
+
+      // Add quick_delivery parameter
+      if (quickDeliveryFee > 0) {
+        insertPayload.quick_delivery = quickDeliveryFee;
+      }
+
+      // Save order to Supabase expected_orders table
+      let { error } = await supabase.from('expected_orders').insert(insertPayload);
       
+      // If quick_delivery column doesn't exist yet in Supabase schema, fallback to base payload
+      if (error && error.message && error.message.includes('quick_delivery')) {
+        delete insertPayload.quick_delivery;
+        const retry = await supabase.from('expected_orders').insert(insertPayload);
+        error = retry.error;
+      }
+
       if (error) {
         console.error("Failed to save order to database:", error.message);
       }
@@ -400,7 +422,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
               </div>
 
               {/* Simple helper text below pills */}
-              <p className="text-[11px] font-medium text-gray-500 m-0 mt-0.5">
+              <p className="text-[11px] font-medium text-gray-500 m-0 mt-0.5 pb-1">
                 100% transferred directly to your rider
               </p>
 
@@ -430,6 +452,29 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Quick Delivery Section */}
+            <div className="flex flex-col gap-2 border-b border-dashed border-gray-200 pb-3.5 pt-1">
+              <label className="flex items-center justify-between gap-2 cursor-pointer group select-none">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isQuickDelivery}
+                    onChange={(e) => setIsQuickDelivery(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer accent-[#00A859]"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-black">
+                      Quick Delivery
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] text-gray-400 font-medium">
+                      Priority dispatch & faster slot delivery
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs sm:text-sm font-extrabold text-gray-900">+₹10</span>
+              </label>
             </div>
             <div className="flex justify-between text-base font-extrabold text-gray-900 pt-1">
               <span>Grand Total</span>
