@@ -380,6 +380,11 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                 </button>
               </div>
 
+              {/* Simple helper text below pills */}
+              <p className="text-[11px] font-medium text-gray-500 m-0 mt-0.5">
+                100% transferred directly to your rider
+              </p>
+
               {/* Custom Tip Input Field */}
               {isCustomTip && (
                 <div className="pt-1 animate-drop-in">
