@@ -396,7 +396,7 @@ function App() {
 
       <WelcomeModal />
       <FeedbackWidget hasCart={cartItems.some(i => i.quantity > 0)} />
-      <FloatingCartBar cartItems={cartItems} />
+      <FloatingCartBar cartItems={cartItems} onCloseModal={() => setSelectedProduct(null)} />
 
       <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto">
         <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">

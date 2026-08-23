@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 
-export default function FloatingCartBar({ cartItems = [] }) {
+export default function FloatingCartBar({ cartItems = [], onCloseModal }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,11 +17,18 @@ export default function FloatingCartBar({ cartItems = [] }) {
   // Get unique products with images currently in cart (max 3 stacked preview images)
   const cartPreviewProducts = cartItems.filter(item => item.quantity > 0).slice(0, 3);
 
+  const handleCartClick = () => {
+    if (typeof onCloseModal === 'function') {
+      onCloseModal();
+    }
+    navigate('/cart');
+  };
+
   return (
     <div className="fixed bottom-4 left-4 z-[350] animate-drop-in">
       {/* View Cart Pill */}
       <button
-        onClick={() => navigate('/cart')}
+        onClick={handleCartClick}
         className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 sm:px-4 rounded-full shadow-[0_8px_25px_rgba(217,119,6,0.4)] flex items-center gap-3 cursor-pointer border border-amber-500/30 transition-all active:scale-[0.97] group"
       >
         <div className="flex items-center gap-3">
