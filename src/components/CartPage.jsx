@@ -469,7 +469,7 @@ export default function CartPage({ cartItems, onUpdateQty, onNavigateHome, order
                       Quick Delivery
                     </span>
                     <span className="text-[10px] sm:text-[11px] text-gray-400 font-medium">
-                      Priority dispatch & faster slot delivery
+                      Priority dispatch in 5-10 min
                     </span>
                   </div>
                 </div>
