@@ -7,7 +7,7 @@ export default function ReferEarnPage() {
   const navigate = useNavigate();
 
   const whatsappNumber = "919719214408";
-  const shareText = "Hey! Order fresh snacks, drinks & essentials on FewPick 🚀 Quick delivery & great prices!";
+  const shareText = "Hey! Order snacks & essentials on FewPick 🚀 No small cart fees & open till 2 AM!";
   const whatsappClaimText = encodeURIComponent("Hi FewPick! My friend just placed an order. Here is their name to claim my free ₹20 item: ");
   const whatsappClaimUrl = `https://wa.me/${whatsappNumber}?text=${whatsappClaimText}`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText + "\nCheck it out here: " + window.location.origin)}`;
