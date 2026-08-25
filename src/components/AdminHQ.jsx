@@ -1433,6 +1433,8 @@ export default function AdminHQ() {
     const chartData = getChartData();
     const maxCount = Math.max(...chartData.map(d => d.count), 0);
     const maxRevenue = Math.max(...chartData.map(d => d.revenue), 0);
+    // Unified scale unit: 1 Order unit = 1 order OR ₹10 revenue
+    const maxUnits = Math.max(maxCount, maxRevenue / 10, 1);
     const hasData = chartData.some(d => d.count > 0 || d.revenue > 0);
 
     return (
@@ -1617,10 +1619,10 @@ export default function AdminHQ() {
               <div className="flex gap-2 items-stretch h-[230px] pt-8">
                 {/* Y-Axis Scale Values */}
                 <div className="flex flex-col justify-between text-[9px] font-extrabold text-gray-400 border-r border-gray-200 pr-2 select-none py-1">
-                  <span>{Math.max(maxRevenue, maxCount, 10)}</span>
-                  <span>{Math.round(Math.max(maxRevenue, maxCount, 10) * 0.75)}</span>
-                  <span>{Math.round(Math.max(maxRevenue, maxCount, 10) * 0.50)}</span>
-                  <span>{Math.round(Math.max(maxRevenue, maxCount, 10) * 0.25)}</span>
+                  <span>{Math.round(maxUnits * 10)}</span>
+                  <span>{Math.round(maxUnits * 10 * 0.75)}</span>
+                  <span>{Math.round(maxUnits * 10 * 0.50)}</span>
+                  <span>{Math.round(maxUnits * 10 * 0.25)}</span>
                   <span>0</span>
                 </div>
 
@@ -1635,8 +1637,8 @@ export default function AdminHQ() {
                     {/* Bars Row */}
                     <div className="flex items-end justify-between gap-1 h-full border-b-2 border-gray-400 px-1 pb-0">
                       {chartData.map((day, idx) => {
-                        const barHeightOrders = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-                        const barHeightRevenue = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                        const barHeightOrders = maxUnits > 0 ? (day.count / maxUnits) * 100 : 0;
+                        const barHeightRevenue = maxUnits > 0 ? ((day.revenue / 10) / maxUnits) * 100 : 0;
                         const isSelected = selectedChartDay?.date === day.date;
 
                         return (
