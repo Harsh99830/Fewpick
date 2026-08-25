@@ -404,7 +404,7 @@ function App() {
       <FloatingCartBar cartItems={cartItems} onCloseModal={() => setSelectedProduct(null)} />
 
       {pathname !== '/refer-earn' && pathname !== '/hq' && pathname !== '/admin' && (
-        <footer className="w-full bg-white border-t border-[#e8eaf0] py-4 px-4 text-center mt-auto flex flex-col items-center justify-center gap-3">
+        <footer className="w-full bg-white border-t border-[#e8eaf0] pt-6 pb-24 px-4 text-center mt-auto flex flex-col items-center justify-center gap-3">
           <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">
             Powered by{' '}
             <a
