@@ -36,7 +36,7 @@ export default function ReferEarnPage() {
           </div>
           <h2 className="ticket-heading">Get Free ₹20 Item On Your Next Order</h2>
           <p className="ticket-subtext">
-            Refer a friend &amp; get a free ₹20 item when they order!
+            Refer a new friend &amp; get a free ₹20 item on their 1st order!
           </p>
         </div>
 
@@ -74,8 +74,8 @@ export default function ReferEarnPage() {
           <div className="timeline-item">
             <div className="timeline-node">1</div>
             <div className="timeline-info">
-              <h4>Friend Places An Order</h4>
-              <p>Your friend orders on FewPick.</p>
+              <h4>New Friend Places 1st Order</h4>
+              <p>Your friend places their first order on FewPick.</p>
             </div>
           </div>
 
