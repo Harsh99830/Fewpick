@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles, PhoneCall } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles, PhoneCall, Gift } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import { getUniqueProductsByName } from '../utils/productUtils';
 
@@ -74,7 +74,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
     };
   }, [searchFocused, searchQuery]);
 
-  const isSearchHidden = ['/cart', '/contact', '/hq'].includes(location.pathname);
+  const isSearchHidden = ['/cart', '/contact', '/hq', '/refer-earn'].includes(location.pathname);
 
   const handleNavigate = (page) => {
     setMenuOpen(false);
@@ -84,6 +84,8 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
       navigate('/cart');
     } else if (page === 'contact') {
       navigate('/contact');
+    } else if (page === 'refer-earn') {
+      navigate('/refer-earn');
     } else if (onNavigate) {
       onNavigate(page);
     }
@@ -231,6 +233,14 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
                 <span>Contact Us</span>
               </button>
 
+              <button
+                onClick={() => handleNavigate('refer-earn')}
+                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-amber-600 whitespace-nowrap flex items-center gap-1.5"
+              >
+                <Gift size={15} className="text-amber-600" />
+                <span>Refer &amp; Earn</span>
+              </button>
+
               {/* Cart */}
               <button 
                 onClick={() => handleNavigate('cart')}
@@ -265,6 +275,14 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               {/* Mobile menu drawer — absolute overlay directly below top bar */}
               {menuOpen && (
                 <div className="absolute top-[50px] right-0 w-[240px] z-[250] bg-white flex flex-col gap-1 px-3 py-2.5 rounded-2xl shadow-2xl border border-gray-150 animate-slide-down">
+                  <button
+                    onClick={() => handleNavigate('refer-earn')}
+                    className="w-full text-left bg-transparent border-none text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2.5"
+                  >
+                    <Gift size={17} className="text-amber-600" />
+                    <span>Refer &amp; Earn</span>
+                  </button>
+
                   <a
                     href="https://www.instagram.com/fewpick?igsh=MWQ0bTFidWF0Mm8yZg=="
                     target="_blank"

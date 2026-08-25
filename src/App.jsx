@@ -17,6 +17,8 @@ import FloatingCartBar from './components/FloatingCartBar';
 import { snackProducts, groceryProducts } from './data/products';
 import { categories as fallbackCategories } from './data/categories';
 import { supabase } from './lib/supabase';
+import { PhoneCall, Sparkles } from 'lucide-react';
+import ReferEarnPage from './components/ReferEarnPage';
 
 const localFallbackProducts = [
   ...snackProducts.map(p => ({ ...p, category: 'snack' })),
@@ -332,6 +334,10 @@ function App() {
               }
             />
             <Route
+              path="/refer-earn"
+              element={<ReferEarnPage />}
+            />
+            <Route
               path="/cart"
               element={
                 <CartPage
@@ -398,19 +404,37 @@ function App() {
       <FeedbackWidget hasCart={cartItems.some(i => i.quantity > 0)} />
       <FloatingCartBar cartItems={cartItems} onCloseModal={() => setSelectedProduct(null)} />
 
-      <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto">
-        <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">
-          Powered by{' '}
-          <a
-            href="https://fuudr.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-extrabold text-orange-500 hover:text-orange-600 transition-colors border-b border-orange-500 pb-[1px] hover:border-orange-600"
-          >
-            Fuudr
-          </a>
-        </p>
-      </footer>
+      {pathname !== '/refer-earn' && (
+        <footer className="w-full bg-white border-t border-[#e8eaf0] py-6 px-4 text-center mt-auto flex flex-col items-center justify-center gap-3">
+          <div className="flex items-center gap-5 justify-center">
+            <button
+              onClick={() => handleNavigate('contact')}
+              className="bg-transparent border-none text-xs font-bold text-gray-700 cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600 whitespace-nowrap flex items-center gap-1.5"
+            >
+              <PhoneCall size={14} className="text-indigo-600" />
+              <span>Contact Us</span>
+            </button>
+            <button
+              onClick={() => handleNavigate('refer-earn')}
+              className="bg-transparent border-none text-xs font-bold text-amber-700 cursor-pointer py-1 px-1 transition-colors hover:text-amber-800 whitespace-nowrap flex items-center gap-1.5"
+            >
+              <Sparkles size={14} className="text-amber-600" />
+              <span>Refer &amp; Earn ₹20</span>
+            </button>
+          </div>
+          <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">
+            Powered by{' '}
+            <a
+              href="https://fuudr.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-extrabold text-orange-500 hover:text-orange-600 transition-colors border-b border-orange-500 pb-[1px] hover:border-orange-600"
+            >
+              Fuudr
+            </a>
+          </p>
+        </footer>
+      )}
     </>
   );
 }
