@@ -30,7 +30,7 @@ export default function AboutPage() {
   const navigate = useNavigate();
   const goHome = () => navigate('/');
   return <div className="ap-page">
-    <header className="ap-masthead"><Wordmark /></header>
+
     <section className="ap-hero">
       <div className="ap-hero-copy"><h1>Need just one<br /><em>item?</em><br />We’ll deliver it.</h1><p>Fewpick is your local store for everyday essentials.<br />Order one item or a full bag. No minimum order,<br />flat ₹10 rider’s effort, and we’re open till 2 AM.</p><div className="ap-action-row"><button className="ap-dark-button" onClick={goHome}>Explore Essentials <ArrowRight size={17} /></button><span className="ap-trust-pill"><ShieldCheck size={16} /> Fast · Simple · Reliable</span></div></div>
       <div className="ap-hero-art" aria-label="A bag of grocery essentials"><div className="ap-hero-circle" /><span className="ap-spark ap-spark-one" /><span className="ap-spark ap-spark-two" /><span className="ap-spark ap-spark-three" /><img src={heroBag} alt="Fewpick grocery bag with snacks and water" /><aside className="ap-delivery-card"><div className="ap-delivery-icon"><Bike size={22} /></div><div><small>Delivered in</small><strong>1 km range</strong><p>Super quick.<br />Super local.</p><b>Flat ₹10 rider’s effort</b></div></aside></div>

@@ -291,8 +291,7 @@ function App() {
 
   return (
     <>
-      {pathname !== '/about' && (
-        <Navbar
+      <Navbar
           products={processedProducts}
           cartCount={cartCount}
           onNavigate={handleNavigate}
@@ -302,7 +301,6 @@ function App() {
           closedMessage={closedMessage}
           openMessage={openMessage}
         />
-      )}
 
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-2.5 py-3 pb-6 flex flex-col gap-5 md:px-6 md:py-6 md:pb-12 md:gap-12">
         {isLoading ? (
