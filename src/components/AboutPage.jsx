@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Bike, Clock3, MapPin, ShoppingBasket, Smartphone, PackageCheck } from 'lucide-react';
 import heroBag from '../assets/about-grocery-bag.png';
 import whyIllustration from '../assets/about-why-illustration.png';
-import scooter from '/hero-grocery-bag.png';
+import step1Img from '../assets/step1-basket.png';
+import step2Img from '../assets/step2-phone.png';
+import step3Img from '../assets/step3-scooter.png';
 import './AboutPage.css';
 
 const features = [
@@ -20,9 +22,9 @@ const steps = [
 ];
 
 function StepGraphic({ type }) {
-  if (type === 'basket') return <div className="ap-step-basket"><ShoppingBasket size={48} /><span className="ap-basket-bottle">▰</span><span className="ap-basket-pack">▰</span></div>;
-  if (type === 'phone') return <div className="ap-step-phone"><Smartphone size={66} /><i>●</i><i>●</i><i>●</i><PackageCheck className="ap-phone-check" size={26} /></div>;
-  return <img className="ap-step-scooter" src={scooter} alt="Delivery rider on a scooter" />;
+  if (type === 'basket') return <img className="ap-step-img" src={step1Img} alt="Pick what you need" />;
+  if (type === 'phone') return <img className="ap-step-img" src={step2Img} alt="Place your order" />;
+  return <img className="ap-step-img" src={step3Img} alt="We deliver it" />;
 }
 
 export default function AboutPage() {
