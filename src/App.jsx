@@ -18,6 +18,7 @@ import { snackProducts, groceryProducts } from './data/products';
 import { categories as fallbackCategories } from './data/categories';
 import { supabase } from './lib/supabase';
 import ReferEarnPage from './components/ReferEarnPage';
+import AboutPage from './components/AboutPage';
 
 const localFallbackProducts = [
   ...snackProducts.map(p => ({ ...p, category: 'snack' })),
@@ -290,16 +291,18 @@ function App() {
 
   return (
     <>
-      <Navbar
-        products={processedProducts}
-        cartCount={cartCount}
-        onNavigate={handleNavigate}
-        cartItems={cartItems}
-        onUpdateQty={handleUpdateQty}
-        orderingEnabled={orderingEnabled}
-        closedMessage={closedMessage}
-        openMessage={openMessage}
-      />
+      {pathname !== '/about' && (
+        <Navbar
+          products={processedProducts}
+          cartCount={cartCount}
+          onNavigate={handleNavigate}
+          cartItems={cartItems}
+          onUpdateQty={handleUpdateQty}
+          orderingEnabled={orderingEnabled}
+          closedMessage={closedMessage}
+          openMessage={openMessage}
+        />
+      )}
 
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-2.5 py-3 pb-6 flex flex-col gap-5 md:px-6 md:py-6 md:pb-12 md:gap-12">
         {isLoading ? (
@@ -380,6 +383,12 @@ function App() {
               }
             />
             <Route
+              path="/about"
+              element={
+                <AboutPage />
+              }
+            />
+            <Route
               path="/hq"
               element={
                 <AdminHQ />
@@ -399,11 +408,11 @@ function App() {
         />
       )}
 
-      <WelcomeModal />
-      <FeedbackWidget hasCart={cartItems.some(i => i.quantity > 0)} />
-      <FloatingCartBar cartItems={cartItems} onCloseModal={() => setSelectedProduct(null)} />
+      {pathname !== '/about' && <WelcomeModal />}
+      {pathname !== '/about' && <FeedbackWidget hasCart={cartItems.some(i => i.quantity > 0)} />}
+      {pathname !== '/about' && <FloatingCartBar cartItems={cartItems} onCloseModal={() => setSelectedProduct(null)} />}
 
-      {pathname !== '/refer-earn' && pathname !== '/hq' && pathname !== '/admin' && (
+      {pathname !== '/refer-earn' && pathname !== '/hq' && pathname !== '/admin' && pathname !== '/about' && (
         <footer className="w-full bg-white border-t border-[#e8eaf0] pt-6 pb-24 px-4 text-center mt-auto flex flex-col items-center justify-center gap-3">
           <p className="text-xs font-semibold text-gray-400 m-0 tracking-wide">
             Powered by{' '}

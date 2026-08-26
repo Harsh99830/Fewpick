@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles, PhoneCall, Gift } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Menu, X, Package, Clock, Sparkles, PhoneCall, Gift, Info } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import { getUniqueProductsByName } from '../utils/productUtils';
 
@@ -74,7 +74,7 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
     };
   }, [searchFocused, searchQuery]);
 
-  const isSearchHidden = ['/cart', '/contact', '/hq', '/refer-earn'].includes(location.pathname);
+  const isSearchHidden = ['/cart', '/contact', '/hq', '/refer-earn', '/about'].includes(location.pathname);
 
   const handleNavigate = (page) => {
     setMenuOpen(false);
@@ -86,6 +86,8 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
       navigate('/contact');
     } else if (page === 'refer-earn') {
       navigate('/refer-earn');
+    } else if (page === 'about') {
+      navigate('/about');
     } else if (onNavigate) {
       onNavigate(page);
     }
@@ -226,6 +228,14 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               </a>
 
               <button
+                onClick={() => handleNavigate('about')}
+                className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-blue-600 whitespace-nowrap flex items-center gap-1.5"
+              >
+                <Info size={15} className="text-blue-600" />
+                <span>About Us</span>
+              </button>
+
+              <button
                 onClick={() => handleNavigate('contact')}
                 className="bg-transparent border-none text-sm font-semibold text-[#374151] cursor-pointer py-1 px-1 transition-colors hover:text-indigo-600 whitespace-nowrap flex items-center gap-1.5"
               >
@@ -275,6 +285,14 @@ export default function Navbar({ products = [], cartCount, onNavigate, cartItems
               {/* Mobile menu drawer — absolute overlay directly below top bar */}
               {menuOpen && (
                 <div className="absolute top-[50px] right-0 w-[240px] z-[250] bg-white flex flex-col gap-1 px-3 py-2.5 rounded-2xl shadow-2xl border border-gray-150 animate-slide-down">
+                  <button
+                    onClick={() => handleNavigate('about')}
+                    className="w-full text-left bg-transparent border-none text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2.5"
+                  >
+                    <Info size={17} className="text-blue-600" />
+                    <span>About Us</span>
+                  </button>
+
                   <button
                     onClick={() => handleNavigate('refer-earn')}
                     className="w-full text-left bg-transparent border-none text-[0.88rem] font-semibold text-[#374151] py-2.5 px-3 rounded-[10px] cursor-pointer transition-colors hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2.5"
